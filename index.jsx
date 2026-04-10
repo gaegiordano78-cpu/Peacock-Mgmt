@@ -96,3 +96,7 @@ export default function App() {
 root.render(<App />);
   );
 }
+// Questo pezzetto serve a dire a React di montare l'app nel "root" dell'HTML
+const rootElement = document.getElementById('root');
+const root = ReactDOM.createRoot(rootElement);
+root.render(<App />);
