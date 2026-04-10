@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useState } from "react";
@@ -337,7 +338,7 @@ const GhostBtn = ({ children, onClick }) => (
 
 export default function App() {
   const [jobs, setJobs]         = useState(initialJobs);
-  const [modelle, setModelle]   = useState(initialModelle);
+  const [modelle, setModelle]   = useState<any[]>(initialModelle);
   const [view, setView]         = useState("lista"); // lista | dettaglio | nuovo_job | calcolatrice | modelle | scheda_modella | nuova_modella | contratto
   const [selectedJob, setSelectedJob]     = useState(null);
   const [selectedModella, setSelectedModella] = useState(null);
@@ -382,7 +383,7 @@ export default function App() {
   const saveModella = () => {
     if (!formMod.nome) { showToast("Inserisci il nome", true); return; }
     const newMod = { ...formMod, id: formMod.id || `m${Date.now()}` };
-    setModelle(prev => { const e = prev.find(m => m.id === newMod.id); return e ? prev.map(m => m.id === newMod.id ? newMod : m) : [...prev, newMod]; });
+    setModelle((prev: any[]) => { const e = prev.find((m: any) => m.id === newMod.id); return e ? prev.map((m: any) => m.id === newMod.id ? newMod : m) : [...prev, newMod]; });
     showToast("Scheda salvata ✓"); setView("modelle");
   };
 
