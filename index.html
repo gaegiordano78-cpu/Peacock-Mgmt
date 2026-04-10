@@ -8,12 +8,29 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body { margin: 0; background-color: #FBF9F6; }
-    </style>
 </head>
-<body>
+<body style="margin: 0; background-color: #FBF9F6;">
     <div id="root"></div>
-    <script type="text/babel" src="index.jsx"></script>
+
+    <script type="text/babel">
+      // Includiamo direttamente qui il collegamento per sicurezza
+      async function loadApp() {
+        const response = await fetch('./index.jsx');
+        const code = await response.text();
+        const transformed = Babel.transform(code, { presets: ['react'] }).code;
+        eval(transformed);
+      }
+      
+      // Aspettiamo che la finestra sia carica
+      window.onload = () => {
+        if (typeof React !== 'undefined') {
+          // Se React è pronto, carichiamo index.jsx
+          const script = document.createElement('script');
+          script.type = 'text/babel';
+          script.src = 'index.jsx';
+          document.body.appendChild(script);
+        }
+      };
+    </script>
 </body>
 </html>
