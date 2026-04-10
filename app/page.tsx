@@ -334,9 +334,13 @@ const GhostBtn = ({ children, onClick }) => (
   </button>
 );
 
+const IMG_MEN   = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-image-2-non-cambiare-il-modello-metti-soltanto-sfondo-bianco-ottico-con-retroilluminazio-0-4.jpg";
+const IMG_WOMEN = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-image-2-metti-sfondo-bianco-con-retroilluminazione-delicata-1-4.jpg";
+
 // ── MAIN APP ─────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [splash, setSplash]     = useState(true);
   const [jobs, setJobs]         = useState(initialJobs);
   const [modelle, setModelle]   = useState<any[]>(initialModelle);
   const [view, setView]         = useState("lista"); // lista | dettaglio | nuovo_job | calcolatrice | modelle | scheda_modella | nuova_modella | contratto
@@ -427,6 +431,28 @@ export default function App() {
     if (view === "contratto") return "Contratto";
     return "";
   };
+
+  if (splash) return (
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ padding: "48px 24px 24px", textAlign: "center" }}>
+        <img src={LOGO} alt="Peacock Models Management" style={{ height: 64, objectFit: "contain" }} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "100%", flex: 1, gap: 2 }}>
+        <div style={{ overflow: "hidden" }}>
+          <img src={IMG_MEN} alt="Men" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+        </div>
+        <div style={{ overflow: "hidden" }}>
+          <img src={IMG_WOMEN} alt="Women" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+        </div>
+      </div>
+      <div style={{ padding: "32px 24px 48px", width: "100%", boxSizing: "border-box" }}>
+        <button onClick={() => setSplash(false)}
+          style={{ width: "100%", padding: "16px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.02em" }}>
+          Entra
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
