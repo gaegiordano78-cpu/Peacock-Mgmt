@@ -1,7 +1,12 @@
 // @ts-nocheck
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
 
@@ -340,6 +345,14 @@ const IMG_WOMEN = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-i
 // ── MAIN APP ─────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [user, setUser]         = useState(null);
+  const [userRuolo, setUserRuolo] = useState(null);
+  const [loginEmail, setLoginEmail]     = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError]     = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [inviteEmail, setInviteEmail]   = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
   const [splash, setSplash]     = useState(true);
   const [jobs, setJobs]         = useState(initialJobs);
   const [modelle, setModelle]   = useState<any[]>(initialModelle);
@@ -353,6 +366,53 @@ export default function App() {
   const [toastErr, setToastErr] = useState(false);
   const [loading, setLoading]   = useState("");
   const [contrattoCopied, setContrattoCopied] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        supabase.from("profiles").select("ruolo").eq("id", session.user.id).single()
+          .then(({ data }) => { if (data) setUserRuolo(data.ruolo); });
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        supabase.from("profiles").select("ruolo").eq("id", session.user.id).single()
+          .then(({ data }) => { if (data) setUserRuolo(data.ruolo); });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const doLogin = async () => {
+    setLoginError("");
+    setLoginLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
+    if (error) setLoginError("Email o password errati");
+    setLoginLoading(false);
+  };
+
+  const doLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserRuolo(null);
+    setSplash(true);
+  };
+
+  const doInvite = async (nomeModella) => {
+    if (!inviteEmail) { showToast("Inserisci un'email", true); return; }
+    setInviteLoading(true);
+    const { data, error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail);
+    if (error) {
+      showToast("Errore invito: " + error.message, true);
+    } else {
+      await supabase.from("profiles").insert({ id: data.user.id, nome: nomeModella, ruolo: "modella" });
+      showToast("Invito inviato a " + inviteEmail + " ✓");
+      setInviteEmail("");
+    }
+    setInviteLoading(false);
+  };
 
   const showToast = (msg, err = false) => { setToast(msg); setToastErr(err); setTimeout(() => setToast(""), 3000); };
 
@@ -432,6 +492,22 @@ export default function App() {
     return "";
   };
 
+  // ── LOGIN ────────────────────────────────────────────────────────────────
+  if (!user) return (
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <img src={LOGO} alt="Peacock" style={{ height: 56, objectFit: "contain" }} />
+      </div>
+      <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "28px 24px", border: "1px solid #F0EAE0" }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Accedi</div>
+        {loginError && <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#DC2626" }}>{loginError}</div>}
+        <Field label="Email" value={loginEmail} onChange={setLoginEmail} type="text" />
+        <Field label="Password" value={loginPassword} onChange={setLoginPassword} type="password" />
+        <PrimaryBtn onClick={doLogin} disabled={loginLoading}>{loginLoading ? "Accesso..." : "Entra"}</PrimaryBtn>
+      </div>
+    </div>
+  );
+
   if (splash) return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div style={{ padding: "48px 24px 24px", textAlign: "center" }}>
@@ -474,9 +550,15 @@ export default function App() {
             )}
             {view === "lista" && (
               <>
-                <button onClick={() => { setFormJob({ ...emptyJob, id: Date.now() }); setView("nuovo_job"); }}
-                  style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#1C1714", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                  + Job
+                {userRuolo === "admin" && (
+                  <button onClick={() => { setFormJob({ ...emptyJob, id: Date.now() }); setView("nuovo_job"); }}
+                    style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#1C1714", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    + Job
+                  </button>
+                )}
+                <button onClick={doLogout}
+                  style={{ padding: "8px 14px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#9C948A", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>
+                  Esci
                 </button>
                 <button onClick={() => setView("modelle")}
                   style={{ width: 36, height: 36, borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -716,6 +798,15 @@ A domani 🤍`}
           const totNetto = mj.reduce((s, j) => s + calcNetto(j), 0);
           return (
             <div style={{ padding: "20px 16px" }}>
+              {userRuolo === "admin" && (
+                <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#16A34A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Invita all'app</div>
+                  <Field label="Email modella" value={inviteEmail} onChange={setInviteEmail} type="text" placeholder="email@esempio.com" />
+                  <PrimaryBtn onClick={() => doInvite(mod.nome)} disabled={inviteLoading} color="#16A34A">
+                    {inviteLoading ? "Invio..." : "Manda invito ✉️"}
+                  </PrimaryBtn>
+                </div>
+              )}
               <PaddedSection title="Contatti"
                 action={<button onClick={() => { setFormMod(mod); setView("nuova_modella"); }} style={{ fontSize: 11, color: "#C4A882", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Modifica</button>}>
                 <InfoRow label="Telefono"   val={mod.telefono} />
