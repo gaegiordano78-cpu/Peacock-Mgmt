@@ -362,6 +362,7 @@ export default function App() {
   const [formJob, setFormJob]   = useState(emptyJob);
   const [formMod, setFormMod]   = useState(emptyModella);
   const [filtroStato, setFiltroStato] = useState("tutti");
+  const [cercaModella, setCercaModella] = useState("");
   const [toast, setToast]       = useState("");
   const [toastErr, setToastErr] = useState(false);
   const [loading, setLoading]   = useState("");
@@ -765,8 +766,20 @@ A domani 🤍`}
         {/* ── MODELLE ── */}
         {view === "modelle" && (
           <div style={{ padding: "16px" }}>
+            <div style={{ position: "relative", marginBottom: 14 }}>
+              <input
+                type="text"
+                placeholder="Cerca modella..."
+                value={cercaModella}
+                onChange={e => setCercaModella(e.target.value)}
+                style={{ width: "100%", background: "#FFFFFF", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 14, padding: "10px 36px 10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }}
+              />
+              {cercaModella && (
+                <button onClick={() => setCercaModella("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#9C948A" }}>×</button>
+              )}
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {modelle.map(mod => {
+              {modelle.filter(m => m.nome.toLowerCase().includes(cercaModella.toLowerCase())).map(mod => {
                 const mj = jobs.filter(j => j.modella === mod.nome);
                 const netto = mj.reduce((s, j) => s + calcNetto(j), 0);
                 return (
@@ -964,6 +977,12 @@ A domani 🤍`}
             <Field label="Residenza" value={formMod.indirizzo} onChange={v => setFormMod(f => ({ ...f, indirizzo: v }))} placeholder="Via..., Bari (BA)" />
 
             <PrimaryBtn onClick={saveModella}>Salva scheda</PrimaryBtn>
+            {formMod.id && modelle.find(m => m.id === formMod.id) && (
+              <button onClick={() => { if (window.confirm("Eliminare la scheda di " + formMod.nome + "?")) { deleteMod(formMod.id); } }}
+                style={{ width: "100%", marginTop: 8, padding: "13px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 16, color: "#DC2626", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                Cancella scheda
+              </button>
+            )}
           </div>
         )}
 
