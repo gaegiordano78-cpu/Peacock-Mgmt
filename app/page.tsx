@@ -830,21 +830,6 @@ A domani 🤍`}
                 {mod.note && <><Divider /><InfoRow label="Note" val={mod.note} /></>}
               </PaddedSection>
 
-                    <Divider />
-                    <Divider />
-                    <Divider />
-                  </>
-                ) : (
-                  <div style={{ padding: "8px 0" }}>
-                    <div style={{ fontSize: 12, color: "#9C948A", marginBottom: 10 }}>Dati necessari per generare i contratti.</div>
-                    <button onClick={() => { setFormMod(mod); setView("nuova_modella"); }}
-                      style={{ padding: "9px 16px", background: "#1C1714", border: "none", borderRadius: 12, color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                      + Aggiungi anagrafica
-                    </button>
-                  </div>
-                )}
-              </PaddedSection>
-
               {/* POLAS */}
               <Section title="Polas"
                 action={mod.link_polas ? (
