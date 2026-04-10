@@ -646,7 +646,7 @@ export default function App() {
         {view === "dettaglio" && selectedJob && (() => {
           const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
           const mod = modelle.find(m => m.nome === job.modella);
-          const contrattoPronto = mod && mod.cf && mod.data_nascita;
+          const contrattoPronto = mod && mod.nome;
           return (
             <div style={{ padding: "20px 16px" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -826,22 +826,13 @@ A domani 🤍`}
                 <Divider />
                 <InfoRow label="Email"      val={mod.email} />
                 <Divider />
-                <InfoRow label="Instagram"  val={mod.instagram} />
-                <Divider />
                 <InfoRow label="Sito"       val={mod.link_sito} />
                 {mod.note && <><Divider /><InfoRow label="Note" val={mod.note} /></>}
               </PaddedSection>
 
-              <PaddedSection title="Anagrafica (contratti)">
-                {mod.cf ? (
-                  <>
-                    <InfoRow label="C.F."         val={mod.cf} />
                     <Divider />
-                    <InfoRow label="Nato/a il"    val={mod.data_nascita} />
                     <Divider />
-                    <InfoRow label="Nato/a a"     val={mod.luogo_nascita} />
                     <Divider />
-                    <InfoRow label="Residenza"    val={mod.indirizzo} />
                   </>
                 ) : (
                   <div style={{ padding: "8px 0" }}>
@@ -950,7 +941,6 @@ A domani 🤍`}
             <Field label="Nome completo *" value={formMod.nome} onChange={v => setFormMod(f => ({ ...f, nome: v }))} />
             <Field label="Telefono"   value={formMod.telefono}   onChange={v => setFormMod(f => ({ ...f, telefono: v }))} />
             <Field label="Email"      value={formMod.email}      onChange={v => setFormMod(f => ({ ...f, email: v }))} />
-            <Field label="Instagram"  value={formMod.instagram}  onChange={v => setFormMod(f => ({ ...f, instagram: v }))} placeholder="@handle" />
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
             <Field label="Note interne" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
 
@@ -966,16 +956,6 @@ A domani 🤍`}
               <Field label="Data firma" value={formMod.contratto_firma} onChange={v => setFormMod(f => ({ ...f, contratto_firma: v }))} placeholder="gg/mm/aaaa" />
               <Field label="Data scadenza" value={formMod.contratto_scadenza} onChange={v => setFormMod(f => ({ ...f, contratto_scadenza: v }))} placeholder="gg/mm/aaaa" />
             </div>
-
-            <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Anagrafica (per i contratti)</div>
-            <Field label="Codice Fiscale"     value={formMod.cf}            onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Data di nascita" value={formMod.data_nascita} onChange={v => setFormMod(f => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
-              <Field label="Luogo nascita"   value={formMod.luogo_nascita} onChange={v => setFormMod(f => ({ ...f, luogo_nascita: v }))} placeholder="Bari (BA)" />
-            </div>
-            <Field label="Residenza" value={formMod.indirizzo} onChange={v => setFormMod(f => ({ ...f, indirizzo: v }))} placeholder="Via..., Bari (BA)" />
-
             <PrimaryBtn onClick={saveModella}>Salva scheda</PrimaryBtn>
             {formMod.id && modelle.find(m => m.id === formMod.id) && (
               <button onClick={() => { if (window.confirm("Eliminare la scheda di " + formMod.nome + "?")) { deleteMod(formMod.id); } }}
