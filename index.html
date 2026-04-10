@@ -8,29 +8,58 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { margin: 0; font-family: -apple-system, sans-serif; background-color: #FBF9F6; color: #3C3530; }
+        .card { background: white; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #F0EAE0; max-width: 400px; margin: 40px auto; }
+        select, input { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 20px; border-radius: 12px; border: 1.5px solid #F0EAE0; box-sizing: border-box; }
+        .result { background: #3C3530; color: white; padding: 20px; border-radius: 16px; text-align: center; }
+    </style>
 </head>
-<body style="margin: 0; background-color: #FBF9F6;">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-      // Includiamo direttamente qui il collegamento per sicurezza
-      async function loadApp() {
-        const response = await fetch('./index.jsx');
-        const code = await response.text();
-        const transformed = Babel.transform(code, { presets: ['react'] }).code;
-        eval(transformed);
-      }
-      
-      // Aspettiamo che la finestra sia carica
-      window.onload = () => {
-        if (typeof React !== 'undefined') {
-          // Se React è pronto, carichiamo index.jsx
-          const script = document.createElement('script');
-          script.type = 'text/babel';
-          script.src = 'index.jsx';
-          document.body.appendChild(script);
+        const { useState } = React;
+
+        function App() {
+            const [fatturato, setFatturato] = useState(0);
+            const [selected, setSelected] = useState("");
+
+            const netto = (fatturato * 0.8) * 0.8; // Calcolo base: -20% agenzia, -20% ritenuta
+
+            return (
+                <div style={{ padding: "20px" }}>
+                    <center>
+                        <img src="https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg" style={{ height: "30px", marginBottom: "20px" }} />
+                    </center>
+                    
+                    <div className="card">
+                        <h2 style={{ fontSize: "18px", margin: "0 0 20px 0" }}>Calcolatore Compensi</h2>
+                        
+                        <label style={{ fontSize: "11px", fontWeight: "bold", color: "#9C948A" }}>MODELLA/O</label>
+                        <select onChange={(e) => setSelected(e.target.value)}>
+                            <option value="">Seleziona...</option>
+                            <option value="1">Abir Aouidet</option>
+                            <option value="2">Alessandro Mincuzzi</option>
+                            <option value="3">Alessia Kuli</option>
+                        </select>
+
+                        <label style={{ fontSize: "11px", fontWeight: "bold", color: "#9C948A" }}>FATTURATO LORDO (€)</label>
+                        <input type="number" placeholder="0.00" onChange={(e) => setFatturato(e.target.value)} />
+
+                        {fatturato > 0 && (
+                            <div className="result">
+                                <div style={{ fontSize: "10px", opacity: 0.7, marginBottom: "5px" }}>NETTO DA PAGARE</div>
+                                <div style={{ fontSize: "32px", fontWeight: "bold" }}>€ {Number(netto).toFixed(2)}</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
         }
-      };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
