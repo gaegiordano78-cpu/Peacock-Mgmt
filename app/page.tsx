@@ -129,7 +129,7 @@ const CONTRATTO_COLORS = { Start: { color: "#7C3AED", bg: "#F5F3FF" }, Advance: 
 const contrattoScadenzaAlert = (scadenza) => {
   if (!scadenza) return null;
   const [g, m, a] = scadenza.split("/");
-  const diff = (new Date(`${a}-${m}-${g}`) - new Date()) / (1000 * 60 * 60 * 24);
+  const diff = (new Date(`${a}-${m}-${g}`).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
   if (diff < 0) return "scaduto";
   if (diff <= 30) return "in scadenza";
   return null;
