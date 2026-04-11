@@ -315,7 +315,7 @@ const Divider = () => <div style={{ height: 1, background: "#F5EFE8", margin: "0
 
 const InfoRow = ({ label, val }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "9px 0" }}>
-    <span style={{ fontSize: 13, color: "#9C948A", flexShrink: 0, marginRight: 12 }}>{label}</span>
+    <span style={{ fontSize: 14, color: "#9C948A", flexShrink: 0, marginRight: 12 }}>{label}</span>
     <span style={{ fontSize: 12, color: "#1C1714", textAlign: "right", wordBreak: "break-all" }}>{val || "—"}</span>
   </div>
 );
@@ -560,7 +560,7 @@ export default function App() {
 
   // ── LOGIN ────────────────────────────────────────────────────────────────
   if (!user) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <img src={LOGO} alt="Peacock" style={{ height: 56, objectFit: "contain" }} />
       </div>
@@ -597,7 +597,7 @@ export default function App() {
   );
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
 
       {/* TOAST */}
       {toast && (
@@ -694,7 +694,7 @@ export default function App() {
                   style={{ background: "#FFFFFF", border: "1.5px solid #F0EAE0", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#1C1714", marginBottom: 3 }}>{job.titolo}</div>
-                    <div style={{ fontSize: 13, color: "#9C948A", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
+                    <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
                     <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
                   </div>
                   <div style={{ textAlign: "right", marginLeft: 12, flexShrink: 0 }}>
@@ -767,7 +767,7 @@ export default function App() {
                 <div style={{ padding: "14px 16px" }}>
                   {contrattoPronto ? (
                     <>
-                      <div style={{ fontSize: 13, color: "#6B6560", lineHeight: 1.5, marginBottom: 14 }}>
+                      <div style={{ fontSize: 14, color: "#6B6560", lineHeight: 1.5, marginBottom: 14 }}>
                         Genera il contratto precompilato con i dati di <strong>{job.modella}</strong> per il job <strong>{job.titolo}</strong> con {job.cliente}.
                       </div>
                       <button onClick={() => { setView("contratto"); }}
@@ -782,7 +782,7 @@ export default function App() {
                       )}
                     </>
                   ) : (
-                    <div style={{ fontSize: 13, color: "#9C948A", lineHeight: 1.6 }}>
+                    <div style={{ fontSize: 14, color: "#9C948A", lineHeight: 1.6 }}>
                       Per generare il contratto completa la scheda anagrafica di <strong style={{ color: "#1C1714" }}>{job.modella}</strong> con CF, data di nascita e residenza.
                     </div>
                   )}
@@ -958,7 +958,7 @@ A domani 🤍`}
                       </a>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 13, color: "#9C948A" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
+                    <div style={{ fontSize: 14, color: "#9C948A" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
                   )}
                 </div>
               </Section>
@@ -985,16 +985,16 @@ A domani 🤍`}
                             )}
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #F5EFE8" }}>
-                            <span style={{ fontSize: 13, color: "#9C948A" }}>Firmato il</span>
+                            <span style={{ fontSize: 14, color: "#9C948A" }}>Firmato il</span>
                             <span style={{ fontSize: 12, color: "#1C1714" }}>{mod.contratto_firma}</span>
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                            <span style={{ fontSize: 13, color: "#9C948A" }}>Scade il</span>
+                            <span style={{ fontSize: 14, color: "#9C948A" }}>Scade il</span>
                             <span style={{ fontSize: 12, fontWeight: alert ? 600 : 400, color: alert === "scaduto" ? "#DC2626" : alert === "in scadenza" ? "#D97706" : "#1C1714" }}>{mod.contratto_scadenza}</span>
                           </div>
                         </>
                       ) : (
-                        <div style={{ fontSize: 13, color: "#9C948A" }}>Nessun contratto registrato.</div>
+                        <div style={{ fontSize: 14, color: "#9C948A" }}>Nessun contratto registrato.</div>
                       )}
                     </div>
                   </Section>
@@ -1019,7 +1019,7 @@ A domani 🤍`}
                       {i < mj.length - 1 && <Divider />}
                     </div>
                   ))}
-                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 13, color: "#9C948A" }}>Nessun job ancora</div>}
+                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 14, color: "#9C948A" }}>Nessun job ancora</div>}
                 </div>
               </Section>
             </div>
@@ -1096,7 +1096,7 @@ A domani 🤍`}
               <div style={{ background: "#F7F3EE", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "1.5px solid #EAE4DC" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, color: "#6B6560" }}>Fee agenzia</span>
+                  <span style={{ fontSize: 14, color: "#6B6560" }}>Fee agenzia</span>
                   <span style={{ fontSize: 12, color: "#1C1714" }}>{fmt(calcFee(formJob))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1116,7 +1116,7 @@ A domani 🤍`}
         {/* ── CALCOLATRICE ── */}
         {view === "calcolatrice" && (
           <div style={{ padding: "20px 16px" }}>
-            <p style={{ fontSize: 13, color: "#9C948A", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto modella.</p>
+            <p style={{ fontSize: 14, color: "#9C948A", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto modella.</p>
             <CalcolatoreSemplice />
           </div>
         )}
@@ -1147,7 +1147,7 @@ function CalcolatoreSemplice() {
 
   const Field2 = ({ label, value, onChange, placeholder = "" }) => (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
       <input type="number" value={value || ""} placeholder={placeholder} onChange={e => onChange(Number(e.target.value))}
         style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
     </div>
@@ -1189,7 +1189,7 @@ function CalcolatoreSemplice() {
                 </div>
                 {rimborsoInv > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 13, color: "#9C948A" }}>+ rimborso viaggio</span>
+                    <span style={{ fontSize: 14, color: "#9C948A" }}>+ rimborso viaggio</span>
                     <span style={{ fontSize: 16, fontWeight: 700, color: "#16A34A" }}>€{rimborsoInv.toFixed(2)}</span>
                   </div>
                 )}
@@ -1218,7 +1218,7 @@ function CalcolatoreSemplice() {
                 { l: "Ritenuta 20%", v: `– €${ritenuta2.toFixed(2)}` },
               ].map((r, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #F7F3EE" }}>
-                  <span style={{ fontSize: 13, color: "#9C948A" }}>{r.l}</span>
+                  <span style={{ fontSize: 14, color: "#9C948A" }}>{r.l}</span>
                   <span style={{ fontSize: 12, color: "#3C3530" }}>{r.v}</span>
                 </div>
               ))}
