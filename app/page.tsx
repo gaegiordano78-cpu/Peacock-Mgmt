@@ -575,24 +575,15 @@ export default function App() {
     </div>
   );
 
-  if (splash) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <style>{`
-        @keyframes fadeInLogo {
-          0% { opacity: 0; transform: scale(0.96); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        .splash-logo { animation: fadeInLogo 1.4s ease forwards; }
-      `}</style>
-      <img
-        src={LOGO_SPLASH}
-        alt="Peacock Models Management"
-        className="splash-logo"
-        style={{ width: "65%", objectFit: "contain", paddingLeft: "11%" }}
-        onLoad={() => setTimeout(() => setSplash(false), 2200)}
-      />
-    </div>
-  );
+  useEffect(() => {
+    if (splash) {
+      if (typeof window !== "undefined" && window.__hideSplash) window.__hideSplash();
+      const t = setTimeout(() => setSplash(false), 2200);
+      return () => clearTimeout(t);
+    }
+  }, [splash]);
+
+  if (splash) return <div style={{ background: "#FFFFFF", minHeight: "100vh" }} />;
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
