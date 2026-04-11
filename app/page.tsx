@@ -576,7 +576,7 @@ export default function App() {
 
   if (splash) return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
-      <img src={LOGO} alt="Peacock Models Management" style={{ height: 72, objectFit: "contain", filter: "invert(1)" }} />
+      <img src={LOGO} alt="Peacock Models Management" style={{ height: 80, objectFit: "contain", mixBlendMode: "multiply" }} />
       <div style={{ position: "absolute", bottom: 48, left: 24, right: 24 }}>
         <button onClick={() => setSplash(false)}
           style={{ width: "100%", padding: "16px", background: "#0A0A0A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.1em" }}>
