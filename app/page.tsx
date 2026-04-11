@@ -577,7 +577,7 @@ export default function App() {
   if (splash) return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <img src={LOGO} alt="Peacock Models Management" style={{ height: 80, objectFit: "contain", mixBlendMode: "multiply" }} />
+        <img src={LOGO} alt="Peacock Models Management" style={{ height: 110, objectFit: "contain", display: "block", margin: "0 auto" }} />
       </div>
       <div style={{ padding: "0 24px 48px" }}>
         <button onClick={() => setSplash(false)}
@@ -601,7 +601,7 @@ export default function App() {
       {/* HEADER */}
       <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <img src="/p-logo.png" alt="P" style={{ height: 90, objectFit: "contain" }} />
+          <img src="/p-logo.png" alt="P" style={{ height: 110, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
