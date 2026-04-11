@@ -507,14 +507,19 @@ export default function App() {
   // Job helpers
   const saveJob = async () => {
     if (!formJob.titolo || !formJob.cliente) { showToast("Inserisci titolo e cliente", true); return; }
-    const jobData = { ...formJob };
-    delete jobData.id;
-    if (formJob.id && jobs.find(j => j.id === formJob.id)) {
-      await supabase.from("jobs").update(jobData).eq("id", formJob.id);
-      setJobs(prev => prev.map(j => j.id === formJob.id ? formJob : j));
+    const { id, ...jobData } = formJob;
+    const isExisting = id && typeof id === "number" && jobs.find(j => j.id === id);
+    if (isExisting) {
+      await supabase.from("jobs").update(jobData).eq("id", id);
+      setJobs(prev => prev.map(j => j.id === id ? { ...jobData, id } : j));
     } else {
-      const { data } = await supabase.from("jobs").insert(jobData).select().single();
-      if (data) setJobs(prev => [...prev, data]);
+      const { data, error } = await supabase.from("jobs").insert(jobData).select().single();
+      if (data) {
+        setJobs(prev => [...prev, data]);
+      } else {
+        showToast("Errore salvataggio", true);
+        return;
+      }
     }
     showToast("Job salvato ✓"); setView("lista");
   };
