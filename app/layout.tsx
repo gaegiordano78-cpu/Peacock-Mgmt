@@ -31,10 +31,19 @@ export default function RootLayout({
           #splash-loader {
             position: fixed; inset: 0; background: #FFFFFF;
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; transition: opacity 0.3s;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
           }
-          #splash-loader img { width: 60%; padding-left: 11%; object-fit: contain; }
+          #splash-loader img {
+            width: 65%;
+            object-fit: contain;
+            animation: fadeInLogo 1.2s ease forwards;
+          }
           #splash-loader.hidden { opacity: 0; pointer-events: none; }
+          @keyframes fadeInLogo {
+            0% { opacity: 0; transform: scale(0.96); }
+            100% { opacity: 1; transform: scale(1); }
+          }
         `}</style>
       </head>
       <body style={{ margin: 0, padding: 0, background: "#FFFFFF" }}>
@@ -42,13 +51,13 @@ export default function RootLayout({
           <img src="/logo-peacock.png" alt="Peacock" />
         </div>
         <script dangerouslySetInnerHTML={{ __html: `
-          window.addEventListener('load', function() {
-            setTimeout(function() {
-              var el = document.getElementById('splash-loader');
-              if (el) el.classList.add('hidden');
-              setTimeout(function() { if (el) el.remove(); }, 300);
-            }, 400);
-          });
+          window.__hideSplash = function() {
+            var el = document.getElementById('splash-loader');
+            if (el) {
+              el.classList.add('hidden');
+              setTimeout(function() { if (el) el.remove(); }, 500);
+            }
+          };
         `}} />
         {children}
       </body>
