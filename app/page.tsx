@@ -459,13 +459,21 @@ export default function App() {
   const doInvite = async (nomeModella) => {
     if (!inviteEmail) { showToast("Inserisci un'email", true); return; }
     setInviteLoading(true);
-    const { data, error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail);
-    if (error) {
-      showToast("Errore invito: " + error.message, true);
-    } else {
-      await supabase.from("profiles").insert({ id: data.user.id, nome: nomeModella, ruolo: "modella" });
+    try {
+      const res = await fetch("https://xtpafxourildjnofeulr.supabase.co/functions/v1/invite-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ email: inviteEmail, nome: nomeModella })
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
       showToast("Invito inviato a " + inviteEmail + " ✓");
       setInviteEmail("");
+    } catch (e) {
+      showToast("Errore: " + e.message, true);
     }
     setInviteLoading(false);
   };
