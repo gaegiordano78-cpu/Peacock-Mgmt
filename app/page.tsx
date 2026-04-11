@@ -599,7 +599,7 @@ export default function App() {
       {/* HEADER */}
       <div style={{ background: "#141414", borderBottom: "0.5px solid #1E1E1E", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <img src={LOGO} alt="Peacock Models Management" style={{ height: 72, objectFit: "contain" }} />
+          <img src={LOGO} alt="Peacock Models Management" style={{ height: 72, objectFit: "contain", filter: "invert(1)" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
