@@ -878,10 +878,8 @@ A domani 🤍`}
                 return (
                   <div key={mod.id} onClick={() => { setSelectedModella(mod); setView("scheda_modella"); }}
                     style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#F5F5F5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, overflow: "hidden" }}>
-                      {mod.foto_profilo
-                        ? <img src={mod.foto_profilo} alt={mod.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <span style={{ fontSize: 18 }}>{mod.nome.charAt(0)}</span>}
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontSize: 18, color: "#767676" }}>{mod.nome.charAt(0)}</span>
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 16, fontWeight: 600, color: "#000000", marginBottom: 2 }}>{mod.nome}</div>
@@ -1019,7 +1017,6 @@ A domani 🤍`}
           <div style={{ padding: "16px" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contatti</div>
             <Field label="Nome completo *" value={formMod.nome} onChange={v => setFormMod(f => ({ ...f, nome: v }))} />
-            <Field label="Foto profilo (URL)" value={formMod.foto_profilo} onChange={v => setFormMod(f => ({ ...f, foto_profilo: v }))} placeholder="https://..." />
             <Field label="Telefono"   value={formMod.telefono}   onChange={v => setFormMod(f => ({ ...f, telefono: v }))} />
             <Field label="Email"      value={formMod.email}      onChange={v => setFormMod(f => ({ ...f, email: v }))} />
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
