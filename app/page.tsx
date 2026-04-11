@@ -147,7 +147,7 @@ const JOB_COLOR = { confermato: "#16A34A", "in attesa": "#D97706", completato: "
 const JOB_BG    = { confermato: "#F0FDF4", "in attesa": "#FFFBEB", completato: "#F9FAFB", interno: "#F5F3FF" };
 
 const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, rimborso: 0, fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
-const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "" };
+const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
 
@@ -251,6 +251,56 @@ Firma Modello/a: _______________________________
 Firma Agenzia: _______________________________`;
 }
 
+// ── GENERATORE RITENUTA ─────────────────────────────────────────────────────
+
+function generaRitenuta(job, modella, numRitenuta, descrizione, dataInizio, dataFine) {
+  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const lordo = calcLordo(job);
+  const ritenuta = calcRitenuta(job);
+  const netto = calcNetto(job);
+
+  return `MODULO DI RITENUTA D'ACCONTO                                    Ritenuta n° ${numRitenuta}
+
+Dati del prestatore (lavoratore):
+Nome e Cognome:    ${modella.nome}
+Codice Fiscale:    ${modella.cf || "_______________"}
+Indirizzo:         ${modella.indirizzo || "_______________"}
+Città:             ${modella.citta || "_______________"}    Cap: ${modella.cap || "_____"}
+Telefono:          ${modella.telefono || "_______________"}
+Email:             ${modella.email || "_______________"}
+
+Dati del committente (azienda / privato):
+Ragione Sociale / Nome e Cognome: Peacock Mgmt di Gaetano Giordano
+Indirizzo: Via Giacomo Matteotti Cap: 70121 Bari (Ba)
+Partita IVA: IT 07164570728
+
+Oggetto della prestazione:
+Descrizione:             ${descrizione || "Modella"}
+Data della prestazione:  ${dataInizio}${dataFine ? " al " + dataFine : ""}
+
+Compenso e ritenuta:
+Compenso lordo pattuito:                    ${lordo.toFixed(2)}€
+Ritenuta d'acconto (20% su compenso lordo): ${ritenuta.toFixed(2)}€
+Compenso netto da corrispondere:            ${netto.toFixed(2)}€
+${job.rimborso > 0 ? `Rimborso spese:                             ${job.rimborso.toFixed(2)}€` : ""}
+
+Coordinate Bancarie del prestatore:
+Banca:        ${modella.banca || "_______________"}
+Intestato a:  ${modella.intestato_a || modella.nome}
+IBAN:         ${modella.iban || "_______________"}
+
+Dichiarazione del prestatore per redditi d'importo non superiore a 5.000€:
+Ai sensi della Legge 335/1995 e dell'art. 44, comma 2, della Legge 24 Novembre 2003 N.326 di conversione del Decreto Legge 269/2003:
+
+Il sottoscritto dichiara che ha fino ad ora percepito, nel corso del periodo d'imposta ${new Date().getFullYear()}, redditi d'importo non superiore ad € 5.000,00 per attività di lavoro autonomo occasionale, a fronte di un unico o di una pluralità di rapporti, (di cui all'art.67 – precedente art.81 – comma 1, lettera l DPR, 917/1986) e pertanto invita codesta amministrazione a tenere conto di tale informazione agli effetti della trattenuta contributiva INPS.
+
+Si impegna a comunicare l'eventuale superamento del limite di € 5.000,00 al fine di permettere l'applicazione della ritenuta e di consentire all'Ente il versamento degli importi dovuti.
+
+In difetto si dichiara disponibile a sostenere integralmente i relativi costi in misura intera sollevando codesta Società da oneri e responsabilità per l'omesso involontario versamento alla gestione separata INPS.
+
+Data: ${oggi}                    Firma del prestatore: _______________________________`;
+}
+
 // ── UI COMPONENTS ────────────────────────────────────────────────────────────
 
 const Badge = ({ label, color, bg }) => (
@@ -265,7 +315,7 @@ const Divider = () => <div style={{ height: 1, background: "#F5EFE8", margin: "0
 
 const InfoRow = ({ label, val }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "9px 0" }}>
-    <span style={{ fontSize: 12, color: "#9C948A", flexShrink: 0, marginRight: 12 }}>{label}</span>
+    <span style={{ fontSize: 13, color: "#9C948A", flexShrink: 0, marginRight: 12 }}>{label}</span>
     <span style={{ fontSize: 12, color: "#1C1714", textAlign: "right", wordBreak: "break-all" }}>{val || "—"}</span>
   </div>
 );
@@ -299,7 +349,7 @@ const Field = ({ label, value, onChange, type = "text", placeholder }) => (
   <div style={{ marginBottom: 14 }}>
     <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ""}
-      style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 14, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+      style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
   </div>
 );
 
@@ -367,6 +417,11 @@ export default function App() {
   const [toastErr, setToastErr] = useState(false);
   const [loading, setLoading]   = useState("");
   const [contrattoCopied, setContrattoCopied] = useState(false);
+  const [ritenutaCopied, setRitenutaCopied] = useState(false);
+  const [numRitenuta, setNumRitenuta] = useState("1");
+  const [descRitenuta, setDescRitenuta] = useState("Modella");
+  const [dataInizioRitenuta, setDataInizioRitenuta] = useState("");
+  const [dataFineRitenuta, setDataFineRitenuta] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -478,6 +533,7 @@ export default function App() {
     if (view === "scheda_modella") return setView("modelle");
     if (view === "nuova_modella") return setView("modelle");
     if (view === "contratto") return setView("dettaglio");
+    if (view === "ritenuta") return setView("dettaglio");
     setView("lista");
   };
 
@@ -486,10 +542,11 @@ export default function App() {
     if (view === "dettaglio") return selectedJob?.titolo || "";
     if (view === "nuovo_job") return formJob.id && jobs.find(j => j.id === formJob.id) ? "Modifica Job" : "Nuovo Job";
     if (view === "calcolatrice") return "Calcolatrice";
-    if (view === "modelle") return "Modelle";
+    if (view === "modelle") return "Models";
     if (view === "scheda_modella") return selectedModella?.nome?.split(" ")[0] || "";
     if (view === "nuova_modella") return formMod.id && modelle.find(m => m.id === formMod.id) ? "Modifica Scheda" : "Nuova Modella";
     if (view === "contratto") return "Contratto";
+    if (view === "ritenuta") return "Ritenuta d'acconto";
     return "";
   };
 
@@ -573,15 +630,15 @@ export default function App() {
             )}
             {view === "modelle" && (
               <>
-                <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Job</button>
+                <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
                 <button onClick={() => { setFormMod({ ...emptyModella, id: null }); setView("nuova_modella"); }}
                   style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#1C1714", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                  + Modella
+                  + Model
                 </button>
               </>
             )}
             {view === "calcolatrice" && (
-              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Job</button>
+              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
             )}
           </div>
         </div>
@@ -629,7 +686,7 @@ export default function App() {
                   style={{ background: "#FFFFFF", border: "1.5px solid #F0EAE0", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#1C1714", marginBottom: 3 }}>{job.titolo}</div>
-                    <div style={{ fontSize: 12, color: "#9C948A", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
+                    <div style={{ fontSize: 13, color: "#9C948A", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
                     <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
                   </div>
                   <div style={{ textAlign: "right", marginLeft: 12, flexShrink: 0 }}>
@@ -702,16 +759,22 @@ export default function App() {
                 <div style={{ padding: "14px 16px" }}>
                   {contrattoPronto ? (
                     <>
-                      <div style={{ fontSize: 12, color: "#6B6560", lineHeight: 1.5, marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, color: "#6B6560", lineHeight: 1.5, marginBottom: 14 }}>
                         Genera il contratto precompilato con i dati di <strong>{job.modella}</strong> per il job <strong>{job.titolo}</strong> con {job.cliente}.
                       </div>
                       <button onClick={() => { setView("contratto"); }}
                         style={{ width: "100%", padding: "13px", background: "#1C1714", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                         📄 Visualizza contratto
                       </button>
+                      {job.stato_pagamento === "pagato" && (
+                        <button onClick={() => { setView("ritenuta"); }}
+                          style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                          🧾 Genera ritenuta d'acconto
+                        </button>
+                      )}
                     </>
                   ) : (
-                    <div style={{ fontSize: 12, color: "#9C948A", lineHeight: 1.6 }}>
+                    <div style={{ fontSize: 13, color: "#9C948A", lineHeight: 1.6 }}>
                       Per generare il contratto completa la scheda anagrafica di <strong style={{ color: "#1C1714" }}>{job.modella}</strong> con CF, data di nascita e residenza.
                     </div>
                   )}
@@ -763,6 +826,40 @@ A domani 🤍`}
           );
         })()}
 
+        {/* ── RITENUTA D'ACCONTO ── */}
+        {view === "ritenuta" && selectedJob && (() => {
+          const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
+          const mod = modelle.find(m => m.nome === job.modella);
+          if (!mod) return <div style={{ padding: 16, color: "#DC2626" }}>Completa prima la scheda anagrafica della modella.</div>;
+          const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
+          return (
+            <div style={{ padding: "16px" }}>
+              <div style={{ background: "#FAFAF8", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Compila</div>
+                <Field label="N° ritenuta" value={numRitenuta} onChange={setNumRitenuta} type="text" />
+                <Field label="Descrizione prestazione" value={descRitenuta} onChange={setDescRitenuta} placeholder="Modella" />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <Field label="Data inizio" value={dataInizioRitenuta} onChange={setDataInizioRitenuta} placeholder="gg/mm/aaaa" />
+                  <Field label="Data fine" value={dataFineRitenuta} onChange={setDataFineRitenuta} placeholder="gg/mm/aaaa" />
+                </div>
+              </div>
+              <div style={{ background: "#FFFFFF", borderRadius: 16, border: "1px solid #F0EAE0", padding: "20px 18px", fontSize: 11, color: "#1C1714", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+                {testo}
+              </div>
+              <button onClick={() => {
+                navigator.clipboard.writeText(testo).then(() => {
+                  setRitenutaCopied(true);
+                  setTimeout(() => setRitenutaCopied(false), 3000);
+                  showToast("Ritenuta copiata ✓");
+                });
+              }}
+                style={{ width: "100%", padding: "15px", background: ritenutaCopied ? "#16A34A" : "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                {ritenutaCopied ? "✓ Copiato!" : "📋 Copia testo ritenuta"}
+              </button>
+            </div>
+          );
+        })()}
+
         {/* ── MODELLE ── */}
         {view === "modelle" && (
           <div style={{ padding: "16px" }}>
@@ -785,11 +882,13 @@ A domani 🤍`}
                 return (
                   <div key={mod.id} onClick={() => { setSelectedModella(mod); setView("scheda_modella"); }}
                     style={{ background: "#FFFFFF", border: "1.5px solid #F0EAE0", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#F7F3EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                      {mod.nome.charAt(0)}
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#F7F3EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, overflow: "hidden" }}>
+                      {mod.foto_profilo
+                        ? <img src={mod.foto_profilo} alt={mod.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <span style={{ fontSize: 18 }}>{mod.nome.charAt(0)}</span>}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#1C1714", marginBottom: 2 }}>{mod.nome}</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: "#1C1714", marginBottom: 2 }}>{mod.nome}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
                       <span style={{ fontSize: 11, color: "#9C948A" }}>{mod.instagram} · {mj.length} job · {fmt(netto)}</span>
                       {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 9, fontWeight: 700, color: cc.color, background: cc.bg, padding: "2px 7px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
@@ -842,7 +941,7 @@ A domani 🤍`}
                   {mod.link_polas ? (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
-                        <div style={{ fontSize: 13, color: "#1C1714", fontWeight: 500, marginBottom: 2 }}>Cartella Drive collegata</div>
+                        <div style={{ fontSize: 15, color: "#1C1714", fontWeight: 500, marginBottom: 2 }}>Cartella Drive collegata</div>
                         {mod.data_polas && <div style={{ fontSize: 11, color: "#9C948A" }}>Aggiornate il {mod.data_polas}</div>}
                       </div>
                       <a href={mod.link_polas} target="_blank" rel="noreferrer"
@@ -851,7 +950,7 @@ A domani 🤍`}
                       </a>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 12, color: "#9C948A" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
+                    <div style={{ fontSize: 13, color: "#9C948A" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
                   )}
                 </div>
               </Section>
@@ -878,16 +977,16 @@ A domani 🤍`}
                             )}
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #F5EFE8" }}>
-                            <span style={{ fontSize: 12, color: "#9C948A" }}>Firmato il</span>
+                            <span style={{ fontSize: 13, color: "#9C948A" }}>Firmato il</span>
                             <span style={{ fontSize: 12, color: "#1C1714" }}>{mod.contratto_firma}</span>
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                            <span style={{ fontSize: 12, color: "#9C948A" }}>Scade il</span>
+                            <span style={{ fontSize: 13, color: "#9C948A" }}>Scade il</span>
                             <span style={{ fontSize: 12, fontWeight: alert ? 600 : 400, color: alert === "scaduto" ? "#DC2626" : alert === "in scadenza" ? "#D97706" : "#1C1714" }}>{mod.contratto_scadenza}</span>
                           </div>
                         </>
                       ) : (
-                        <div style={{ fontSize: 12, color: "#9C948A" }}>Nessun contratto registrato.</div>
+                        <div style={{ fontSize: 13, color: "#9C948A" }}>Nessun contratto registrato.</div>
                       )}
                     </div>
                   </Section>
@@ -912,7 +1011,7 @@ A domani 🤍`}
                       {i < mj.length - 1 && <Divider />}
                     </div>
                   ))}
-                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 12, color: "#9C948A" }}>Nessun job ancora</div>}
+                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 13, color: "#9C948A" }}>Nessun job ancora</div>}
                 </div>
               </Section>
             </div>
@@ -924,10 +1023,30 @@ A domani 🤍`}
           <div style={{ padding: "16px" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contatti</div>
             <Field label="Nome completo *" value={formMod.nome} onChange={v => setFormMod(f => ({ ...f, nome: v }))} />
+            <Field label="Foto profilo (URL)" value={formMod.foto_profilo} onChange={v => setFormMod(f => ({ ...f, foto_profilo: v }))} placeholder="https://..." />
             <Field label="Telefono"   value={formMod.telefono}   onChange={v => setFormMod(f => ({ ...f, telefono: v }))} />
             <Field label="Email"      value={formMod.email}      onChange={v => setFormMod(f => ({ ...f, email: v }))} />
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
             <Field label="Note interne" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
+
+            <div style={{ height: 8 }} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Anagrafica (per ritenute)</div>
+            <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Data di nascita" value={formMod.data_nascita} onChange={v => setFormMod(f => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
+              <Field label="Luogo nascita" value={formMod.luogo_nascita} onChange={v => setFormMod(f => ({ ...f, luogo_nascita: v }))} placeholder="Bari (BA)" />
+            </div>
+            <Field label="Indirizzo" value={formMod.indirizzo} onChange={v => setFormMod(f => ({ ...f, indirizzo: v }))} placeholder="Via..." />
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+              <Field label="Città" value={formMod.citta} onChange={v => setFormMod(f => ({ ...f, citta: v }))} placeholder="Bari" />
+              <Field label="CAP" value={formMod.cap} onChange={v => setFormMod(f => ({ ...f, cap: v }))} placeholder="70121" />
+            </div>
+
+            <div style={{ height: 8 }} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Coordinate bancarie</div>
+            <Field label="Banca" value={formMod.banca} onChange={v => setFormMod(f => ({ ...f, banca: v }))} placeholder="UniCredit" />
+            <Field label="Intestato a" value={formMod.intestato_a} onChange={v => setFormMod(f => ({ ...f, intestato_a: v }))} />
+            <Field label="IBAN" value={formMod.iban} onChange={v => setFormMod(f => ({ ...f, iban: v }))} placeholder="IT..." />
 
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Polas</div>
@@ -969,7 +1088,7 @@ A domani 🤍`}
               <div style={{ background: "#F7F3EE", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "1.5px solid #EAE4DC" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: "#6B6560" }}>Fee agenzia</span>
+                  <span style={{ fontSize: 13, color: "#6B6560" }}>Fee agenzia</span>
                   <span style={{ fontSize: 12, color: "#1C1714" }}>{fmt(calcFee(formJob))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1000,44 +1119,103 @@ A domani 🤍`}
 }
 
 function CalcolatoreSemplice() {
+  const [tab, setTab] = useState("inversa"); // "inversa" | "diretta"
+
+  // Calcolatrice inversa (dal netto)
+  const [nettoDes, setNettoDes] = useState(0);
+  const [rimborsoInv, setRimborsoInv] = useState(0);
+  const lordoInv    = nettoDes > 0 ? nettoDes / 0.8 : 0;
+  const ritenuta    = lordoInv * 0.2;
+  const totaleInv   = lordoInv + rimborsoInv;
+
+  // Calcolatrice diretta (dal fatturato)
   const [fatturato, setFatturato] = useState(0);
   const [rimborso, setRimborso]   = useState(0);
   const [fee, setFee]             = useState(20);
   const feeEur   = fatturato * (fee / 100);
   const lordo    = fatturato - feeEur + rimborso;
-  const ritenuta = lordo * 0.2;
-  const netto    = lordo - ritenuta;
+  const ritenuta2 = lordo * 0.2;
+  const netto    = lordo - ritenuta2;
 
-  const Field2 = ({ label, value, onChange }) => (
+  const Field2 = ({ label, value, onChange, placeholder = "" }) => (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
-      <input type="number" value={value} onChange={e => onChange(Number(e.target.value))}
-        style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 14, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+      <input type="number" value={value || ""} placeholder={placeholder} onChange={e => onChange(Number(e.target.value))}
+        style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+    </div>
+  );
+
+  const Row = ({ l, v, bold, big }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #F7F3EE" }}>
+      <span style={{ fontSize: bold ? 13 : 12, fontWeight: bold ? 600 : 400, color: bold ? "#1C1714" : "#9C948A" }}>{l}</span>
+      <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#1C1714" }}>{v}</span>
     </div>
   );
 
   return (
     <>
-      <Field2 label="Fatturato cliente €" value={fatturato} onChange={setFatturato} />
-      <Field2 label="Rimborso spese €"    value={rimborso}  onChange={setRimborso} />
-      <Field2 label="Fee agenzia %"       value={fee}       onChange={setFee} />
-      {fatturato > 0 && (
-        <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "20px", border: "1.5px solid #F0EAE0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
-          {[
-            { l: "Fatturato", v: `€${fatturato.toFixed(2)}` },
-            { l: `Fee (${fee}%)`, v: `– €${feeEur.toFixed(2)}` },
-            ...(rimborso > 0 ? [{ l: "Rimborso", v: `+ €${rimborso.toFixed(2)}` }] : []),
-            { l: "Lordo", v: `€${lordo.toFixed(2)}` },
-            { l: "Ritenuta 20%", v: `– €${ritenuta.toFixed(2)}` },
-          ].map((r, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #F7F3EE" }}>
-              <span style={{ fontSize: 12, color: "#9C948A" }}>{r.l}</span>
-              <span style={{ fontSize: 12, color: "#3C3530" }}>{r.v}</span>
+      {/* Tab switcher */}
+      <div style={{ display: "flex", background: "#F0EAE0", borderRadius: 12, padding: 3, marginBottom: 20 }}>
+        {[["inversa", "Dal netto"], ["diretta", "Dal fatturato"]].map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)}
+            style={{ flex: 1, padding: "8px", borderRadius: 10, border: "none", background: tab === k ? "#1C1714" : "transparent", color: tab === k ? "#FFF" : "#9C948A", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {tab === "inversa" && (
+        <>
+          <Field2 label="Netto desiderato €" value={nettoDes} onChange={setNettoDes} placeholder="es. 400" />
+          <Field2 label="Rimborso viaggio €" value={rimborsoInv} onChange={setRimborsoInv} placeholder="es. 50" />
+          {nettoDes > 0 && (
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "20px", border: "1.5px solid #F0EAE0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
+              <Row l="Lordo da dichiarare" v={`€${lordoInv.toFixed(2)}`} />
+              <Row l="Ritenuta 20%" v={`– €${ritenuta.toFixed(2)}`} />
+              {rimborsoInv > 0 && <Row l="Rimborso viaggio" v={`+ €${rimborsoInv.toFixed(2)}`} />}
+              <div style={{ marginTop: 14, background: "#F7F3EE", borderRadius: 14, padding: "14px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: rimborsoInv > 0 ? 8 : 0 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1714" }}>Netto in tasca</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.03em" }}>€{nettoDes.toFixed(2)}</span>
+                </div>
+                {rimborsoInv > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 13, color: "#9C948A" }}>+ rimborso viaggio</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: "#16A34A" }}>€{rimborsoInv.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ marginTop: 12, background: "#EFF6FF", borderRadius: 12, padding: "10px 14px", fontSize: 11, color: "#1D4ED8", lineHeight: 1.5 }}>
+                💡 Comunica all'agenzia che vuoi <strong>€{lordoInv.toFixed(2)} lordi</strong> per ricevere €{nettoDes.toFixed(2)} netti
+              </div>
             </div>
-          ))}
-          <div style={{ marginTop: 14, background: "#F7F3EE", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#1C1714" }}>Netto da pagare</span>
+          )}
+        </>
+      )}
+
+      {tab === "diretta" && (
+        <>
+          <Field2 label="Fatturato cliente €" value={fatturato} onChange={setFatturato} placeholder="es. 500" />
+          <Field2 label="Rimborso spese €"    value={rimborso}  onChange={setRimborso} placeholder="es. 50" />
+          <Field2 label="Fee agenzia %"       value={fee}       onChange={setFee} />
+          {fatturato > 0 && (
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "20px", border: "1.5px solid #F0EAE0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
+              {[
+                { l: "Fatturato", v: `€${fatturato.toFixed(2)}` },
+                { l: `Fee (${fee}%)`, v: `– €${feeEur.toFixed(2)}` },
+                ...(rimborso > 0 ? [{ l: "Rimborso", v: `+ €${rimborso.toFixed(2)}` }] : []),
+                { l: "Lordo", v: `€${lordo.toFixed(2)}` },
+                { l: "Ritenuta 20%", v: `– €${ritenuta2.toFixed(2)}` },
+              ].map((r, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #F7F3EE" }}>
+                  <span style={{ fontSize: 13, color: "#9C948A" }}>{r.l}</span>
+                  <span style={{ fontSize: 12, color: "#3C3530" }}>{r.v}</span>
+                </div>
+              ))}
+              <div style={{ marginTop: 14, background: "#F7F3EE", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#1C1714" }}>Netto da pagare</span>
             <span style={{ fontSize: 26, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.04em" }}>€{netto.toFixed(2)}</span>
           </div>
         </div>
