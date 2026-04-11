@@ -1216,9 +1216,11 @@ function CalcolatoreSemplice() {
               ))}
               <div style={{ marginTop: 14, background: "#F7F3EE", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: "#1C1714" }}>Netto da pagare</span>
-            <span style={{ fontSize: 26, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.04em" }}>€{netto.toFixed(2)}</span>
-          </div>
-        </div>
+                <span style={{ fontSize: 26, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.04em" }}>€{netto.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   );
