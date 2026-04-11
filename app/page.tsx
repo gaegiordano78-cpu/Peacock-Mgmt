@@ -425,6 +425,11 @@ export default function App() {
   const [dataFineRitenuta, setDataFineRitenuta] = useState("");
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.__hideSplash) {
+      setTimeout(() => { window.__hideSplash(); setSplash(false); }, 2200);
+    } else {
+      setTimeout(() => setSplash(false), 2200);
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
@@ -575,15 +580,9 @@ export default function App() {
     </div>
   );
 
-  useEffect(() => {
-    if (splash) {
-      if (typeof window !== "undefined" && window.__hideSplash) window.__hideSplash();
-      const t = setTimeout(() => setSplash(false), 2200);
-      return () => clearTimeout(t);
-    }
-  }, [splash]);
-
-  if (splash) return <div style={{ background: "#FFFFFF", minHeight: "100vh" }} />;
+  if (splash) return (
+    <div style={{ background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto" }} />
+  );
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
