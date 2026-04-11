@@ -9,6 +9,7 @@ const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
+const LOGO_SPLASH = "/logo-peacock.png";
 
 // ── DATI ────────────────────────────────────────────────────────────────────
 
@@ -577,7 +578,7 @@ export default function App() {
   if (splash) return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <img src={LOGO} alt="Peacock Models Management" style={{ height: 110, objectFit: "contain", display: "block", margin: "0 auto" }} />
+        <img src={LOGO_SPLASH} alt="Peacock Models Management" style={{ width: "70%", objectFit: "contain", display: "block", margin: "0 auto" }} />
       </div>
       <div style={{ padding: "0 24px 48px" }}>
         <button onClick={() => setSplash(false)}
