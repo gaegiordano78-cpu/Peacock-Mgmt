@@ -131,7 +131,7 @@ const fmt     = n => n === 0 ? "—" : `€${Number(n).toLocaleString("it-IT", {
 const fmtDate = d => { if (!d) return "—"; const [y, m, g] = d.split("-"); return `${g}/${m}/${y}`; };
 
 // Contratto helpers
-const CONTRATTO_COLORS = { Start: { color: "#7C3AED", bg: "#F5F3FF" }, Advance: { color: "#D97706", bg: "#FFFBEB" }, Top: { color: "#DC2626", bg: "#FEF2F2" } };
+const CONTRATTO_COLORS = { Start: { color: "#7C3AED", bg: "#F5F3FF" }, Advance: { color: "#D97706", bg: "#FFFBEB" }, Top: { color: "#C9A96E", bg: "#FEF2F2" } };
 const contrattoScadenzaAlert = (scadenza) => {
   if (!scadenza) return null;
   const [g, m, a] = scadenza.split("/");
@@ -566,7 +566,7 @@ export default function App() {
       </div>
       <div style={{ background: "#141414", borderRadius: 20, padding: "28px 24px", border: "0.5px solid #1E1E1E" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Accedi</div>
-        {loginError && <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#DC2626" }}>{loginError}</div>}
+        {loginError && <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#C9A96E" }}>{loginError}</div>}
         <Field label="Email" value={loginEmail} onChange={setLoginEmail} type="text" />
         <Field label="Password" value={loginPassword} onChange={setLoginPassword} type="password" />
         <PrimaryBtn onClick={doLogin} disabled={loginLoading}>{loginLoading ? "Accesso..." : "Entra"}</PrimaryBtn>
@@ -599,7 +599,7 @@ export default function App() {
       {/* HEADER */}
       <div style={{ background: "#141414", borderBottom: "0.5px solid #1E1E1E", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <img src={LOGO} alt="Peacock Models Management" style={{ height: 72, objectFit: "contain", filter: "invert(1)" }} />
+          <img src={LOGO} alt="Peacock Models Management" style={{ height: 44, objectFit: "contain", filter: "invert(1)" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
@@ -656,9 +656,9 @@ export default function App() {
             {/* Stats */}
             <div style={{ background: "#141414", borderBottom: "0.5px solid #1E1E1E", display: "flex" }}>
               {[
-                { label: "Da incassare", val: fmt(totDaIncassare), color: "#DC2626" },
+                { label: "Da incassare", val: fmt(totDaIncassare), color: "#C9A96E" },
                 { label: "Da pagare",    val: fmt(totDaPagare),    color: "#C4A882" },
-                { label: "Pagato YTD",   val: fmt(totPagato),      color: "#16A34A" },
+                { label: "Pagato YTD",   val: fmt(totPagato),      color: "#888888" },
               ].map((s, i) => (
                 <div key={i} style={{ flex: 1, padding: "16px 8px", textAlign: "center", borderRight: i < 2 ? "1px solid #F0EAE0" : "none" }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: s.color, letterSpacing: "-0.01em" }}>{s.val}</div>
@@ -741,7 +741,7 @@ export default function App() {
                     ✓ Marca come pagato
                   </button>
                 ) : (
-                  <div style={{ marginTop: 10, padding: "13px", background: "#F0FDF4", border: "1.5px solid #16A34A33", borderRadius: 14, color: "#16A34A", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
+                  <div style={{ marginTop: 10, padding: "13px", background: "#F0FDF4", border: "1.5px solid #16A34A33", borderRadius: 14, color: "#888888", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
                     ✓ Pagamento completato · {fmtDate(job.data_pagamento_cliente)}
                   </div>
                 )}
@@ -750,7 +750,7 @@ export default function App() {
               {/* CONTRATTO */}
               <Section title="Contratto & Liberatoria"
                 action={contrattoPronto ? null : (
-                  <button onClick={() => { if (mod) { setFormMod(mod); setView("nuova_modella"); } }} style={{ fontSize: 10, color: "#DC2626", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                  <button onClick={() => { if (mod) { setFormMod(mod); setView("nuova_modella"); } }} style={{ fontSize: 10, color: "#C9A96E", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                     Completa anagrafica →
                   </button>
                 )}>
@@ -798,7 +798,7 @@ A domani 🤍`}
 
               <GhostBtn onClick={() => { setFormJob(job); setView("nuovo_job"); }}>Modifica job</GhostBtn>
               <button onClick={() => { if (window.confirm("Eliminare questo job?")) deleteJob(job.id); }}
-                style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 14, color: "#DC2626", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 14, color: "#C9A96E", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
                 Elimina job
               </button>
             </div>
@@ -828,7 +828,7 @@ A domani 🤍`}
         {view === "ritenuta" && selectedJob && (() => {
           const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
           const mod = modelle.find(m => m.nome === job.modella);
-          if (!mod) return <div style={{ padding: 16, color: "#DC2626" }}>Completa prima la scheda anagrafica della modella.</div>;
+          if (!mod) return <div style={{ padding: 16, color: "#C9A96E" }}>Completa prima la scheda anagrafica della modella.</div>;
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
           return (
             <div style={{ padding: "16px" }}>
@@ -910,7 +910,7 @@ A domani 🤍`}
             <div style={{ padding: "20px 16px" }}>
               {userRuolo === "admin" && (
                 <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "#16A34A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Invita all'app</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#888888", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Invita all'app</div>
                   <Field label="Email modella" value={inviteEmail} onChange={setInviteEmail} type="text" placeholder="email@esempio.com" />
                   <PrimaryBtn onClick={() => doInvite(mod.nome)} disabled={inviteLoading} color="#16A34A">
                     {inviteLoading ? "Invio..." : "Manda invito ✉️"}
@@ -1061,7 +1061,7 @@ A domani 🤍`}
             <PrimaryBtn onClick={saveModella}>Salva scheda</PrimaryBtn>
             {formMod.id && modelle.find(m => m.id === formMod.id) && (
               <button onClick={() => { if (window.confirm("Eliminare la scheda di " + formMod.nome + "?")) { deleteMod(formMod.id); } }}
-                style={{ width: "100%", marginTop: 8, padding: "13px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 16, color: "#DC2626", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ width: "100%", marginTop: 8, padding: "13px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 16, color: "#C9A96E", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
                 Cancella scheda
               </button>
             )}
@@ -1180,7 +1180,7 @@ function CalcolatoreSemplice() {
                 {rimborsoInv > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 14, color: "#666666" }}>+ rimborso viaggio</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: "#16A34A" }}>€{rimborsoInv.toFixed(2)}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: "#888888" }}>€{rimborsoInv.toFixed(2)}</span>
                   </div>
                 )}
               </div>
