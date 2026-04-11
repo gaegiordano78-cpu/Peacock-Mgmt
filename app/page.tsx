@@ -576,16 +576,21 @@ export default function App() {
   );
 
   if (splash) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <img src={LOGO_SPLASH} alt="Peacock Models Management" style={{ width: "50%", objectFit: "contain", display: "block", marginLeft: "auto", marginRight: "auto" }} />
-      </div>
-      <div style={{ padding: "0 24px 48px" }}>
-        <button onClick={() => setSplash(false)}
-          style={{ width: "100%", padding: "16px", background: "#000000", border: "none", borderRadius: 14, color: "#FFFFFF", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.1em" }}>
-          ENTRA
-        </button>
-      </div>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <style>{`
+        @keyframes fadeInLogo {
+          0% { opacity: 0; transform: scale(0.96); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .splash-logo { animation: fadeInLogo 1.4s ease forwards; }
+      `}</style>
+      <img
+        src={LOGO_SPLASH}
+        alt="Peacock Models Management"
+        className="splash-logo"
+        style={{ width: "65%", objectFit: "contain", paddingLeft: "11%" }}
+        onLoad={() => setTimeout(() => setSplash(false), 2200)}
+      />
     </div>
   );
 
