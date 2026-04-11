@@ -8,9 +8,9 @@ export default function Loading() {
       justifyContent: "center",
     }}>
       <img
-        src="/p-logo.png"
+        src="/logo-peacock.png"
         alt="Peacock"
-        style={{ height: 80, objectFit: "contain" }}
+        style={{ width: "60%", objectFit: "contain", paddingLeft: "11%" }}
       />
     </div>
   );
