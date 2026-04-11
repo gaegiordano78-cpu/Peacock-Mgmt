@@ -141,8 +141,8 @@ const contrattoScadenzaAlert = (scadenza) => {
   return null;
 };
 
-const PAG_COLOR = { pagato: "#16A34A", "da pagare": "#DC2626", "in attesa": "#D97706" };
-const PAG_BG    = { pagato: "#F0FDF4", "da pagare": "#FEF2F2", "in attesa": "#FFFBEB" };
+const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9A96E" };
+const PAG_BG    = { pagato: "#0d1f0d", "da pagare": "#1a1a1a", "in attesa": "#1a1500" };
 const JOB_COLOR = { confermato: "#16A34A", "in attesa": "#D97706", completato: "#6B7280", interno: "#7C3AED" };
 const JOB_BG    = { confermato: "#F0FDF4", "in attesa": "#FFFBEB", completato: "#F9FAFB", interno: "#F5F3FF" };
 
@@ -315,25 +315,25 @@ const Divider = () => <div style={{ height: 1, background: "#F5EFE8", margin: "0
 
 const InfoRow = ({ label, val }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "9px 0" }}>
-    <span style={{ fontSize: 14, color: "#9C948A", flexShrink: 0, marginRight: 12 }}>{label}</span>
-    <span style={{ fontSize: 12, color: "#1C1714", textAlign: "right", wordBreak: "break-all" }}>{val || "—"}</span>
+    <span style={{ fontSize: 14, color: "#666666", flexShrink: 0, marginRight: 12 }}>{label}</span>
+    <span style={{ fontSize: 12, color: "#FFFFFF", textAlign: "right", wordBreak: "break-all" }}>{val || "—"}</span>
   </div>
 );
 
 const CalcRow = ({ label, val, bold, big }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
     <span style={{ fontSize: bold ? 13 : 12, fontWeight: bold ? 600 : 400, color: bold ? "#1C1714" : "#9C948A" }}>{label}</span>
-    <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#1C1714", letterSpacing: big ? "-0.03em" : "0" }}>{val}</span>
+    <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#FFFFFF", letterSpacing: big ? "-0.03em" : "0" }}>{val}</span>
   </div>
 );
 
 const Section = ({ title, children, action }) => (
   <div style={{ marginBottom: 20 }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#9C948A", textTransform: "uppercase" }}>{title}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#666666", textTransform: "uppercase" }}>{title}</div>
       {action}
     </div>
-    <div style={{ background: "#FFFFFF", borderRadius: 16, border: "1px solid #F0EAE0", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+    <div style={{ background: "#141414", borderRadius: 16, border: "0.5px solid #1E1E1E", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
       {children}
     </div>
   </div>
@@ -347,17 +347,17 @@ const PaddedSection = ({ title, children, action }) => (
 
 const Field = ({ label, value, onChange, type = "text", placeholder }) => (
   <div style={{ marginBottom: 14 }}>
-    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
+    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ""}
-      style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+      style={{ width: "100%", background: "#141414", border: "0.5px solid #1E1E1E", borderRadius: 12, color: "#FFFFFF", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
   </div>
 );
 
 const SelectField = ({ label, value, onChange, options }) => (
   <div style={{ marginBottom: 14 }}>
-    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
+    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
     <select value={value} onChange={e => onChange(e.target.value)}
-      style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 14, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", appearance: "none" }}>
+      style={{ width: "100%", background: "#141414", border: "0.5px solid #1E1E1E", borderRadius: 12, color: "#FFFFFF", fontSize: 14, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", appearance: "none" }}>
       {options.map(o => <option key={o}>{o}</option>)}
     </select>
   </div>
@@ -365,11 +365,11 @@ const SelectField = ({ label, value, onChange, options }) => (
 
 const CalBtn = ({ icon, label, sub, onClick, loading }) => (
   <button onClick={onClick} disabled={loading}
-    style={{ width: "100%", marginBottom: 8, padding: "12px 14px", background: loading ? "#F5F0EA" : "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 12, fontFamily: "inherit" }}>
+    style={{ width: "100%", marginBottom: 8, padding: "12px 14px", background: loading ? "#F5F0EA" : "#FAFAF8", border: "0.5px solid #1E1E1E", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 12, fontFamily: "inherit" }}>
     <span style={{ fontSize: 20 }}>{loading ? "⏳" : icon}</span>
     <div style={{ textAlign: "left", flex: 1 }}>
-      <div style={{ fontSize: 13, fontWeight: 500, color: "#1C1714" }}>{label}</div>
-      <div style={{ fontSize: 10, color: "#9C948A", marginTop: 1 }}>{sub}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, color: "#FFFFFF" }}>{label}</div>
+      <div style={{ fontSize: 10, color: "#666666", marginTop: 1 }}>{sub}</div>
     </div>
     <span style={{ fontSize: 16, color: "#C4A882", fontWeight: 300 }}>+</span>
   </button>
@@ -384,7 +384,7 @@ const PrimaryBtn = ({ children, onClick, color = "#1C1714", disabled }) => (
 
 const GhostBtn = ({ children, onClick }) => (
   <button onClick={onClick}
-    style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #EAE4DC", borderRadius: 14, color: "#6B6560", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+    style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "0.5px solid #1E1E1E", borderRadius: 14, color: "#888888", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
     {children}
   </button>
 );
@@ -560,12 +560,12 @@ export default function App() {
 
   // ── LOGIN ────────────────────────────────────────────────────────────────
   if (!user) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#0A0A0A", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <img src={LOGO} alt="Peacock" style={{ height: 56, objectFit: "contain" }} />
       </div>
-      <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "28px 24px", border: "1px solid #F0EAE0" }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Accedi</div>
+      <div style={{ background: "#141414", borderRadius: 20, padding: "28px 24px", border: "0.5px solid #1E1E1E" }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Accedi</div>
         {loginError && <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#DC2626" }}>{loginError}</div>}
         <Field label="Email" value={loginEmail} onChange={setLoginEmail} type="text" />
         <Field label="Password" value={loginPassword} onChange={setLoginPassword} type="password" />
@@ -575,29 +575,19 @@ export default function App() {
   );
 
   if (splash) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ padding: "48px 24px 24px", textAlign: "center" }}>
-        <img src={LOGO} alt="Peacock Models Management" style={{ height: 64, objectFit: "contain" }} />
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "100%", flex: 1, gap: 2 }}>
-        <div style={{ overflow: "hidden" }}>
-          <img src={IMG_MEN} alt="Men" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
-        </div>
-        <div style={{ overflow: "hidden" }}>
-          <img src={IMG_WOMEN} alt="Women" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
-        </div>
-      </div>
-      <div style={{ padding: "32px 24px 48px", width: "100%", boxSizing: "border-box" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
+      <img src={LOGO} alt="Peacock Models Management" style={{ height: 72, objectFit: "contain", filter: "invert(1)" }} />
+      <div style={{ position: "absolute", bottom: 48, left: 24, right: 24 }}>
         <button onClick={() => setSplash(false)}
-          style={{ width: "100%", padding: "16px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.02em" }}>
-          Entra
+          style={{ width: "100%", padding: "16px", background: "#0A0A0A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.1em" }}>
+          ENTRA
         </button>
       </div>
     </div>
   );
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#0A0A0A", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
 
       {/* TOAST */}
       {toast && (
@@ -607,52 +597,52 @@ export default function App() {
       )}
 
       {/* HEADER */}
-      <div style={{ background: "#FFFFFF", borderBottom: "1px solid #F0EAE0", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
+      <div style={{ background: "#141414", borderBottom: "0.5px solid #1E1E1E", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <img src={LOGO} alt="Peacock Models Management" style={{ height: 72, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && (
-              <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+              <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
             )}
             {view === "lista" && (
               <>
                 {userRuolo === "admin" && (
                   <button onClick={() => { setFormJob({ ...emptyJob, id: Date.now() }); setView("nuovo_job"); }}
-                    style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#1C1714", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#FFFFFF", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     + Job
                   </button>
                 )}
                 <button onClick={doLogout}
-                  style={{ padding: "8px 14px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#9C948A", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "8px 14px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#666666", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>
                   Esci
                 </button>
                 <button onClick={() => setView("modelle")}
-                  style={{ width: 36, height: 36, borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  style={{ width: 36, height: 36, borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   👤
                 </button>
                 <button onClick={() => setView("calcolatrice")}
-                  style={{ width: 36, height: 36, borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  style={{ width: 36, height: 36, borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   ÷
                 </button>
               </>
             )}
             {view === "modelle" && (
               <>
-                <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
+                <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
                 <button onClick={() => { setFormMod({ ...emptyModella, id: null }); setView("nuova_modella"); }}
-                  style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#1C1714", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#FFFFFF", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   + Model
                 </button>
               </>
             )}
             {view === "calcolatrice" && (
-              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#6B6560", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
+              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "1.5px solid #E8E2DA", background: "transparent", color: "#888888", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
             )}
           </div>
         </div>
         {pageTitle() && (
           <div style={{ padding: "0 20px 14px" }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#1C1714", letterSpacing: "-0.02em" }}>{pageTitle()}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.02em" }}>{pageTitle()}</div>
           </div>
         )}
       </div>
@@ -664,7 +654,7 @@ export default function App() {
         {view === "lista" && (
           <div>
             {/* Stats */}
-            <div style={{ background: "#FFFFFF", borderBottom: "1px solid #F0EAE0", display: "flex" }}>
+            <div style={{ background: "#141414", borderBottom: "0.5px solid #1E1E1E", display: "flex" }}>
               {[
                 { label: "Da incassare", val: fmt(totDaIncassare), color: "#DC2626" },
                 { label: "Da pagare",    val: fmt(totDaPagare),    color: "#C4A882" },
@@ -672,13 +662,13 @@ export default function App() {
               ].map((s, i) => (
                 <div key={i} style={{ flex: 1, padding: "16px 8px", textAlign: "center", borderRight: i < 2 ? "1px solid #F0EAE0" : "none" }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: s.color, letterSpacing: "-0.01em" }}>{s.val}</div>
-                  <div style={{ fontSize: 9, color: "#9C948A", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
+                  <div style={{ fontSize: 9, color: "#666666", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Filtri */}
-            <div style={{ padding: "12px 16px", display: "flex", gap: 6, overflowX: "auto", background: "#FFFFFF", borderBottom: "1px solid #F0EAE0" }}>
+            <div style={{ padding: "12px 16px", display: "flex", gap: 6, overflowX: "auto", background: "#141414", borderBottom: "0.5px solid #1E1E1E" }}>
               {["tutti", "da pagare", "pagato", "in attesa"].map(f => (
                 <Chip key={f} active={filtroStato === f} onClick={() => setFiltroStato(f)}>{f}</Chip>
               ))}
@@ -687,19 +677,19 @@ export default function App() {
             {/* Lista job */}
             <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
               {jobFiltrati.length === 0 && (
-                <div style={{ textAlign: "center", color: "#9C948A", padding: "40px 0", fontSize: 14 }}>Nessun job trovato</div>
+                <div style={{ textAlign: "center", color: "#666666", padding: "40px 0", fontSize: 14 }}>Nessun job trovato</div>
               )}
               {jobFiltrati.map(job => (
                 <div key={job.id} onClick={() => { setSelectedJob(job); setView("dettaglio"); }}
-                  style={{ background: "#FFFFFF", border: "1.5px solid #F0EAE0", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                  style={{ background: "#141414", border: "0.5px solid #1E1E1E", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#1C1714", marginBottom: 3 }}>{job.titolo}</div>
-                    <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#FFFFFF", marginBottom: 3 }}>{job.titolo}</div>
+                    <div style={{ fontSize: 14, color: "#666666", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
                     <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
                   </div>
                   <div style={{ textAlign: "right", marginLeft: 12, flexShrink: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#1C1714", letterSpacing: "-0.02em" }}>{fmt(calcNetto(job))}</div>
-                    <div style={{ fontSize: 10, color: "#9C948A", marginTop: 2 }}>netto</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.02em" }}>{fmt(calcNetto(job))}</div>
+                    <div style={{ fontSize: 10, color: "#666666", marginTop: 2 }}>netto</div>
                   </div>
                 </div>
               ))}
@@ -741,9 +731,9 @@ export default function App() {
                 <Divider />
                 <CalcRow label="Ritenuta 20%"        val={`– ${fmt(calcRitenuta(job))}`} />
                 <div style={{ height: 8 }} />
-                <div style={{ background: "#F7F3EE", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1714" }}>Netto da pagare</span>
-                  <span style={{ fontSize: 22, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.03em" }}>{fmt(calcNetto(job))}</span>
+                <div style={{ background: "#0A0A0A", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>Netto da pagare</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.03em" }}>{fmt(calcNetto(job))}</span>
                 </div>
                 {job.stato_pagamento !== "pagato" ? (
                   <button onClick={() => { marcaPagato(job.id); setSelectedJob({ ...job, stato_pagamento: "pagato" }); }}
@@ -767,11 +757,11 @@ export default function App() {
                 <div style={{ padding: "14px 16px" }}>
                   {contrattoPronto ? (
                     <>
-                      <div style={{ fontSize: 14, color: "#6B6560", lineHeight: 1.5, marginBottom: 14 }}>
+                      <div style={{ fontSize: 14, color: "#888888", lineHeight: 1.5, marginBottom: 14 }}>
                         Genera il contratto precompilato con i dati di <strong>{job.modella}</strong> per il job <strong>{job.titolo}</strong> con {job.cliente}.
                       </div>
                       <button onClick={() => { setView("contratto"); }}
-                        style={{ width: "100%", padding: "13px", background: "#1C1714", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                        style={{ width: "100%", padding: "13px", background: "#FFFFFF", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                         📄 Visualizza contratto
                       </button>
                       {job.stato_pagamento === "pagato" && (
@@ -782,8 +772,8 @@ export default function App() {
                       )}
                     </>
                   ) : (
-                    <div style={{ fontSize: 14, color: "#9C948A", lineHeight: 1.6 }}>
-                      Per generare il contratto completa la scheda anagrafica di <strong style={{ color: "#1C1714" }}>{job.modella}</strong> con CF, data di nascita e residenza.
+                    <div style={{ fontSize: 14, color: "#666666", lineHeight: 1.6 }}>
+                      Per generare il contratto completa la scheda anagrafica di <strong style={{ color: "#FFFFFF" }}>{job.modella}</strong> con CF, data di nascita e residenza.
                     </div>
                   )}
                 </div>
@@ -798,7 +788,7 @@ export default function App() {
               </Section>
 
               <Section title="💬 WhatsApp">
-                <div style={{ padding: "14px 16px", background: "#FAFAF8", fontSize: 13, color: "#3C3530", lineHeight: 1.6, whiteSpace: "pre-wrap", borderRadius: 16 }}>
+                <div style={{ padding: "14px 16px", background: "#141414", fontSize: 13, color: "#AAAAAA", lineHeight: 1.6, whiteSpace: "pre-wrap", borderRadius: 16 }}>
                   {`Ciao ${job.modella.split(" ")[0]}! Ti ricordo lo shooting di domani:
 "${job.titolo}" con ${job.cliente}
 Luogo: ${job.luogo}
@@ -823,7 +813,7 @@ A domani 🤍`}
           const testo = generaContratto(job, mod);
           return (
             <div style={{ padding: "16px" }}>
-              <div style={{ background: "#FFFFFF", borderRadius: 16, border: "1px solid #F0EAE0", padding: "20px 18px", fontSize: 12, color: "#1C1714", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+              <div style={{ background: "#141414", borderRadius: 16, border: "0.5px solid #1E1E1E", padding: "20px 18px", fontSize: 12, color: "#FFFFFF", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
                 {testo}
               </div>
               <button onClick={() => copiaContratto(job)}
@@ -842,8 +832,8 @@ A domani 🤍`}
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
           return (
             <div style={{ padding: "16px" }}>
-              <div style={{ background: "#FAFAF8", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Compila</div>
+              <div style={{ background: "#141414", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Compila</div>
                 <Field label="N° ritenuta" value={numRitenuta} onChange={setNumRitenuta} type="text" />
                 <Field label="Descrizione prestazione" value={descRitenuta} onChange={setDescRitenuta} placeholder="Modella" />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -851,7 +841,7 @@ A domani 🤍`}
                   <Field label="Data fine" value={dataFineRitenuta} onChange={setDataFineRitenuta} placeholder="gg/mm/aaaa" />
                 </div>
               </div>
-              <div style={{ background: "#FFFFFF", borderRadius: 16, border: "1px solid #F0EAE0", padding: "20px 18px", fontSize: 11, color: "#1C1714", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+              <div style={{ background: "#141414", borderRadius: 16, border: "0.5px solid #1E1E1E", padding: "20px 18px", fontSize: 11, color: "#FFFFFF", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
                 {testo}
               </div>
               <button onClick={() => {
@@ -877,10 +867,10 @@ A domani 🤍`}
                 placeholder="Cerca modella..."
                 value={cercaModella}
                 onChange={e => setCercaModella(e.target.value)}
-                style={{ width: "100%", background: "#FFFFFF", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 14, padding: "10px 36px 10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }}
+                style={{ width: "100%", background: "#141414", border: "0.5px solid #1E1E1E", borderRadius: 12, color: "#FFFFFF", fontSize: 14, padding: "10px 36px 10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }}
               />
               {cercaModella && (
-                <button onClick={() => setCercaModella("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#9C948A" }}>×</button>
+                <button onClick={() => setCercaModella("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#666666" }}>×</button>
               )}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -889,16 +879,16 @@ A domani 🤍`}
                 const netto = mj.reduce((s, j) => s + calcNetto(j), 0);
                 return (
                   <div key={mod.id} onClick={() => { setSelectedModella(mod); setView("scheda_modella"); }}
-                    style={{ background: "#FFFFFF", border: "1.5px solid #F0EAE0", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#F7F3EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, overflow: "hidden" }}>
+                    style={{ background: "#141414", border: "0.5px solid #1E1E1E", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, overflow: "hidden" }}>
                       {mod.foto_profilo
                         ? <img src={mod.foto_profilo} alt={mod.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : <span style={{ fontSize: 18 }}>{mod.nome.charAt(0)}</span>}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: "#1C1714", marginBottom: 2 }}>{mod.nome}</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: "#FFFFFF", marginBottom: 2 }}>{mod.nome}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-                      <span style={{ fontSize: 11, color: "#9C948A" }}>{mod.instagram} · {mj.length} job · {fmt(netto)}</span>
+                      <span style={{ fontSize: 11, color: "#666666" }}>{mod.instagram} · {mj.length} job · {fmt(netto)}</span>
                       {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 9, fontWeight: 700, color: cc.color, background: cc.bg, padding: "2px 7px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
                       {contrattoScadenzaAlert(mod.contratto_scadenza) && <span style={{ fontSize: 9, fontWeight: 600, color: contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "#DC2626" : "#D97706" }}>{contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "⚠️ scaduto" : "⏰ in scadenza"}</span>}
                     </div>
@@ -949,16 +939,16 @@ A domani 🤍`}
                   {mod.link_polas ? (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
-                        <div style={{ fontSize: 15, color: "#1C1714", fontWeight: 500, marginBottom: 2 }}>Cartella Drive collegata</div>
-                        {mod.data_polas && <div style={{ fontSize: 11, color: "#9C948A" }}>Aggiornate il {mod.data_polas}</div>}
+                        <div style={{ fontSize: 15, color: "#FFFFFF", fontWeight: 500, marginBottom: 2 }}>Cartella Drive collegata</div>
+                        {mod.data_polas && <div style={{ fontSize: 11, color: "#666666" }}>Aggiornate il {mod.data_polas}</div>}
                       </div>
                       <a href={mod.link_polas} target="_blank" rel="noreferrer"
-                        style={{ width: 40, height: 40, background: "#F7F3EE", border: "1.5px solid #EAE4DC", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, textDecoration: "none" }}>
+                        style={{ width: 40, height: 40, background: "#0A0A0A", border: "0.5px solid #1E1E1E", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, textDecoration: "none" }}>
                         📁
                       </a>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 14, color: "#9C948A" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
+                    <div style={{ fontSize: 14, color: "#666666" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
                   )}
                 </div>
               </Section>
@@ -984,17 +974,17 @@ A domani 🤍`}
                               </span>
                             )}
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #F5EFE8" }}>
-                            <span style={{ fontSize: 14, color: "#9C948A" }}>Firmato il</span>
-                            <span style={{ fontSize: 12, color: "#1C1714" }}>{mod.contratto_firma}</span>
+                          <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #1E1E1E" }}>
+                            <span style={{ fontSize: 14, color: "#666666" }}>Firmato il</span>
+                            <span style={{ fontSize: 12, color: "#FFFFFF" }}>{mod.contratto_firma}</span>
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                            <span style={{ fontSize: 14, color: "#9C948A" }}>Scade il</span>
+                            <span style={{ fontSize: 14, color: "#666666" }}>Scade il</span>
                             <span style={{ fontSize: 12, fontWeight: alert ? 600 : 400, color: alert === "scaduto" ? "#DC2626" : alert === "in scadenza" ? "#D97706" : "#1C1714" }}>{mod.contratto_scadenza}</span>
                           </div>
                         </>
                       ) : (
-                        <div style={{ fontSize: 14, color: "#9C948A" }}>Nessun contratto registrato.</div>
+                        <div style={{ fontSize: 14, color: "#666666" }}>Nessun contratto registrato.</div>
                       )}
                     </div>
                   </Section>
@@ -1008,18 +998,18 @@ A domani 🤍`}
                       <div onClick={() => { setSelectedJob(job); setView("dettaglio"); }}
                         style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: "#1C1714", marginBottom: 2 }}>{job.titolo}</div>
-                          <div style={{ fontSize: 11, color: "#9C948A" }}>{job.cliente} · {fmtDate(job.data_shooting)}</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: "#FFFFFF", marginBottom: 2 }}>{job.titolo}</div>
+                          <div style={{ fontSize: 11, color: "#666666" }}>{job.cliente} · {fmtDate(job.data_shooting)}</div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1714" }}>{fmt(calcNetto(job))}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>{fmt(calcNetto(job))}</div>
                           <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
                         </div>
                       </div>
                       {i < mj.length - 1 && <Divider />}
                     </div>
                   ))}
-                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 14, color: "#9C948A" }}>Nessun job ancora</div>}
+                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 14, color: "#666666" }}>Nessun job ancora</div>}
                 </div>
               </Section>
             </div>
@@ -1029,7 +1019,7 @@ A domani 🤍`}
         {/* ── NUOVA / MODIFICA MODELLA ── */}
         {view === "nuova_modella" && (
           <div style={{ padding: "16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contatti</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contatti</div>
             <Field label="Nome completo *" value={formMod.nome} onChange={v => setFormMod(f => ({ ...f, nome: v }))} />
             <Field label="Foto profilo (URL)" value={formMod.foto_profilo} onChange={v => setFormMod(f => ({ ...f, foto_profilo: v }))} placeholder="https://..." />
             <Field label="Telefono"   value={formMod.telefono}   onChange={v => setFormMod(f => ({ ...f, telefono: v }))} />
@@ -1038,7 +1028,7 @@ A domani 🤍`}
             <Field label="Note interne" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Anagrafica (per ritenute)</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Anagrafica (per ritenute)</div>
             <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Data di nascita" value={formMod.data_nascita} onChange={v => setFormMod(f => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
@@ -1051,18 +1041,18 @@ A domani 🤍`}
             </div>
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Coordinate bancarie</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Coordinate bancarie</div>
             <Field label="Banca" value={formMod.banca} onChange={v => setFormMod(f => ({ ...f, banca: v }))} placeholder="UniCredit" />
             <Field label="Intestato a" value={formMod.intestato_a} onChange={v => setFormMod(f => ({ ...f, intestato_a: v }))} />
             <Field label="IBAN" value={formMod.iban} onChange={v => setFormMod(f => ({ ...f, iban: v }))} placeholder="IT..." />
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Polas</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Polas</div>
             <Field label="Link cartella Drive" value={formMod.link_polas} onChange={v => setFormMod(f => ({ ...f, link_polas: v }))} placeholder="https://drive.google.com/..." />
             <Field label="Data ultimo aggiornamento" value={formMod.data_polas} onChange={v => setFormMod(f => ({ ...f, data_polas: v }))} placeholder="gg/mm/aaaa" />
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contratto Agenzia</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contratto Agenzia</div>
             <SelectField label="Tipologia" value={formMod.contratto_tipo} onChange={v => setFormMod(f => ({ ...f, contratto_tipo: v }))} options={["Start", "Advance", "Top"]} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Data firma" value={formMod.contratto_firma} onChange={v => setFormMod(f => ({ ...f, contratto_firma: v }))} placeholder="gg/mm/aaaa" />
@@ -1093,15 +1083,15 @@ A domani 🤍`}
             <Field label="Fee agenzia %" value={formJob.fee_pct} onChange={v => setFormJob(f => ({ ...f, fee_pct: Number(v) }))} type="number" />
 
             {formJob.fatturato > 0 && (
-              <div style={{ background: "#F7F3EE", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "1.5px solid #EAE4DC" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
+              <div style={{ background: "#0A0A0A", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "0.5px solid #1E1E1E" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, color: "#6B6560" }}>Fee agenzia</span>
-                  <span style={{ fontSize: 12, color: "#1C1714" }}>{fmt(calcFee(formJob))}</span>
+                  <span style={{ fontSize: 14, color: "#888888" }}>Fee agenzia</span>
+                  <span style={{ fontSize: 12, color: "#FFFFFF" }}>{fmt(calcFee(formJob))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1714" }}>Netto modella</span>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#1C1714" }}>{fmt(calcNetto(formJob))}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>Netto modella</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "#C9A96E" }}>{fmt(calcNetto(formJob))}</span>
                 </div>
               </div>
             )}
@@ -1116,7 +1106,7 @@ A domani 🤍`}
         {/* ── CALCOLATRICE ── */}
         {view === "calcolatrice" && (
           <div style={{ padding: "20px 16px" }}>
-            <p style={{ fontSize: 14, color: "#9C948A", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto modella.</p>
+            <p style={{ fontSize: 14, color: "#666666", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto modella.</p>
             <CalcolatoreSemplice />
           </div>
         )}
@@ -1147,16 +1137,16 @@ function CalcolatoreSemplice() {
 
   const Field2 = ({ label, value, onChange, placeholder = "" }) => (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
       <input type="number" value={value || ""} placeholder={placeholder} onChange={e => onChange(Number(e.target.value))}
-        style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+        style={{ width: "100%", background: "#141414", border: "0.5px solid #1E1E1E", borderRadius: 12, color: "#FFFFFF", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
     </div>
   );
 
   const Row = ({ l, v, bold, big }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #F7F3EE" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #1E1E1E" }}>
       <span style={{ fontSize: bold ? 13 : 12, fontWeight: bold ? 600 : 400, color: bold ? "#1C1714" : "#9C948A" }}>{l}</span>
-      <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#1C1714" }}>{v}</span>
+      <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#FFFFFF" }}>{v}</span>
     </div>
   );
 
@@ -1177,19 +1167,19 @@ function CalcolatoreSemplice() {
           <Field2 label="Netto desiderato €" value={nettoDes} onChange={setNettoDes} placeholder="es. 400" />
           <Field2 label="Rimborso viaggio €" value={rimborsoInv} onChange={setRimborsoInv} placeholder="es. 50" />
           {nettoDes > 0 && (
-            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "20px", border: "1.5px solid #F0EAE0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
+            <div style={{ background: "#141414", borderRadius: 20, padding: "20px", border: "0.5px solid #1E1E1E", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
               <Row l="Lordo da dichiarare" v={`€${lordoInv.toFixed(2)}`} />
               <Row l="Ritenuta 20%" v={`– €${ritenuta.toFixed(2)}`} />
               {rimborsoInv > 0 && <Row l="Rimborso viaggio" v={`+ €${rimborsoInv.toFixed(2)}`} />}
-              <div style={{ marginTop: 14, background: "#F7F3EE", borderRadius: 14, padding: "14px 16px" }}>
+              <div style={{ marginTop: 14, background: "#0A0A0A", borderRadius: 14, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: rimborsoInv > 0 ? 8 : 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1714" }}>Netto in tasca</span>
-                  <span style={{ fontSize: 22, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.03em" }}>€{nettoDes.toFixed(2)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>Netto in tasca</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.03em" }}>€{nettoDes.toFixed(2)}</span>
                 </div>
                 {rimborsoInv > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 14, color: "#9C948A" }}>+ rimborso viaggio</span>
+                    <span style={{ fontSize: 14, color: "#666666" }}>+ rimborso viaggio</span>
                     <span style={{ fontSize: 16, fontWeight: 700, color: "#16A34A" }}>€{rimborsoInv.toFixed(2)}</span>
                   </div>
                 )}
@@ -1208,8 +1198,8 @@ function CalcolatoreSemplice() {
           <Field2 label="Rimborso spese €"    value={rimborso}  onChange={setRimborso} placeholder="es. 50" />
           <Field2 label="Fee agenzia %"       value={fee}       onChange={setFee} />
           {fatturato > 0 && (
-            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "20px", border: "1.5px solid #F0EAE0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
+            <div style={{ background: "#141414", borderRadius: 20, padding: "20px", border: "0.5px solid #1E1E1E", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#666666", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
               {[
                 { l: "Fatturato", v: `€${fatturato.toFixed(2)}` },
                 { l: `Fee (${fee}%)`, v: `– €${feeEur.toFixed(2)}` },
@@ -1217,14 +1207,14 @@ function CalcolatoreSemplice() {
                 { l: "Lordo", v: `€${lordo.toFixed(2)}` },
                 { l: "Ritenuta 20%", v: `– €${ritenuta2.toFixed(2)}` },
               ].map((r, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #F7F3EE" }}>
-                  <span style={{ fontSize: 14, color: "#9C948A" }}>{r.l}</span>
-                  <span style={{ fontSize: 12, color: "#3C3530" }}>{r.v}</span>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "0.5px solid #1E1E1E" }}>
+                  <span style={{ fontSize: 14, color: "#666666" }}>{r.l}</span>
+                  <span style={{ fontSize: 12, color: "#AAAAAA" }}>{r.v}</span>
                 </div>
               ))}
-              <div style={{ marginTop: 14, background: "#F7F3EE", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "#1C1714" }}>Netto da pagare</span>
-                <span style={{ fontSize: 26, fontWeight: 800, color: "#1C1714", letterSpacing: "-0.04em" }}>€{netto.toFixed(2)}</span>
+              <div style={{ marginTop: 14, background: "#0A0A0A", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#FFFFFF" }}>Netto da pagare</span>
+                <span style={{ fontSize: 26, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.04em" }}>€{netto.toFixed(2)}</span>
               </div>
             </div>
           )}
