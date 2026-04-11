@@ -579,7 +579,7 @@ export default function App() {
       <img src={LOGO} alt="Peacock Models Management" style={{ height: 80, objectFit: "contain", mixBlendMode: "multiply" }} />
       <div style={{ position: "absolute", bottom: 48, left: 24, right: 24 }}>
         <button onClick={() => setSplash(false)}
-          style={{ width: "100%", padding: "16px", background: "#F5F5F5", border: "none", borderRadius: 14, color: "#FFF", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.1em" }}>
+          style={{ width: "100%", padding: "16px", background: "#000000", border: "none", borderRadius: 14, color: "#FFFFFF", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.1em" }}>
           ENTRA
         </button>
       </div>
@@ -599,7 +599,7 @@ export default function App() {
       {/* HEADER */}
       <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <img src="/p-logo.png" alt="P" style={{ height: 40, objectFit: "contain" }} />
+          <img src="/p-logo.png" alt="P" style={{ height: 56, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
