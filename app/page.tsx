@@ -644,7 +644,7 @@ export default function App() {
               <>
                 {userRuolo === "admin" && (
                   <button onClick={() => { setFormJob({ ...emptyJob, id: Date.now() }); setView("nuovo_job"); }}
-                    style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#FFFFFF", color: "#FFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     + Job
                   </button>
                 )}
