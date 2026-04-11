@@ -405,8 +405,8 @@ export default function App() {
   const [inviteEmail, setInviteEmail]   = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [splash, setSplash]     = useState(true);
-  const [jobs, setJobs]         = useState(initialJobs);
-  const [modelle, setModelle]   = useState<any[]>(initialModelle);
+  const [jobs, setJobs]         = useState([]);
+  const [modelle, setModelle]   = useState<any[]>([]);
   const [view, setView]         = useState("lista"); // lista | dettaglio | nuovo_job | calcolatrice | modelle | scheda_modella | nuova_modella | contratto
   const [selectedJob, setSelectedJob]     = useState(null);
   const [selectedModella, setSelectedModella] = useState(null);
@@ -430,18 +430,36 @@ export default function App() {
     } else {
       setTimeout(() => setSplash(false), 2200);
     }
+    const loadData = async () => {
+      const { data: jobsData } = await supabase.from("jobs").select("*").order("data_shooting", { ascending: false });
+      if (jobsData) setJobs(jobsData);
+      const { data: modelleData } = await supabase.from("modelle").select("*").order("nome");
+      if (modelleData && modelleData.length > 0) setModelle(modelleData);
+      else setModelle(initialModelle);
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
         supabase.from("profiles").select("ruolo").eq("id", session.user.id).single()
-          .then(({ data }) => { if (data) setUserRuolo(data.ruolo); });
+          .then(({ data }) => { 
+            if (data) {
+              setUserRuolo(data.ruolo);
+              loadData();
+            }
+          });
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         supabase.from("profiles").select("ruolo").eq("id", session.user.id).single()
-          .then(({ data }) => { if (data) setUserRuolo(data.ruolo); });
+          .then(({ data }) => { 
+            if (data) {
+              setUserRuolo(data.ruolo);
+              loadData();
+            }
+          });
       }
     });
     return () => subscription.unsubscribe();
@@ -487,23 +505,35 @@ export default function App() {
   const showToast = (msg, err = false) => { setToast(msg); setToastErr(err); setTimeout(() => setToast(""), 3000); };
 
   // Job helpers
-  const saveJob = () => {
+  const saveJob = async () => {
     if (!formJob.titolo || !formJob.cliente) { showToast("Inserisci titolo e cliente", true); return; }
-    setJobs(prev => { const e = prev.find(j => j.id === formJob.id); return e ? prev.map(j => j.id === formJob.id ? formJob : j) : [...prev, formJob]; });
+    const jobData = { ...formJob };
+    delete jobData.id;
+    if (formJob.id && jobs.find(j => j.id === formJob.id)) {
+      await supabase.from("jobs").update(jobData).eq("id", formJob.id);
+      setJobs(prev => prev.map(j => j.id === formJob.id ? formJob : j));
+    } else {
+      const { data } = await supabase.from("jobs").insert(jobData).select().single();
+      if (data) setJobs(prev => [...prev, data]);
+    }
     showToast("Job salvato ✓"); setView("lista");
   };
-  const deleteJob = id => {
+  const deleteJob = async id => {
+    await supabase.from("jobs").delete().eq("id", id);
     setJobs(prev => prev.filter(j => j.id !== id));
     showToast("Job eliminato"); setView("lista");
   };
 
-  const deleteMod = id => {
+  const deleteMod = async id => {
+    await supabase.from("modelle").delete().eq("id", id);
     setModelle(prev => prev.filter(m => m.id !== id));
     showToast("Scheda eliminata"); setView("modelle");
   };
 
-  const marcaPagato = id => {
-    setJobs(prev => prev.map(j => j.id === id ? { ...j, stato_pagamento: "pagato", data_pagamento_cliente: new Date().toISOString().split("T")[0] } : j));
+  const marcaPagato = async id => {
+    const oggi = new Date().toISOString().split("T")[0];
+    await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
+    setJobs(prev => prev.map(j => j.id === id ? { ...j, stato_pagamento: "pagato", data_pagamento_cliente: oggi } : j));
     showToast("Pagamento registrato ✓");
   };
   const aggiungiCal = async (job, tipo) => {
@@ -514,10 +544,18 @@ export default function App() {
   };
 
   // Modella helpers
-  const saveModella = () => {
+  const saveModella = async () => {
     if (!formMod.nome) { showToast("Inserisci il nome", true); return; }
-    const newMod = { ...formMod, id: formMod.id || `m${Date.now()}` };
-    setModelle((prev: any[]) => { const e = prev.find((m: any) => m.id === newMod.id); return e ? prev.map((m: any) => m.id === newMod.id ? newMod : m) : [...prev, newMod]; });
+    const modData = { ...formMod };
+    if (formMod.id && modelle.find(m => m.id === formMod.id)) {
+      await supabase.from("modelle").update(modData).eq("id", formMod.id);
+      setModelle((prev: any[]) => prev.map((m: any) => m.id === formMod.id ? modData : m));
+    } else {
+      const newId = `m${Date.now()}`;
+      const newMod = { ...modData, id: newId };
+      await supabase.from("modelle").insert(newMod);
+      setModelle((prev: any[]) => [...prev, newMod]);
+    }
     showToast("Scheda salvata ✓"); setView("modelle");
   };
 
