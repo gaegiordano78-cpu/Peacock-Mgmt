@@ -575,9 +575,11 @@ export default function App() {
   );
 
   if (splash) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
-      <img src={LOGO} alt="Peacock Models Management" style={{ height: 80, objectFit: "contain", mixBlendMode: "multiply" }} />
-      <div style={{ position: "absolute", bottom: 48, left: 24, right: 24 }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img src={LOGO} alt="Peacock Models Management" style={{ height: 80, objectFit: "contain", mixBlendMode: "multiply" }} />
+      </div>
+      <div style={{ padding: "0 24px 48px" }}>
         <button onClick={() => setSplash(false)}
           style={{ width: "100%", padding: "16px", background: "#000000", border: "none", borderRadius: 14, color: "#FFFFFF", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.1em" }}>
           ENTRA
