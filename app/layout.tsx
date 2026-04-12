@@ -42,7 +42,7 @@ export default function RootLayout({
           }
           #splash-loader.hidden { opacity: 0; pointer-events: none; }
           @keyframes fadeInLogo {
-            0% { opacity: 0; transform: scale(0.90); }
+            0% { opacity: 0; transform: scale(0.75); }
             60% { opacity: 1; }
             100% { opacity: 1; transform: scale(1); }
           }
