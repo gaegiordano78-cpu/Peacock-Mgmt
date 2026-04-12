@@ -37,11 +37,12 @@ export default function RootLayout({
           #splash-loader img {
             width: 65%;
             object-fit: contain;
-            animation: fadeInLogo 1.2s ease forwards;
+            animation: fadeInLogo 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           }
           #splash-loader.hidden { opacity: 0; pointer-events: none; }
           @keyframes fadeInLogo {
-            0% { opacity: 0; transform: scale(0.96); }
+            0% { opacity: 0; transform: scale(0.90); }
+            60% { opacity: 1; }
             100% { opacity: 1; transform: scale(1); }
           }
         `}</style>
