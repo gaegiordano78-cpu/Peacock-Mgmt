@@ -287,7 +287,7 @@ ${job.rimborso > 0 ? `Rimborso spese:                             ${job.rimborso
 
 Coordinate Bancarie del prestatore:
 Banca:        ${modella.banca || "_______________"}
-Intestato a:  ${modella.intestato_a || modella.nome}
+Account holder:  ${modella.intestato_a || modella.nome}
 IBAN:         ${modella.iban || "_______________"}
 
 Dichiarazione del prestatore per redditi d'importo non superiore a 5.000€:
@@ -350,7 +350,7 @@ const Field = ({ label, value, onChange, type = "text", placeholder }) => (
   <div style={{ marginBottom: 14 }}>
     <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ""}
-      style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+      style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
   </div>
 );
 
@@ -544,7 +544,7 @@ export default function App() {
   const deleteMod = async id => {
     await supabase.from("modelle").delete().eq("id", id);
     setModelle(prev => prev.filter(m => m.id !== id));
-    showToast("Scheda eliminata"); setView("modelle");
+    showToast("Profile deleted"); setView("modelle");
   };
 
   const marcaPagato = async id => {
@@ -562,7 +562,7 @@ export default function App() {
 
   // Modella helpers
   const saveModella = async () => {
-    if (!formMod.nome) { showToast("Inserisci il nome", true); return; }
+    if (!formMod.nome) { showToast("Enter name", true); return; }
     const modData = { ...formMod };
     if (formMod.id && modelle.find(m => m.id === formMod.id)) {
       await supabase.from("modelle").update(modData).eq("id", formMod.id);
@@ -573,7 +573,7 @@ export default function App() {
       await supabase.from("modelle").insert(newMod);
       setModelle((prev: any[]) => [...prev, newMod]);
     }
-    showToast("Scheda salvata ✓"); setView("modelle");
+    showToast("Profile saved ✓"); setView("modelle");
   };
 
   // Contratto
@@ -613,7 +613,7 @@ export default function App() {
     if (view === "calcolatrice") return "Calcolatrice";
     if (view === "modelle") return "Models";
     if (view === "scheda_modella") return selectedModella?.nome?.split(" ")[0] || "";
-    if (view === "nuova_modella") return formMod.id && modelle.find(m => m.id === formMod.id) ? "Modifica Scheda" : "Nuova Modella";
+    if (view === "nuova_modella") return formMod.id && modelle.find(m => m.id === formMod.id) ? "Edit Profile" : "New Model";
     if (view === "contratto") return "Contratto";
     if (view === "ritenuta") return "Ritenuta d'acconto";
     return "";
@@ -621,7 +621,7 @@ export default function App() {
 
   // ── LOGIN ────────────────────────────────────────────────────────────────
   if (!user) return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <img src={LOGO} alt="Peacock" style={{ height: 56, objectFit: "contain" }} />
       </div>
@@ -648,7 +648,7 @@ export default function App() {
         </div>
         <div style={{ padding: "20px 16px 0" }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
-          <div style={{ fontSize: 13, color: "#767676", marginBottom: 20 }}>I tuoi lavori</div>
+          <div style={{ fontSize: 15, color: "#767676", marginBottom: 20 }}>Your jobs</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
             <div style={{ background: "#FFFFFF", borderRadius: 12, padding: "14px", border: "0.5px solid #EBEBEB" }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#000" }}>{fmt(totNetto)}</div>
@@ -663,7 +663,7 @@ export default function App() {
         <div style={{ flex: 1, padding: "0 16px 30px", display: "flex", flexDirection: "column", gap: 10 }}>
           {myJobs.length === 0 ? (
             <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "24px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
-              <div style={{ fontSize: 13, color: "#767676" }}>Nessun job ancora</div>
+              <div style={{ fontSize: 15, color: "#767676" }}>No jobs yet</div>
             </div>
           ) : myJobs.map(j => (
             <div key={j.id} style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
@@ -691,7 +691,7 @@ export default function App() {
   );
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
 
       {/* TOAST */}
       {toast && (
@@ -892,7 +892,7 @@ export default function App() {
               </Section>
 
               <Section title="💬 WhatsApp">
-                <div style={{ padding: "14px 16px", background: "#FFFFFF", fontSize: 13, color: "#767676", lineHeight: 1.6, whiteSpace: "pre-wrap", borderRadius: 16 }}>
+                <div style={{ padding: "14px 16px", background: "#FFFFFF", fontSize: 15, color: "#767676", lineHeight: 1.6, whiteSpace: "pre-wrap", borderRadius: 16 }}>
                   {`Ciao ${job.modella.split(" ")[0]}! Ti ricordo lo shooting di domani:
 "${job.titolo}" con ${job.cliente}
 Luogo: ${job.luogo}
@@ -968,7 +968,7 @@ A domani 🤍`}
             <div style={{ position: "relative", marginBottom: 14 }}>
               <input
                 type="text"
-                placeholder="Cerca modella..."
+                placeholder="Search model..."
                 value={cercaModella}
                 onChange={e => setCercaModella(e.target.value)}
                 style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 14, padding: "10px 36px 10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }}
@@ -988,7 +988,7 @@ A domani 🤍`}
                       <span style={{ fontSize: 18, color: "#767676" }}>{mod.nome.charAt(0)}</span>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: "#000000", marginBottom: 2 }}>{mod.nome}</div>
+                      <div style={{ fontSize: 18, fontWeight: 600, color: "#000000", marginBottom: 2 }}>{mod.nome}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
                       <span style={{ fontSize: 11, color: "#767676" }}>{mod.instagram} · {mj.length} job · {fmt(netto)}</span>
                       {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 9, fontWeight: 700, color: cc.color, background: cc.bg, padding: "2px 7px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
@@ -1010,7 +1010,7 @@ A domani 🤍`}
           const totNetto = mj.reduce((s, j) => s + calcNetto(j), 0);
           return (
             <div style={{ padding: "20px 16px" }}>
-              {userRuolo === "admin" && (
+              {userRuolo === "admin" && !mod.user_id && (
                 <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Invita all'app</div>
                   <Field label="Email modella" value={inviteEmail} onChange={setInviteEmail} type="text" placeholder="email@esempio.com" />
@@ -1061,7 +1061,7 @@ A domani 🤍`}
                 const tipo = mod.contratto_tipo || "Start";
                 const cc = CONTRATTO_COLORS[tipo] || CONTRATTO_COLORS.Start;
                 return (
-                  <Section title="Contratto Agenzia"
+                  <Section title="Agency contract"
                     action={<button onClick={() => { setFormMod(mod); setView("nuova_modella"); }} style={{ fontSize: 11, color: "#C4A882", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Modifica</button>}>
                     <div style={{ padding: "14px 16px" }}>
                       {mod.contratto_firma ? (
@@ -1111,7 +1111,7 @@ A domani 🤍`}
                       {i < mj.length - 1 && <Divider />}
                     </div>
                   ))}
-                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 14, color: "#767676" }}>Nessun job ancora</div>}
+                  {mj.length === 0 && <div style={{ padding: "16px", fontSize: 14, color: "#767676" }}>No jobs yet</div>}
                 </div>
               </Section>
             </div>
@@ -1122,14 +1122,14 @@ A domani 🤍`}
         {view === "nuova_modella" && (
           <div style={{ padding: "16px" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contatti</div>
-            <Field label="Nome completo *" value={formMod.nome} onChange={v => setFormMod(f => ({ ...f, nome: v }))} />
+            <Field label="Full name *" value={formMod.nome} onChange={v => setFormMod(f => ({ ...f, nome: v }))} />
             <Field label="Telefono"   value={formMod.telefono}   onChange={v => setFormMod(f => ({ ...f, telefono: v }))} />
             <Field label="Email"      value={formMod.email}      onChange={v => setFormMod(f => ({ ...f, email: v }))} />
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
-            <Field label="Note interne" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
+            <Field label="Internal notes" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Anagrafica (per ritenute)</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Personal data (for tax)</div>
             <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Data di nascita" value={formMod.data_nascita} onChange={v => setFormMod(f => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
@@ -1142,28 +1142,28 @@ A domani 🤍`}
             </div>
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Coordinate bancarie</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Bank details</div>
             <Field label="Banca" value={formMod.banca} onChange={v => setFormMod(f => ({ ...f, banca: v }))} placeholder="UniCredit" />
-            <Field label="Intestato a" value={formMod.intestato_a} onChange={v => setFormMod(f => ({ ...f, intestato_a: v }))} />
+            <Field label="Account holder" value={formMod.intestato_a} onChange={v => setFormMod(f => ({ ...f, intestato_a: v }))} />
             <Field label="IBAN" value={formMod.iban} onChange={v => setFormMod(f => ({ ...f, iban: v }))} placeholder="IT..." />
 
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Polas</div>
-            <Field label="Link cartella Drive" value={formMod.link_polas} onChange={v => setFormMod(f => ({ ...f, link_polas: v }))} placeholder="https://drive.google.com/..." />
-            <Field label="Data ultimo aggiornamento" value={formMod.data_polas} onChange={v => setFormMod(f => ({ ...f, data_polas: v }))} placeholder="gg/mm/aaaa" />
+            <Field label="Drive folder link" value={formMod.link_polas} onChange={v => setFormMod(f => ({ ...f, link_polas: v }))} placeholder="https://drive.google.com/..." />
+            <Field label="Last update" value={formMod.data_polas} onChange={v => setFormMod(f => ({ ...f, data_polas: v }))} placeholder="gg/mm/aaaa" />
 
             <div style={{ height: 8 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Contratto Agenzia</div>
-            <SelectField label="Tipologia" value={formMod.contratto_tipo} onChange={v => setFormMod(f => ({ ...f, contratto_tipo: v }))} options={["Start", "Advance", "Top"]} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Agency contract</div>
+            <SelectField label="Type" value={formMod.contratto_tipo} onChange={v => setFormMod(f => ({ ...f, contratto_tipo: v }))} options={["Start", "Advance", "Top"]} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Data firma" value={formMod.contratto_firma} onChange={v => setFormMod(f => ({ ...f, contratto_firma: v }))} placeholder="gg/mm/aaaa" />
-              <Field label="Data scadenza" value={formMod.contratto_scadenza} onChange={v => setFormMod(f => ({ ...f, contratto_scadenza: v }))} placeholder="gg/mm/aaaa" />
+              <Field label="Sign date" value={formMod.contratto_firma} onChange={v => setFormMod(f => ({ ...f, contratto_firma: v }))} placeholder="gg/mm/aaaa" />
+              <Field label="Expiry date" value={formMod.contratto_scadenza} onChange={v => setFormMod(f => ({ ...f, contratto_scadenza: v }))} placeholder="gg/mm/aaaa" />
             </div>
-            <PrimaryBtn onClick={saveModella}>Salva scheda</PrimaryBtn>
+            <PrimaryBtn onClick={saveModella}>Save profile</PrimaryBtn>
             {formMod.id && modelle.find(m => m.id === formMod.id) && (
               <button onClick={() => { if (window.confirm("Eliminare la scheda di " + formMod.nome + "?")) { deleteMod(formMod.id); } }}
                 style={{ width: "100%", marginTop: 8, padding: "13px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 16, color: "#000000", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-                Cancella scheda
+                Delete profile
               </button>
             )}
           </div>
@@ -1192,7 +1192,7 @@ A domani 🤍`}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "#000000" }}>Netto modella</span>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#000000" }}>{fmt(calcNetto(formJob))}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: "#000000" }}>{fmt(calcNetto(formJob))}</span>
                 </div>
               </div>
             )}
@@ -1240,7 +1240,7 @@ function CalcolatoreSemplice() {
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
       <input type="number" value={value || ""} placeholder={placeholder} onChange={e => onChange(Number(e.target.value))}
-        style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+        style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
     </div>
   );
 
