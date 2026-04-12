@@ -175,14 +175,15 @@ async function creaEventoCalendar(job, tipo) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 1000,
+      model: "claude-sonnet-4-6", max_tokens: 1000,
       mcp_servers: [{ type: "url", url: "https://gcal.mcp.claude.com/mcp", name: "gcal" }],
-      messages: [{ role: "user", content: `Crea evento Google Calendar: summary="${summary}", description="${description}", start="${startTime}", end="${endTime}", timeZone="Europe/Rome". Rispondi solo "OK".` }]
+      messages: [{ role: "user", content: `Crea evento Google Calendar: summary="${summary}", description="${description}", start="${startTime}", end="${endTime}", timeZone="Europe/Rome".` }]
     })
   });
   const data = await response.json();
-  const testo = data.content?.filter(b => b.type === "text").map(b => b.text).join("") || "";
-  if (!testo.includes("OK")) throw new Error("Errore calendario");
+  if (data.error) throw new Error(data.error.message || "Errore API");
+  const ok = data.content?.some(b => b.type === "mcp_tool_result" || b.type === "text");
+  if (!ok) throw new Error("Risposta calendario vuota");
   return true;
 }
 
