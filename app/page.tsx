@@ -172,7 +172,7 @@ async function creaEventoCalendar(job, tipo) {
     const oggi = new Date().toISOString().split("T")[0];
     startTime = `${oggi}T10:00:00`; endTime = `${oggi}T10:30:00`;
   }
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("/api/calendar", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6", max_tokens: 1000,
@@ -181,7 +181,6 @@ async function creaEventoCalendar(job, tipo) {
     })
   });
   const data = await response.json();
-  console.log("CALENDAR API RESPONSE:", JSON.stringify(data, null, 2));
   if (data.error) throw new Error(data.error.message || "Errore API");
   const ok = data.content?.some(b => b.type === "mcp_tool_result" || b.type === "text");
   if (!ok) throw new Error("Risposta calendario vuota");
