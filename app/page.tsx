@@ -555,19 +555,11 @@ export default function App() {
     setJobs(prev => prev.map(j => j.id === id ? { ...j, stato_pagamento: "pagato", data_pagamento_cliente: oggi } : j));
     showToast("Pagamento registrato ✓");
   };
- const aggiungiCal = async (job, tipo) => {
-  setLoading(tipo);
-  try {
-    await creaEventoCalendar(job, tipo);
-    showToast("Aggiunto al calendario ✓");
-  } catch (e) {
-    showToast(e.message, true);
-    // Mostra l'errore completo in un alert
-    alert("ERRORE: " + e.message);
-  } finally {
-    setLoading("");
-  }
-};
+  const aggiungiCal = async (job, tipo) => {
+    setLoading(tipo);
+    try { await creaEventoCalendar(job, tipo); showToast("Aggiunto al calendario ✓"); }
+    catch (e) { showToast(e.message, true); alert("ERRORE: " + e.message); }
+    finally { setLoading(""); }
   };
 
   // Modella helpers
