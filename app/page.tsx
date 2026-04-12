@@ -854,7 +854,7 @@ export default function App() {
               {/* CONTRATTO */}
               <Section title="Contratto & Liberatoria"
                 action={contrattoPronto ? null : (
-                  <button onClick={() => { if (mod) { setFormMod(mod); setView("nuova_modella"); } }} style={{ fontSize: 10, color: "#000000", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                  <button onClick={() => { setFormMod(mod ? mod : { ...emptyModella, nome: job.modella }); setView("nuova_modella"); }} style={{ fontSize: 10, color: "#000000", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                     Completa anagrafica →
                   </button>
                 )}>
