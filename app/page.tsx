@@ -934,6 +934,37 @@ A domani 🤍`}
           const mod = modelle.find(m => m.nome === job.modella);
           if (!mod) return <div style={{ padding: 16, color: "#000000" }}>Completa prima la scheda anagrafica della modella.</div>;
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
+
+          const stampaPDF = () => {
+            const win = window.open("", "_blank");
+            if (!win) { showToast("Abilita i popup per stampare", true); return; }
+            win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ritenuta d'acconto - ${mod.nome}</title><style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: Georgia, serif; font-size: 13px; color: #000; padding: 40px 48px; line-height: 1.7; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #000; padding-bottom: 16px; }
+              .logo { font-size: 22px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+              .logo span { font-size: 11px; font-weight: 400; display: block; letter-spacing: 0.08em; color: #555; margin-top: 2px; }
+              .num { font-size: 13px; text-align: right; }
+              .num strong { font-size: 16px; display: block; }
+              .body { white-space: pre-wrap; }
+              .footer { margin-top: 40px; border-top: 1px solid #ccc; padding-top: 14px; font-size: 11px; color: #777; text-align: center; }
+              @media print {
+                body { padding: 20px 32px; }
+                @page { margin: 1cm; size: A4; }
+              }
+            </style></head><body>
+              <div class="header">
+                <div class="logo">Peacock Models Mgmt<span>Via G. Matteotti 16 — Bari · P.IVA IT 07164570728</span></div>
+                <div class="num"><span>Ritenuta n°</span><strong>${numRitenuta}</strong></div>
+              </div>
+              <div class="body">${testo.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+              <div class="footer">Documento generato da Peacock Models Mgmt</div>
+            </body></html>`);
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); }, 400);
+          };
+
           return (
             <div style={{ padding: "16px" }}>
               <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
@@ -945,9 +976,13 @@ A domani 🤍`}
                   <Field label="Data fine" value={dataFineRitenuta} onChange={setDataFineRitenuta} placeholder="gg/mm/aaaa" />
                 </div>
               </div>
-              <div style={{ background: "#FFFFFF", borderRadius: 16, border: "0.5px solid #EBEBEB", padding: "20px 18px", fontSize: 17, color: "#000000", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+              <div style={{ background: "#FFFFFF", borderRadius: 16, border: "0.5px solid #EBEBEB", padding: "20px 18px", fontSize: 15, color: "#000000", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
                 {testo}
               </div>
+              <button onClick={stampaPDF}
+                style={{ width: "100%", padding: "15px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
+                🖨️ Genera PDF
+              </button>
               <button onClick={() => {
                 navigator.clipboard.writeText(testo).then(() => {
                   setRitenutaCopied(true);
@@ -955,8 +990,8 @@ A domani 🤍`}
                   showToast("Ritenuta copiata ✓");
                 });
               }}
-                style={{ width: "100%", padding: "15px", background: ritenutaCopied ? "#16A34A" : "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                {ritenutaCopied ? "✓ Copiato!" : "📋 Copia testo ritenuta"}
+                style={{ width: "100%", padding: "13px", background: "transparent", border: "0.5px solid #EBEBEB", borderRadius: 16, color: "#767676", fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
+                {ritenutaCopied ? "✓ Copiato!" : "📋 Copia testo"}
               </button>
             </div>
           );
