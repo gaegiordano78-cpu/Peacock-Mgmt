@@ -508,6 +508,9 @@ export default function App() {
   const saveJob = async () => {
     if (!formJob.titolo || !formJob.cliente) { showToast("Inserisci titolo e cliente", true); return; }
     const { id, ...jobData } = formJob;
+    // Converti stringhe vuote in null per i campi date
+    if (!jobData.data_shooting) jobData.data_shooting = null;
+    if (!jobData.data_pagamento_cliente) jobData.data_pagamento_cliente = null;
     const isExisting = id && typeof id === "number" && jobs.find(j => j.id === id);
     if (isExisting) {
       await supabase.from("jobs").update(jobData).eq("id", id);
