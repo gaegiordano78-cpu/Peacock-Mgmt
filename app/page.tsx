@@ -279,7 +279,7 @@ Indirizzo: Via Giacomo Matteotti Cap: 70121 Bari (Ba)
 Partita IVA: IT 07164570728
 
 Oggetto della prestazione:
-Descrizione:             ${descrizione || "Modella"}
+Descrizione:             ${descrizione || "Model"}
 Data della prestazione:  ${dataInizio}${dataFine ? " al " + dataFine : ""}
 
 Compenso e ritenuta:
@@ -424,7 +424,7 @@ export default function App() {
   const [myModella, setMyModella] = useState(null);
   const [ritenutaCopied, setRitenutaCopied] = useState(false);
   const [numRitenuta, setNumRitenuta] = useState("1");
-  const [descRitenuta, setDescRitenuta] = useState("Modella");
+  const [descRitenuta, setDescRitenuta] = useState("Model");
   const [dataInizioRitenuta, setDataInizioRitenuta] = useState("");
   const [dataFineRitenuta, setDataFineRitenuta] = useState("");
 
@@ -450,7 +450,7 @@ export default function App() {
             if (data) {
               setUserRuolo(data.ruolo);
               loadData();
-              if (data.ruolo === "modella") {
+              if (data.ruolo === "model") {
                 supabase.from("modelle").select("*").eq("user_id", session.user.id).single()
                   .then(({ data: mod }) => { if (mod) setMyModella(mod); });
               }
@@ -466,7 +466,7 @@ export default function App() {
             if (data) {
               setUserRuolo(data.ruolo);
               loadData();
-              if (data.ruolo === "modella") {
+              if (data.ruolo === "model") {
                 supabase.from("modelle").select("*").eq("user_id", session.user.id).single()
                   .then(({ data: mod }) => { if (mod) setMyModella(mod); });
               }
@@ -579,7 +579,7 @@ export default function App() {
   // Contratto
   const copiaContratto = (job) => {
     const mod = modelle.find(m => m.nome === job.modella);
-    if (!mod || !mod.cf) { showToast("Completa prima la scheda anagrafica della modella", true); return; }
+    if (!mod || !mod.cf) { showToast("Completa prima la scheda anagrafica del model", true); return; }
     const testo = generaContratto(job, mod);
     navigator.clipboard.writeText(testo).then(() => { setContrattoCopied(true); setTimeout(() => setContrattoCopied(false), 3000); showToast("Contratto copiato ✓"); });
   };
@@ -636,7 +636,7 @@ export default function App() {
   );
 
   // ── VISTA MODELLA ────────────────────────────────────────────────────────
-  if (user && userRuolo === "modella") {
+  if (user && userRuolo === "model") {
     const myJobs = jobs.filter(j => j.modella === myModella?.nome).sort((a, b) => new Date(b.data_shooting).getTime() - new Date(a.data_shooting).getTime());
     const totNetto = myJobs.reduce((s, j) => s + calcNetto(j), 0);
     const totPagato = myJobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
@@ -816,7 +816,7 @@ export default function App() {
               <PaddedSection title="Dettagli">
                 <InfoRow label="Cliente"       val={job.cliente} />
                 <Divider />
-                <InfoRow label="Modella"       val={job.modella} />
+                <InfoRow label="Model"       val={job.modella} />
                 <Divider />
                 <InfoRow label="Data shooting" val={fmtDate(job.data_shooting)} />
                 <Divider />
@@ -831,7 +831,7 @@ export default function App() {
                 <Divider />
                 <CalcRow label={`Fee (${job.fee_pct}%)`} val={`– ${fmt(calcFee(job))}`} />
                 <Divider />
-                <CalcRow label="Lordo modella"       val={fmt(calcLordo(job))} />
+                <CalcRow label="Lordo model"       val={fmt(calcLordo(job))} />
                 <Divider />
                 <CalcRow label="Ritenuta 20%"        val={`– ${fmt(calcRitenuta(job))}`} />
                 <div style={{ height: 8 }} />
@@ -932,7 +932,7 @@ A domani 🤍`}
         {view === "ritenuta" && selectedJob && (() => {
           const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
           const mod = modelle.find(m => m.nome === job.modella);
-          if (!mod) return <div style={{ padding: 16, color: "#000000" }}>Completa prima la scheda anagrafica della modella.</div>;
+          if (!mod) return <div style={{ padding: 16, color: "#000000" }}>Completa prima la scheda anagrafica del model.</div>;
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
 
           const stampaPDF = () => {
@@ -970,7 +970,7 @@ A domani 🤍`}
               <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
                 <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Compila</div>
                 <Field label="N° ritenuta" value={numRitenuta} onChange={setNumRitenuta} type="text" />
-                <Field label="Descrizione prestazione" value={descRitenuta} onChange={setDescRitenuta} placeholder="Modella" />
+                <Field label="Descrizione prestazione" value={descRitenuta} onChange={setDescRitenuta} placeholder="Model" />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <Field label="Data inizio" value={dataInizioRitenuta} onChange={setDataInizioRitenuta} placeholder="gg/mm/aaaa" />
                   <Field label="Data fine" value={dataFineRitenuta} onChange={setDataFineRitenuta} placeholder="gg/mm/aaaa" />
@@ -1048,7 +1048,7 @@ A domani 🤍`}
               {userRuolo === "admin" && !mod.user_id && (
                 <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Invita all'app</div>
-                  <Field label="Email modella" value={inviteEmail} onChange={setInviteEmail} type="text" placeholder="email@esempio.com" />
+                  <Field label="Email model" value={inviteEmail} onChange={setInviteEmail} type="text" placeholder="email@esempio.com" />
                   <PrimaryBtn onClick={() => doInvite(mod.nome)} disabled={inviteLoading} color="#16A34A">
                     {inviteLoading ? "Invio..." : "Manda invito ✉️"}
                   </PrimaryBtn>
@@ -1209,7 +1209,7 @@ A domani 🤍`}
           <div style={{ padding: "16px" }}>
             <Field label="Titolo job *" value={formJob.titolo} onChange={v => setFormJob(f => ({ ...f, titolo: v }))} />
             <Field label="Cliente *"   value={formJob.cliente} onChange={v => setFormJob(f => ({ ...f, cliente: v }))} />
-            <SelectField label="Modella" value={formJob.modella} onChange={v => setFormJob(f => ({ ...f, modella: v }))} options={nomiModelle} />
+            <SelectField label="Model" value={formJob.modella} onChange={v => setFormJob(f => ({ ...f, modella: v }))} options={nomiModelle} />
             <Field label="Data shooting" value={formJob.data_shooting} onChange={v => setFormJob(f => ({ ...f, data_shooting: v }))} type="date" />
             <Field label="Luogo"         value={formJob.luogo}         onChange={v => setFormJob(f => ({ ...f, luogo: v }))} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -1226,7 +1226,7 @@ A domani 🤍`}
                   <span style={{ fontSize: 16, color: "#000000" }}>{fmt(calcFee(formJob))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto modella</span>
+                  <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto model</span>
                   <span style={{ fontSize: 18, fontWeight: 800, color: "#000000" }}>{fmt(calcNetto(formJob))}</span>
                 </div>
               </div>
@@ -1242,7 +1242,7 @@ A domani 🤍`}
         {/* ── CALCOLATRICE ── */}
         {view === "calcolatrice" && (
           <div style={{ padding: "20px 16px" }}>
-            <p style={{ fontSize: 16, color: "#767676", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto modella.</p>
+            <p style={{ fontSize: 16, color: "#767676", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto model.</p>
             <CalcolatoreSemplice />
           </div>
         )}
