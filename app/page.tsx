@@ -418,6 +418,7 @@ export default function App() {
   const [toastErr, setToastErr] = useState(false);
   const [loading, setLoading]   = useState("");
   const [contrattoCopied, setContrattoCopied] = useState(false);
+  const [myModella, setMyModella] = useState(null);
   const [ritenutaCopied, setRitenutaCopied] = useState(false);
   const [numRitenuta, setNumRitenuta] = useState("1");
   const [descRitenuta, setDescRitenuta] = useState("Modella");
@@ -446,6 +447,10 @@ export default function App() {
             if (data) {
               setUserRuolo(data.ruolo);
               loadData();
+              if (data.ruolo === "modella") {
+                supabase.from("modelle").select("*").eq("user_id", session.user.id).single()
+                  .then(({ data: mod }) => { if (mod) setMyModella(mod); });
+              }
             }
           });
       }
@@ -458,6 +463,10 @@ export default function App() {
             if (data) {
               setUserRuolo(data.ruolo);
               loadData();
+              if (data.ruolo === "modella") {
+                supabase.from("modelle").select("*").eq("user_id", session.user.id).single()
+                  .then(({ data: mod }) => { if (mod) setMyModella(mod); });
+              }
             }
           });
       }
@@ -625,6 +634,57 @@ export default function App() {
       </div>
     </div>
   );
+
+  // ── VISTA MODELLA ────────────────────────────────────────────────────────
+  if (user && userRuolo === "modella") {
+    const myJobs = jobs.filter(j => j.modella === myModella?.nome).sort((a, b) => new Date(b.data_shooting).getTime() - new Date(a.data_shooting).getTime());
+    const totNetto = myJobs.reduce((s, j) => s + calcNetto(j), 0);
+    const totPagato = myJobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
+    return (
+      <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+        <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <img src="/p-logo.png" alt="P" style={{ height: 48, objectFit: "contain" }} />
+          <button onClick={doLogout} style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Esci</button>
+        </div>
+        <div style={{ padding: "20px 16px 0" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
+          <div style={{ fontSize: 13, color: "#767676", marginBottom: 20 }}>I tuoi lavori</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+            <div style={{ background: "#FFFFFF", borderRadius: 12, padding: "14px", border: "0.5px solid #EBEBEB" }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#000" }}>{fmt(totNetto)}</div>
+              <div style={{ fontSize: 10, color: "#767676", marginTop: 2, letterSpacing: "0.06em" }}>TOTALE NETTO</div>
+            </div>
+            <div style={{ background: "#FFFFFF", borderRadius: 12, padding: "14px", border: "0.5px solid #EBEBEB" }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#000" }}>{fmt(totPagato)}</div>
+              <div style={{ fontSize: 10, color: "#767676", marginTop: 2, letterSpacing: "0.06em" }}>PAGATO</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: "0 16px 30px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {myJobs.length === 0 ? (
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "24px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
+              <div style={{ fontSize: 13, color: "#767676" }}>Nessun job ancora</div>
+            </div>
+          ) : myJobs.map(j => (
+            <div key={j.id} style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "#000" }}>{j.titolo}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>{fmt(calcNetto(j))}</div>
+              </div>
+              <div style={{ fontSize: 12, color: "#767676", marginBottom: 8 }}>{j.cliente} · {fmtDate(j.data_shooting)}</div>
+              <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: j.stato_pagamento === "pagato" ? "#16A34A" : "#767676", background: j.stato_pagamento === "pagato" ? "#F0FDF4" : "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {j.stato_pagamento}
+              </span>
+            </div>
+          ))}
+          <div style={{ marginTop: 10, background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Calcolatrice ritenuta</div>
+            <CalcolatoreSemplice />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (splash) return (
     <div style={{ background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto" }} />
