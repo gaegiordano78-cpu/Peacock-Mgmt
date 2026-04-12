@@ -940,16 +940,16 @@ A domani 🤍`}
             if (!win) { showToast("Abilita i popup per stampare", true); return; }
             win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ritenuta d'acconto - ${mod.nome}</title><style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: Georgia, serif; font-size: 13px; color: #000; padding: 40px 48px; line-height: 1.7; }
-              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #000; padding-bottom: 16px; }
-              .logo { font-size: 22px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
-              .logo span { font-size: 11px; font-weight: 400; display: block; letter-spacing: 0.08em; color: #555; margin-top: 2px; }
-              .num { font-size: 13px; text-align: right; }
-              .num strong { font-size: 16px; display: block; }
-              .body { white-space: pre-wrap; }
-              .footer { margin-top: 40px; border-top: 1px solid #ccc; padding-top: 14px; font-size: 11px; color: #777; text-align: center; }
+              body { font-family: Georgia, serif; font-size: 11px; color: #000; padding: 24px 36px; line-height: 1.45; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; border-bottom: 1.5px solid #000; padding-bottom: 8px; }
+              .logo { font-size: 16px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+              .logo span { font-size: 9px; font-weight: 400; display: block; letter-spacing: 0.06em; color: #555; margin-top: 2px; }
+              .num { font-size: 11px; text-align: right; }
+              .num strong { font-size: 13px; display: block; }
+              .body { white-space: pre-wrap; font-size: 11px; line-height: 1.45; }
+              .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 8px; font-size: 9px; color: #777; text-align: center; }
               @media print {
-                body { padding: 20px 32px; }
+                body { padding: 0; font-size: 11px; line-height: 1.45; }
                 @page { margin: 1cm; size: A4; }
               }
             </style></head><body>
