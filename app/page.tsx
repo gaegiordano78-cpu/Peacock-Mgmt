@@ -152,39 +152,41 @@ const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_sc
 
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
 
-async function creaEventoCalendar(job, tipo) {
+function apriCalendar(job, tipo) {
   const dataBase = job.data_shooting;
-  if (!dataBase) throw new Error("Data shooting mancante");
-  let summary, description, startTime, endTime;
+  if (!dataBase) { alert("Data shooting mancante"); return; }
+
+  const toGcalDate = (iso, time) => iso.replace(/-/g, "") + "T" + time.replace(/:/g, "") + "00";
+
+  let title, details, start, end;
+
   if (tipo === "shooting") {
-    summary = `📷 Shooting: ${job.titolo}`;
-    description = `Cliente: ${job.cliente}\nModella: ${job.modella}\nLuogo: ${job.luogo}\nNetto: ${fmt(calcNetto(job))}`;
-    startTime = `${dataBase}T09:00:00`; endTime = `${dataBase}T18:00:00`;
+    title   = "📷 Shooting: " + job.titolo;
+    details = "Cliente: " + job.cliente + " | Modella: " + job.modella + " | Luogo: " + job.luogo;
+    start   = toGcalDate(dataBase, "09:00");
+    end     = toGcalDate(dataBase, "18:00");
   } else if (tipo === "promemoria") {
     const d = new Date(dataBase); d.setDate(d.getDate() - 1);
     const gp = d.toISOString().split("T")[0];
-    summary = `💬 WA → ${job.modella.split(" ")[0]} — ${job.titolo}`;
-    description = `Domani shooting "${job.titolo}" con ${job.cliente} — ${job.luogo}`;
-    startTime = `${gp}T19:00:00`; endTime = `${gp}T19:15:00`;
+    title   = "💬 WA → " + job.modella.split(" ")[0] + " — " + job.titolo;
+    details = "Domani shooting con " + job.cliente + " — " + job.luogo;
+    start   = toGcalDate(gp, "19:00");
+    end     = toGcalDate(gp, "19:15");
   } else {
-    summary = `💸 Paga ${job.modella.split(" ")[0]}: ${fmt(calcNetto(job))}`;
-    description = `Job: ${job.titolo}\nNetto: ${fmt(calcNetto(job))}`;
     const oggi = new Date().toISOString().split("T")[0];
-    startTime = `${oggi}T10:00:00`; endTime = `${oggi}T10:30:00`;
+    title   = "💸 Paga " + job.modella.split(" ")[0];
+    details = "Job: " + job.titolo;
+    start   = toGcalDate(oggi, "10:00");
+    end     = toGcalDate(oggi, "10:30");
   }
-  const response = await fetch("/api/calendar", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6", max_tokens: 1000,
-      mcp_servers: [{ type: "url", url: "https://gcal.mcp.claude.com/mcp", name: "gcal" }],
-      messages: [{ role: "user", content: `Crea evento Google Calendar: summary="${summary}", description="${description}", start="${startTime}", end="${endTime}", timeZone="Europe/Rome".` }]
-    })
-  });
-  const data = await response.json();
-  if (data.error) throw new Error(data.error.message || "Errore API");
-  const ok = data.content?.some(b => b.type === "mcp_tool_result" || b.type === "text");
-  if (!ok) throw new Error("Risposta calendario vuota");
-  return true;
+
+  const url = "https://calendar.google.com/calendar/render?action=TEMPLATE"
+    + "&text=" + encodeURIComponent(title)
+    + "&details=" + encodeURIComponent(details)
+    + "&dates=" + start + "/" + end
+    + "&ctz=Europe/Rome";
+
+  window.open(url, "_blank");
 }
 
 // ── GENERATORE CONTRATTO ─────────────────────────────────────────────────────
@@ -554,11 +556,8 @@ export default function App() {
     setJobs(prev => prev.map(j => j.id === id ? { ...j, stato_pagamento: "pagato", data_pagamento_cliente: oggi } : j));
     showToast("Pagamento registrato ✓");
   };
-  const aggiungiCal = async (job, tipo) => {
-    setLoading(tipo);
-    try { await creaEventoCalendar(job, tipo); showToast("Aggiunto al calendario ✓"); }
-    catch (e) { showToast(e.message, true); alert("ERRORE: " + e.message); }
-    finally { setLoading(""); }
+  const aggiungiCal = (job, tipo) => {
+    apriCalendar(job, tipo);
   };
 
   // Modella helpers
