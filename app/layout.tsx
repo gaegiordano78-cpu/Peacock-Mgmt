@@ -37,6 +37,7 @@ export default function RootLayout({
           #splash-loader img {
             width: 65%;
             object-fit: contain;
+            margin-left: 8px;
             animation: fadeInLogo 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           }
           #splash-loader.hidden { opacity: 0; pointer-events: none; }
