@@ -181,9 +181,7 @@ async function creaEventoCalendar(job, tipo) {
     })
   });
   const data = await response.json();
-  const data = await response.json();
-console.log("CALENDAR API RESPONSE:", JSON.stringify(data, null, 2)); // ← QUI
-if (data.error) throw new Error(data.error.message || "Errore API");
+  console.log("CALENDAR API RESPONSE:", JSON.stringify(data, null, 2));
   if (data.error) throw new Error(data.error.message || "Errore API");
   const ok = data.content?.some(b => b.type === "mcp_tool_result" || b.type === "text");
   if (!ok) throw new Error("Risposta calendario vuota");
