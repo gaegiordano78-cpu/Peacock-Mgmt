@@ -734,7 +734,7 @@ export default function App() {
               <>
                 <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
                 <button onClick={() => { setFormMod({ ...emptyModella, id: null }); setView("nuova_modella"); }}
-                  style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#FFFFFF", color: "#FFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   + Model
                 </button>
               </>
