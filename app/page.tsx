@@ -517,7 +517,7 @@ export default function App() {
       if (data) {
         setJobs(prev => [...prev, data]);
       } else {
-        showToast("Errore salvataggio", true);
+        showToast(error?.message || "Errore salvataggio", true);
         return;
       }
     }
