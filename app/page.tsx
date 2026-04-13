@@ -149,6 +149,7 @@ const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "
 
 const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, rimborso: 0, fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
+const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
 
@@ -427,6 +428,10 @@ export default function App() {
   const [descRitenuta, setDescRitenuta] = useState("Model");
   const [dataInizioRitenuta, setDataInizioRitenuta] = useState("");
   const [dataFineRitenuta, setDataFineRitenuta] = useState("");
+  const [castings, setCastings] = useState<any[]>([]);
+  const [candidature, setCandidature] = useState<any[]>([]);
+  const [formCasting, setFormCasting] = useState(emptyCasting);
+  const [selectedCasting, setSelectedCasting] = useState<any>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
@@ -440,6 +445,10 @@ export default function App() {
       const { data: modelleData } = await supabase.from("modelle").select("*").order("nome");
       if (modelleData && modelleData.length > 0) setModelle(modelleData);
       else setModelle(initialModelle);
+      const { data: castingsData } = await supabase.from("castings").select("*").order("created_at", { ascending: false });
+      if (castingsData) setCastings(castingsData);
+      const { data: candidatureData } = await supabase.from("candidature").select("*");
+      if (candidatureData) setCandidature(candidatureData);
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -550,6 +559,43 @@ export default function App() {
     showToast("Profile deleted"); setView("modelle");
   };
 
+  // Casting helpers
+  const saveCasting = async () => {
+    if (!formCasting.brand || !formCasting.tipologia) { showToast("Inserisci brand e tipologia", true); return; }
+    const { id, ...castingData } = formCasting;
+    if (!castingData.data) castingData.data = null;
+    if (id) {
+      const { error } = await supabase.from("castings").update(castingData).eq("id", id);
+      if (error) { showToast(error.message, true); return; }
+      setCastings(prev => prev.map(c => c.id === id ? { ...c, ...castingData } : c));
+    } else {
+      const { data, error } = await supabase.from("castings").insert(castingData).select().single();
+      if (error) { showToast(error.message, true); return; }
+      if (data) setCastings(prev => [data, ...prev]);
+    }
+    showToast("Casting salvato ✓"); setView("castings");
+  };
+  const deleteCasting = async id => {
+    await supabase.from("castings").delete().eq("id", id);
+    setCastings(prev => prev.filter(c => c.id !== id));
+    setCandidature(prev => prev.filter(c => c.casting_id !== id));
+    showToast("Casting eliminato"); setView("castings");
+  };
+  const candidati = async (castingId) => {
+    if (!myModella) return;
+    const { data, error } = await supabase.from("candidature").insert({ casting_id: castingId, modella_id: myModella.id }).select().single();
+    if (error) { showToast(error.message, true); return; }
+    if (data) setCandidature(prev => [...prev, data]);
+    showToast("Candidatura inviata ✓");
+  };
+  const scandidati = async (castingId) => {
+    if (!myModella) return;
+    const { error } = await supabase.from("candidature").delete().eq("casting_id", castingId).eq("modella_id", myModella.id);
+    if (error) { showToast(error.message, true); return; }
+    setCandidature(prev => prev.filter(c => !(c.casting_id === castingId && c.modella_id === myModella.id)));
+    showToast("Candidatura rimossa");
+  };
+
   const marcaPagato = async id => {
     const oggi = new Date().toISOString().split("T")[0];
     await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
@@ -603,6 +649,8 @@ export default function App() {
     if (view === "nuova_modella") return setView("modelle");
     if (view === "contratto") return setView("dettaglio");
     if (view === "ritenuta") return setView("dettaglio");
+    if (view === "nuovo_casting") return setView("castings");
+    if (view === "dettaglio_casting") return setView("castings");
     setView("lista");
   };
 
@@ -616,6 +664,9 @@ export default function App() {
     if (view === "nuova_modella") return formMod.id && modelle.find(m => m.id === formMod.id) ? "Edit Profile" : "New Model";
     if (view === "contratto") return "Contratto";
     if (view === "ritenuta") return "Ritenuta d'acconto";
+    if (view === "castings") return "Castings";
+    if (view === "nuovo_casting") return formCasting.id ? "Modifica Casting" : "Nuovo Casting";
+    if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
     return "";
   };
 
@@ -677,6 +728,35 @@ export default function App() {
               </span>
             </div>
           ))}
+          {castings.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", margin: "6px 4px 10px" }}>Casting aperti</div>
+              {castings.map(c => {
+                const giaCandidata = candidature.some(cand => cand.casting_id === c.id && cand.modella_id === myModella?.id);
+                return (
+                  <div key={c.id} style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB", marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <div style={{ fontSize: 17, fontWeight: 600, color: "#000" }}>{c.brand}</div>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: "#767676", background: "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                        {c.genere}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 16, color: "#767676", marginBottom: 4 }}>{c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}</div>
+                    {c.caratteristiche && <div style={{ fontSize: 15, color: "#767676", marginBottom: 10, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{c.caratteristiche}</div>}
+                    {giaCandidata ? (
+                      <button onClick={() => scandidati(c.id)} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "0.5px solid #16A34A", background: "#F0FDF4", color: "#16A34A", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                        ✓ Candidato — annulla
+                      </button>
+                    ) : (
+                      <button onClick={() => candidati(c.id)} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                        Candidati
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <div style={{ marginTop: 10, background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Calcolatrice ritenuta</div>
             <CalcolatoreSemplice />
