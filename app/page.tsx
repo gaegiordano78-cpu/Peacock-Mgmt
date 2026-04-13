@@ -432,6 +432,8 @@ export default function App() {
   const [candidature, setCandidature] = useState<any[]>([]);
   const [formCasting, setFormCasting] = useState(emptyCasting);
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
+  const [modelView, setModelView] = useState("home"); // "home" | "profilo"
+  const [formMyProfile, setFormMyProfile] = useState<any>({});
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
@@ -596,6 +598,34 @@ export default function App() {
     showToast("Candidatura rimossa");
   };
 
+  // Profilo personale del model (self-service)
+  const saveMyProfile = async () => {
+    const { error } = await supabase.rpc("update_my_profile", {
+      p_telefono:      formMyProfile.telefono      || "",
+      p_email:         formMyProfile.email         || "",
+      p_link_sito:     formMyProfile.link_sito     || "",
+      p_cf:            (formMyProfile.cf || "").toUpperCase(),
+      p_data_nascita:  formMyProfile.data_nascita  || "",
+      p_luogo_nascita: formMyProfile.luogo_nascita || "",
+      p_indirizzo:     formMyProfile.indirizzo     || "",
+      p_iban:          formMyProfile.iban          || "",
+    });
+    if (error) { showToast(error.message, true); return; }
+    setMyModella((prev: any) => ({
+      ...(prev || {}),
+      telefono:      formMyProfile.telefono      || "",
+      email:         formMyProfile.email         || "",
+      link_sito:     formMyProfile.link_sito     || "",
+      cf:            (formMyProfile.cf || "").toUpperCase(),
+      data_nascita:  formMyProfile.data_nascita  || "",
+      luogo_nascita: formMyProfile.luogo_nascita || "",
+      indirizzo:     formMyProfile.indirizzo     || "",
+      iban:          formMyProfile.iban          || "",
+    }));
+    showToast("Profilo aggiornato ✓");
+    setModelView("home");
+  };
+
   const marcaPagato = async id => {
     const oggi = new Date().toISOString().split("T")[0];
     await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
@@ -688,6 +718,50 @@ export default function App() {
 
   // ── VISTA MODELLA ────────────────────────────────────────────────────────
   if (user && userRuolo === "model") {
+    // Sub-view: profilo personale
+    if (modelView === "profilo") {
+      return (
+        <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+          {toast && (
+            <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toastErr ? "#DC2626" : "#1C1714", color: "#FFF", padding: "10px 20px", borderRadius: 100, fontSize: 16, fontWeight: 500, zIndex: 100, boxShadow: "0 4px 24px rgba(0,0,0,0.15)", whiteSpace: "nowrap" }}>
+              {toast}
+            </div>
+          )}
+          <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <img src="/p-logo.png" alt="P" style={{ height: 48, objectFit: "contain" }} />
+            <button onClick={() => setModelView("home")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+          </div>
+          <div style={{ padding: "20px 16px 40px", flex: 1, overflowY: "auto" }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>Il mio profilo</div>
+            <div style={{ fontSize: 17, color: "#767676", marginBottom: 20 }}>Aggiorna i tuoi dati personali</div>
+
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Contatti</div>
+            <Field label="Telefono" value={formMyProfile.telefono || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, telefono: v }))} placeholder="+39..." />
+            <Field label="Email" value={formMyProfile.email || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, email: v }))} />
+            <Field label="Link sito / portfolio" value={formMyProfile.link_sito || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, link_sito: v }))} placeholder="https://..." />
+
+            <div style={{ height: 8 }} />
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Dati personali</div>
+            <Field label="Codice Fiscale" value={formMyProfile.cf || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, cf: v.toUpperCase() }))} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Data di nascita" value={formMyProfile.data_nascita || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
+              <Field label="Luogo di nascita" value={formMyProfile.luogo_nascita || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, luogo_nascita: v }))} placeholder="Bari (BA)" />
+            </div>
+            <Field label="Indirizzo" value={formMyProfile.indirizzo || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, indirizzo: v }))} placeholder="Via..." />
+
+            <div style={{ height: 8 }} />
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Coordinate bancarie</div>
+            <Field label="IBAN" value={formMyProfile.iban || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, iban: v.toUpperCase() }))} placeholder="IT..." />
+
+            <PrimaryBtn onClick={saveMyProfile}>Salva</PrimaryBtn>
+            <div style={{ marginTop: 14, fontSize: 14, color: "#9C948A", textAlign: "center", lineHeight: 1.5 }}>
+              Per modificare nome, contratto o altri dati<br />contatta l'agenzia.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const myJobs = jobs.filter(j => j.modella === myModella?.nome).sort((a, b) => new Date(b.data_shooting).getTime() - new Date(a.data_shooting).getTime());
     const totNetto = myJobs.reduce((s, j) => s + calcNetto(j), 0);
     const totPagato = myJobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
@@ -695,7 +769,13 @@ export default function App() {
       <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
         <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <img src="/p-logo.png" alt="P" style={{ height: 48, objectFit: "contain" }} />
-          <button onClick={doLogout} style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>Esci</button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button onClick={() => { setFormMyProfile(myModella || {}); setModelView("profilo"); }}
+              style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
+              Profilo
+            </button>
+            <button onClick={doLogout} style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>Esci</button>
+          </div>
         </div>
         <div style={{ padding: "20px 16px 0" }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
@@ -785,8 +865,17 @@ export default function App() {
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <img src="/p-logo.png" alt="P" style={{ height: 110, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && (
+            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+            )}
+            {view === "castings" && (
+              <>
+                <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
+                <button onClick={() => { setFormCasting({ ...emptyCasting, id: null }); setView("nuovo_casting"); }}
+                  style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  + Casting
+                </button>
+              </>
             )}
             {view === "lista" && (
               <>
@@ -804,6 +893,12 @@ export default function App() {
                   style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   👤
                 </button>
+                {userRuolo === "admin" && (
+                  <button onClick={() => setView("castings")}
+                    style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    📋
+                  </button>
+                )}
                 <button onClick={() => setView("calcolatrice")}
                   style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   ÷
@@ -1318,6 +1413,134 @@ A domani 🤍`}
             <PrimaryBtn onClick={saveJob}>Salva Job</PrimaryBtn>
           </div>
         )}
+
+        {/* ── LISTA CASTINGS (admin) ── */}
+        {view === "castings" && (
+          <div style={{ padding: "16px" }}>
+            {castings.length === 0 ? (
+              <div style={{ background: "#FFFFFF", borderRadius: 18, padding: "32px 20px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
+                <div style={{ fontSize: 17, color: "#767676", marginBottom: 12 }}>Nessun casting ancora creato</div>
+                <div style={{ fontSize: 15, color: "#9C948A", lineHeight: 1.5 }}>Crea un casting per raccogliere candidature dai model.</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {castings.map(c => {
+                  const nCand = candidature.filter(k => k.casting_id === c.id).length;
+                  return (
+                    <div key={c.id} onClick={() => { setSelectedCasting(c); setView("dettaglio_casting"); }}
+                      style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 18, padding: "16px", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: "#000000" }}>{c.brand}</div>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: "#767676", background: "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                          {c.genere}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 16, color: "#767676", marginBottom: 8 }}>
+                        {c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: "#000000" }}>{nCand}</span>
+                        <span style={{ fontSize: 14, color: "#767676" }}>{nCand === 1 ? "candidatura" : "candidature"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── NUOVO / MODIFICA CASTING ── */}
+        {view === "nuovo_casting" && (
+          <div style={{ padding: "16px" }}>
+            <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo"]} />
+            <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
+            <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
+            <Field label="Data shooting" value={formCasting.data} onChange={v => setFormCasting(f => ({ ...f, data: v }))} type="date" />
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>Caratteristiche richieste</label>
+              <textarea value={formCasting.caratteristiche} onChange={e => setFormCasting(f => ({ ...f, caratteristiche: e.target.value }))} placeholder="Altezza, età, tipologia, note aggiuntive..."
+                style={{ width: "100%", minHeight: 110, background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", resize: "vertical", lineHeight: 1.5 }} />
+            </div>
+
+            <PrimaryBtn onClick={saveCasting}>Salva casting</PrimaryBtn>
+            {formCasting.id && (
+              <button onClick={() => { if (window.confirm("Eliminare questo casting? Verranno rimosse anche tutte le candidature.")) deleteCasting(formCasting.id); }}
+                style={{ width: "100%", marginTop: 8, padding: "13px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 16, color: "#000000", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
+                Elimina casting
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── DETTAGLIO CASTING ── */}
+        {view === "dettaglio_casting" && selectedCasting && (() => {
+          const cast = castings.find(c => c.id === selectedCasting.id) || selectedCasting;
+          const candidati = candidature
+            .filter(k => k.casting_id === cast.id)
+            .map(k => ({ cand: k, mod: modelle.find(m => m.id === k.modella_id) }))
+            .filter(x => x.mod);
+
+          return (
+            <div style={{ padding: "20px 16px" }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                <Badge label={cast.genere} color="#000000" bg="#F5F5F5" />
+                {cast.data && <Badge label={fmtDate(cast.data)} color="#767676" bg="#F5F5F5" />}
+              </div>
+
+              <PaddedSection title="Dettagli casting">
+                <InfoRow label="Brand" val={cast.brand} />
+                <Divider />
+                <InfoRow label="Tipologia" val={cast.tipologia} />
+                <Divider />
+                <InfoRow label="Data shooting" val={fmtDate(cast.data)} />
+                {cast.caratteristiche && (
+                  <>
+                    <Divider />
+                    <div style={{ padding: "12px 0" }}>
+                      <div style={{ fontSize: 16, color: "#767676", marginBottom: 6 }}>Caratteristiche</div>
+                      <div style={{ fontSize: 16, color: "#000000", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{cast.caratteristiche}</div>
+                    </div>
+                  </>
+                )}
+              </PaddedSection>
+
+              <Section title={`Candidature · ${candidati.length}`}>
+                {candidati.length === 0 ? (
+                  <div style={{ padding: "20px 16px", fontSize: 16, color: "#767676", textAlign: "center" }}>Nessuna candidatura ancora</div>
+                ) : (
+                  candidati.map(({ cand, mod }, i) => (
+                    <div key={cand.id}>
+                      <div onClick={() => { setSelectedModella(mod); setView("scheda_modella"); }}
+                        style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                          {mod.foto_profilo ? (
+                            <img src={mod.foto_profilo} alt={mod.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            <span style={{ fontSize: 14, fontWeight: 700, color: "#767676" }}>{mod.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}</span>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 16, fontWeight: 600, color: "#000000" }}>{mod.nome}</div>
+                          <div style={{ fontSize: 14, color: "#767676" }}>{mod.contratto_tipo || mod.tipo || "—"}</div>
+                        </div>
+                        <span style={{ fontSize: 16, color: "#C4A882" }}>›</span>
+                      </div>
+                      {i < candidati.length - 1 && <Divider />}
+                    </div>
+                  ))
+                )}
+              </Section>
+
+              <GhostBtn onClick={() => { setFormCasting(cast); setView("nuovo_casting"); }}>Modifica casting</GhostBtn>
+              <button onClick={() => { if (window.confirm("Eliminare questo casting? Verranno rimosse anche tutte le candidature.")) deleteCasting(cast.id); }}
+                style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 14, color: "#000000", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
+                Elimina casting
+              </button>
+            </div>
+          );
+        })()}
 
         {/* ── CALCOLATRICE ── */}
         {view === "calcolatrice" && (
