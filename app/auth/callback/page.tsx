@@ -10,84 +10,115 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
 
-export default function AuthCallback() {
+export default function AuthCallbackPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Supabase inserisce il token nell'hash dell'URL
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+    const init = async () => {
+      // Caso 1: link di reset/invite col formato ?token_hash=...&type=recovery
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenHash = urlParams.get("token_hash");
+      const type = urlParams.get("type");
+
+      if (tokenHash && type) {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type,
+        });
+        if (error) {
+          setError("Link non valido o scaduto. Chiedi un nuovo invito.");
+          setChecking(false);
+          return;
+        }
         setReady(true);
+        setChecking(false);
+        return;
       }
+
+      // Caso 2: link vecchio formato (hash #access_token=...)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setReady(true);
+      } else {
+        setError("Link non valido o scaduto. Chiedi un nuovo invito.");
+      }
+      setChecking(false);
+    };
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) setReady(true);
     });
-    // Processa il token dall'URL
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleSetPassword = async () => {
-    if (!password) { setError("Inserisci una password"); return; }
-    if (password.length < 6) { setError("Password minimo 6 caratteri"); return; }
+  const handleSubmit = async () => {
+    setError("");
+    if (password.length < 8) { setError("La password deve avere almeno 8 caratteri"); return; }
     if (password !== confirm) { setError("Le password non coincidono"); return; }
     setLoading(true);
-    setError("");
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
-      setError(error.message);
-    } else {
-      setDone(true);
-      setTimeout(() => { window.location.href = "/"; }, 2000);
-    }
+    if (error) { setError(error.message); setLoading(false); return; }
+    setSuccess(true);
     setLoading(false);
+    setTimeout(() => { window.location.href = "/"; }, 2000);
   };
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F7F3EE", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <img src={LOGO} alt="Peacock" style={{ height: 56, objectFit: "contain" }} />
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fafafa", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", padding: 20 }}>
+      <div style={{ maxWidth: 400, width: "100%", background: "#fff", padding: 40, borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+        <img src={LOGO} alt="Peacock" style={{ height: 40, display: "block", margin: "0 auto 30px" }} />
+        <h2 style={{ fontSize: 18, fontWeight: 500, marginBottom: 8, textAlign: "center" }}>Imposta la tua password</h2>
+        <p style={{ fontSize: 13, color: "#666", marginBottom: 24, textAlign: "center", lineHeight: 1.5 }}>
+          Scegli una password per accedere all'area riservata di Peacock Models.
+        </p>
+
+        {success ? (
+          <div style={{ padding: 16, background: "#f0f9f0", color: "#2d6a2d", borderRadius: 6, fontSize: 13, textAlign: "center" }}>
+            Password impostata ✓<br/>Reindirizzamento in corso…
+          </div>
+        ) : checking ? (
+          <div style={{ padding: 16, color: "#666", borderRadius: 6, fontSize: 13, textAlign: "center" }}>
+            Verifica in corso…
+          </div>
+        ) : !ready ? (
+          <div style={{ padding: 16, background: "#fef2f2", color: "#991b1b", borderRadius: 6, fontSize: 13, textAlign: "center" }}>
+            {error}
+          </div>
+        ) : (
+          <>
+            <input
+              type="password"
+              placeholder="Nuova password (min. 8 caratteri)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", fontSize: 14, border: "1px solid #ddd", borderRadius: 6, marginBottom: 12, boxSizing: "border-box" }}
+            />
+            <input
+              type="password"
+              placeholder="Conferma password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", fontSize: 14, border: "1px solid #ddd", borderRadius: 6, marginBottom: 16, boxSizing: "border-box" }}
+            />
+            {error && <div style={{ fontSize: 12, color: "#c00", marginBottom: 12 }}>{error}</div>}
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{ width: "100%", padding: "12px", fontSize: 14, background: "#000", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", opacity: loading ? 0.6 : 1 }}
+            >
+              {loading ? "Salvataggio…" : "Imposta password"}
+            </button>
+          </>
+        )}
       </div>
-
-      {done ? (
-        <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 20, padding: "28px 24px", textAlign: "center" }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>✓</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#16A34A" }}>Password creata!</div>
-          <div style={{ fontSize: 13, color: "#9C948A", marginTop: 8 }}>Accesso in corso...</div>
-        </div>
-      ) : (
-        <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "28px 24px", border: "1px solid #F0EAE0" }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#1C1714", marginBottom: 6 }}>Crea la tua password</div>
-          <div style={{ fontSize: 13, color: "#9C948A", marginBottom: 24 }}>Benvenuto su Peacock Mgmt — scegli una password per accedere.</div>
-
-          {error && (
-            <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#DC2626" }}>
-              {error}
-            </div>
-          )}
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimo 6 caratteri"
-              style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Conferma password</label>
-            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Ripeti la password"
-              style={{ width: "100%", background: "#FAFAF8", border: "1.5px solid #EAE4DC", borderRadius: 12, color: "#1C1714", fontSize: 16, padding: "12px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
-          </div>
-
-          <button onClick={handleSetPassword} disabled={loading}
-            style={{ width: "100%", padding: "15px", background: loading ? "#E5E0D8" : "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 15, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-            {loading ? "Salvataggio..." : "Accedi a Peacock"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
