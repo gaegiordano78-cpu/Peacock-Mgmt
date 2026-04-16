@@ -149,7 +149,7 @@ const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "
 
 const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, rimborso: 0, fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
-const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
+const emptyCasting = { id: null, data: "", brand: "", tipologia: "", caratteristiche: "" };
 
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
 
@@ -843,9 +843,6 @@ export default function App() {
                   <div key={c.id} style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB", marginBottom: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                       <div style={{ fontSize: 17, fontWeight: 600, color: "#000" }}>{c.brand}</div>
-                      <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: "#767676", background: "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                        {c.genere}
-                      </span>
                     </div>
                     <div style={{ fontSize: 16, color: "#767676", marginBottom: 4 }}>{c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}</div>
                     {c.caratteristiche && <div style={{ fontSize: 15, color: "#767676", marginBottom: 10, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{c.caratteristiche}</div>}
@@ -1457,9 +1454,6 @@ A domani 🤍`}
                       style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 18, padding: "16px", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                         <div style={{ fontSize: 16, fontWeight: 600, color: "#000000" }}>{c.brand}</div>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: "#767676", background: "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {c.genere}
-                        </span>
                       </div>
                       <div style={{ fontSize: 16, color: "#767676", marginBottom: 8 }}>
                         {c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}
@@ -1479,7 +1473,6 @@ A domani 🤍`}
         {/* ── NUOVO / MODIFICA CASTING ── */}
         {view === "nuovo_casting" && (
           <div style={{ padding: "16px" }}>
-            <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo"]} />
             <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
             <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
             <Field label="Data shooting" value={formCasting.data} onChange={v => setFormCasting(f => ({ ...f, data: v }))} type="date" />
@@ -1511,7 +1504,6 @@ A domani 🤍`}
           return (
             <div style={{ padding: "20px 16px" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                <Badge label={cast.genere} color="#000000" bg="#F5F5F5" />
                 {cast.data && <Badge label={fmtDate(cast.data)} color="#767676" bg="#F5F5F5" />}
               </div>
 
