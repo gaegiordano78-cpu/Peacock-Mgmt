@@ -149,7 +149,7 @@ const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "
 
 const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, rimborso: 0, fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
-const emptyCasting = { id: null, data: "", brand: "", tipologia: "", caratteristiche: "" };
+const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
 
@@ -434,6 +434,7 @@ export default function App() {
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
   const [modelView, setModelView] = useState("home"); // "home" | "profilo"
   const [formMyProfile, setFormMyProfile] = useState<any>({});
+  const [polaUploading, setPolaUploading] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
@@ -570,38 +571,12 @@ export default function App() {
       const { error } = await supabase.from("castings").update(castingData).eq("id", id);
       if (error) { showToast(error.message, true); return; }
       setCastings(prev => prev.map(c => c.id === id ? { ...c, ...castingData } : c));
-      showToast("Casting salvato ✓"); setView("castings");
     } else {
       const { data, error } = await supabase.from("castings").insert(castingData).select().single();
       if (error) { showToast(error.message, true); return; }
       if (data) setCastings(prev => [data, ...prev]);
-      showToast("Casting salvato ✓"); setView("castings");
-      // Invia notifica email a tutti i model
-      try {
-        const res = await fetch("https://xtpafxourildjnofeulr.supabase.co/functions/v1/notify-casting", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-          },
-          body: JSON.stringify({
-            titolo: castingData.brand + " — " + castingData.tipologia,
-            cliente: castingData.brand,
-            data_shooting: castingData.data,
-            luogo: "",
-            compenso: "",
-            descrizione: castingData.caratteristiche,
-            casting_id: data?.id
-          })
-        });
-        const json = await res.json();
-        if (json.ok && json.sent > 0) {
-          showToast(`Email inviate a ${json.sent} model ✓`);
-        }
-      } catch (e) {
-        console.error("Errore invio email casting:", e);
-      }
     }
+    showToast("Casting salvato ✓"); setView("castings");
   };
   const deleteCasting = async id => {
     await supabase.from("castings").delete().eq("id", id);
@@ -631,9 +606,9 @@ export default function App() {
       p_email:         formMyProfile.email         || "",
       p_link_sito:     formMyProfile.link_sito     || "",
       p_cf:            (formMyProfile.cf || "").toUpperCase(),
-      p_data_nascita:  formMyProfile.data_nascita  || "",
-      p_luogo_nascita: formMyProfile.luogo_nascita || "",
       p_indirizzo:     formMyProfile.indirizzo     || "",
+      p_citta:         formMyProfile.citta         || "",
+      p_cap:           formMyProfile.cap           || "",
       p_iban:          formMyProfile.iban          || "",
     });
     if (error) { showToast(error.message, true); return; }
@@ -643,13 +618,34 @@ export default function App() {
       email:         formMyProfile.email         || "",
       link_sito:     formMyProfile.link_sito     || "",
       cf:            (formMyProfile.cf || "").toUpperCase(),
-      data_nascita:  formMyProfile.data_nascita  || "",
-      luogo_nascita: formMyProfile.luogo_nascita || "",
       indirizzo:     formMyProfile.indirizzo     || "",
+      citta:         formMyProfile.citta         || "",
+      cap:           formMyProfile.cap           || "",
       iban:          formMyProfile.iban          || "",
     }));
     showToast("Profilo aggiornato ✓");
     setModelView("home");
+  };
+
+  // Upload singola pola
+  const uploadPola = async (slot: string, file: File) => {
+    if (!myModella || !user) return;
+    setPolaUploading(slot);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${slot}_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("polas").upload(path, file, { cacheControl: "3600", upsert: false });
+      if (upErr) { showToast(upErr.message, true); setPolaUploading(""); return; }
+      const { data: urlData } = supabase.storage.from("polas").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+      const { error: rpcErr } = await supabase.rpc("update_my_pola", { p_slot: slot, p_url: publicUrl });
+      if (rpcErr) { showToast(rpcErr.message, true); setPolaUploading(""); return; }
+      setMyModella((prev: any) => ({ ...(prev || {}), [slot]: publicUrl }));
+      showToast("Foto caricata ✓");
+    } catch (e: any) {
+      showToast(e.message || "Errore upload", true);
+    }
+    setPolaUploading("");
   };
 
   const marcaPagato = async id => {
@@ -769,15 +765,52 @@ export default function App() {
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Dati personali</div>
             <Field label="Codice Fiscale" value={formMyProfile.cf || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, cf: v.toUpperCase() }))} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Data di nascita" value={formMyProfile.data_nascita || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
-              <Field label="Luogo di nascita" value={formMyProfile.luogo_nascita || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, luogo_nascita: v }))} placeholder="Bari (BA)" />
-            </div>
             <Field label="Indirizzo" value={formMyProfile.indirizzo || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, indirizzo: v }))} placeholder="Via..." />
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+              <Field label="Città" value={formMyProfile.citta || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, citta: v }))} placeholder="Bari" />
+              <Field label="CAP" value={formMyProfile.cap || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, cap: v }))} placeholder="70121" />
+            </div>
 
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Coordinate bancarie</div>
             <Field label="IBAN" value={formMyProfile.iban || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, iban: v.toUpperCase() }))} placeholder="IT..." />
+
+            <div style={{ height: 8 }} />
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Polas</div>
+            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Carica 4 foto su sfondo neutro, senza filtri e senza trucco.</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+              {[
+                { slot: "pola_primo_piano", label: "Primo piano" },
+                { slot: "pola_profilo_sx", label: "Profilo sinistro" },
+                { slot: "pola_profilo_dx", label: "Profilo destro" },
+                { slot: "pola_figura_intera", label: "Figura intera" },
+              ].map(({ slot, label }) => {
+                const url = myModella?.[slot];
+                const isLoading = polaUploading === slot;
+                return (
+                  <div key={slot} style={{ position: "relative" }}>
+                    <label style={{ display: "block", cursor: isLoading ? "wait" : "pointer" }}>
+                      <input type="file" accept="image/*" style={{ display: "none" }} disabled={isLoading}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadPola(slot, f); e.target.value = ""; }} />
+                      <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 14, overflow: "hidden", background: "#EBEBEB", border: "0.5px solid #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                        {url ? (
+                          <img src={url} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ textAlign: "center", color: "#9C948A" }}>
+                            <div style={{ fontSize: 28, marginBottom: 4 }}>{isLoading ? "⏳" : "📷"}</div>
+                            <div style={{ fontSize: 11 }}>{isLoading ? "Caricamento..." : "Tappa per caricare"}</div>
+                          </div>
+                        )}
+                        {isLoading && url && (
+                          <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>⏳</div>
+                        )}
+                      </div>
+                    </label>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                  </div>
+                );
+              })}
+            </div>
 
             <PrimaryBtn onClick={saveMyProfile}>Salva</PrimaryBtn>
             <div style={{ marginTop: 14, fontSize: 14, color: "#9C948A", textAlign: "center", lineHeight: 1.5 }}>
@@ -843,6 +876,9 @@ export default function App() {
                   <div key={c.id} style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB", marginBottom: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                       <div style={{ fontSize: 17, fontWeight: 600, color: "#000" }}>{c.brand}</div>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: "#767676", background: "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                        {c.genere}
+                      </span>
                     </div>
                     <div style={{ fontSize: 16, color: "#767676", marginBottom: 4 }}>{c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}</div>
                     {c.caratteristiche && <div style={{ fontSize: 15, color: "#767676", marginBottom: 10, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{c.caratteristiche}</div>}
@@ -1139,24 +1175,16 @@ A domani 🤍`}
             win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ritenuta d'acconto - ${mod.nome}</title><style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
               body { font-family: Georgia, serif; font-size: 11px; color: #000; padding: 24px 36px; line-height: 1.45; }
-              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; border-bottom: 1.5px solid #000; padding-bottom: 8px; }
-              .logo { font-size: 16px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
-              .logo span { font-size: 9px; font-weight: 400; display: block; letter-spacing: 0.06em; color: #555; margin-top: 2px; }
-              .num { font-size: 11px; text-align: right; }
+              .num { font-size: 11px; text-align: right; margin-bottom: 14px; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
               .num strong { font-size: 13px; display: block; }
               .body { white-space: pre-wrap; font-size: 11px; line-height: 1.45; }
-              .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 8px; font-size: 9px; color: #777; text-align: center; }
               @media print {
                 body { padding: 0; font-size: 11px; line-height: 1.45; }
                 @page { margin: 1cm; size: A4; }
               }
             </style></head><body>
-              <div class="header">
-                <div class="logo">Peacock Models Mgmt<span>Via G. Matteotti 16 — Bari · P.IVA IT 07164570728</span></div>
-                <div class="num"><span>Ritenuta n°</span><strong>${numRitenuta}</strong></div>
-              </div>
+              <div class="num"><span>Ritenuta n°</span><strong>${numRitenuta}</strong></div>
               <div class="body">${testo.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
-              <div class="footer">Documento generato da Peacock Models Mgmt</div>
             </body></html>`);
             win.document.close();
             win.focus();
@@ -1263,29 +1291,32 @@ A domani 🤍`}
               </PaddedSection>
 
               {/* POLAS */}
-              <Section title="Polas"
-                action={mod.link_polas ? (
-                  <a href={mod.link_polas} target="_blank" rel="noreferrer"
-                    style={{ fontSize: 17, color: "#C4A882", fontWeight: 600, textDecoration: "none" }}>
-                    Apri Drive →
-                  </a>
-                ) : null}>
-                <div style={{ padding: "14px 16px" }}>
-                  {mod.link_polas ? (
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <div style={{ fontSize: 17, color: "#000000", fontWeight: 500, marginBottom: 2 }}>Cartella Drive collegata</div>
-                        {mod.data_polas && <div style={{ fontSize: 17, color: "#767676" }}>Aggiornate il {mod.data_polas}</div>}
-                      </div>
-                      <a href={mod.link_polas} target="_blank" rel="noreferrer"
-                        style={{ width: 40, height: 40, background: "#F5F5F5", border: "0.5px solid #EBEBEB", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, textDecoration: "none" }}>
-                        📁
-                      </a>
+              <Section title="Polas">
+                {(mod.pola_primo_piano || mod.pola_profilo_sx || mod.pola_profilo_dx || mod.pola_figura_intera) ? (
+                  <div style={{ padding: "14px 16px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      {[
+                        { slot: "pola_primo_piano", label: "Primo piano" },
+                        { slot: "pola_profilo_sx", label: "Profilo SX" },
+                        { slot: "pola_profilo_dx", label: "Profilo DX" },
+                        { slot: "pola_figura_intera", label: "Figura intera" },
+                      ].map(({ slot, label }) => (
+                        <div key={slot}>
+                          <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 14, overflow: "hidden", background: "#F5F5F5", border: "0.5px solid #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {mod[slot] ? (
+                              <img src={mod[slot]} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              <div style={{ fontSize: 12, color: "#C4C0BA", textAlign: "center" }}>—</div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <div style={{ fontSize: 16, color: "#767676" }}>Nessuna cartella collegata. Modificala scheda per aggiungere il link Drive.</div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: "16px", fontSize: 16, color: "#767676" }}>Il model non ha ancora caricato le polas.</div>
+                )}
               </Section>
 
               {/* CONTRATTO AGENZIA */}
@@ -1454,6 +1485,9 @@ A domani 🤍`}
                       style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 18, padding: "16px", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                         <div style={{ fontSize: 16, fontWeight: 600, color: "#000000" }}>{c.brand}</div>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 100, border: "0.5px solid #EBEBEB", color: "#767676", background: "#F5F5F5", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                          {c.genere}
+                        </span>
                       </div>
                       <div style={{ fontSize: 16, color: "#767676", marginBottom: 8 }}>
                         {c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}
@@ -1473,6 +1507,7 @@ A domani 🤍`}
         {/* ── NUOVO / MODIFICA CASTING ── */}
         {view === "nuovo_casting" && (
           <div style={{ padding: "16px" }}>
+            <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo"]} />
             <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
             <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
             <Field label="Data shooting" value={formCasting.data} onChange={v => setFormCasting(f => ({ ...f, data: v }))} type="date" />
@@ -1504,6 +1539,7 @@ A domani 🤍`}
           return (
             <div style={{ padding: "20px 16px" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                <Badge label={cast.genere} color="#000000" bg="#F5F5F5" />
                 {cast.data && <Badge label={fmtDate(cast.data)} color="#767676" bg="#F5F5F5" />}
               </div>
 
