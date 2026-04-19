@@ -432,9 +432,10 @@ export default function App() {
   const [candidature, setCandidature] = useState<any[]>([]);
   const [formCasting, setFormCasting] = useState(emptyCasting);
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
-  const [modelView, setModelView] = useState("home"); // "home" | "profilo"
+  const [modelView, setModelView] = useState("home"); // "home" | "profilo" | "job_dettaglio" | "ritenuta_model"
   const [formMyProfile, setFormMyProfile] = useState<any>({});
   const [polaUploading, setPolaUploading] = useState("");
+  const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
@@ -824,6 +825,140 @@ export default function App() {
     const myJobs = jobs.filter(j => j.modella === myModella?.nome).sort((a, b) => new Date(b.data_shooting).getTime() - new Date(a.data_shooting).getTime());
     const totNetto = myJobs.reduce((s, j) => s + calcNetto(j), 0);
     const totPagato = myJobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
+
+    // Sub-view: dettaglio job del model
+    if (modelView === "job_dettaglio" && modelSelectedJob) {
+      const job = jobs.find(j => j.id === modelSelectedJob.id) || modelSelectedJob;
+      return (
+        <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+          {toast && (
+            <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toastErr ? "#DC2626" : "#1C1714", color: "#FFF", padding: "10px 20px", borderRadius: 100, fontSize: 16, fontWeight: 500, zIndex: 100, boxShadow: "0 4px 24px rgba(0,0,0,0.15)", whiteSpace: "nowrap" }}>
+              {toast}
+            </div>
+          )}
+          <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <img src="/p-logo.png" alt="P" style={{ height: 48, objectFit: "contain" }} />
+            <button onClick={() => setModelView("home")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+          </div>
+          <div style={{ padding: "20px 16px 40px", flex: 1, overflowY: "auto" }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 16 }}>{job.titolo}</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              <Badge label={job.stato_job} color={JOB_COLOR[job.stato_job]} bg={JOB_BG[job.stato_job]} />
+              <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
+            </div>
+
+            <PaddedSection title="Dettagli">
+              <InfoRow label="Cliente" val={job.cliente} />
+              <Divider />
+              <InfoRow label="Data shooting" val={fmtDate(job.data_shooting)} />
+              <Divider />
+              <InfoRow label="Luogo" val={job.luogo} />
+            </PaddedSection>
+
+            <PaddedSection title="Compenso">
+              <CalcRow label="Fatturato" val={fmt(job.fatturato)} />
+              <Divider />
+              <CalcRow label="Rimborso spese" val={fmt(job.rimborso)} />
+              <Divider />
+              <CalcRow label={`Fee (${job.fee_pct}%)`} val={`– ${fmt(calcFee(job))}`} />
+              <Divider />
+              <CalcRow label="Lordo" val={fmt(calcLordo(job))} />
+              <Divider />
+              <CalcRow label="Ritenuta 20%" val={`– ${fmt(calcRitenuta(job))}`} />
+              <div style={{ height: 8 }} />
+              <div style={{ background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.03em" }}>{fmt(calcNetto(job))}</span>
+              </div>
+              {job.stato_pagamento === "pagato" && (
+                <div style={{ marginTop: 10, padding: "13px", background: "#F0FDF4", border: "1.5px solid #16A34A33", borderRadius: 14, color: "#767676", fontSize: 17, fontWeight: 600, textAlign: "center" }}>
+                  ✓ Pagamento completato · {fmtDate(job.data_pagamento_cliente)}
+                </div>
+              )}
+            </PaddedSection>
+
+            {job.stato_pagamento === "pagato" && myModella && (
+              <Section title="Ritenuta d'acconto">
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.5, marginBottom: 14 }}>
+                    Genera la ritenuta d'acconto per questo job con i tuoi dati precompilati.
+                  </div>
+                  <button onClick={() => { setNumRitenuta("1"); setDescRitenuta("Model"); setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(""); setModelView("ritenuta_model"); }}
+                    style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    🧾 Genera ritenuta
+                  </button>
+                </div>
+              </Section>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Sub-view: ritenuta model
+    if (modelView === "ritenuta_model" && modelSelectedJob && myModella) {
+      const job = jobs.find(j => j.id === modelSelectedJob.id) || modelSelectedJob;
+      const testo = generaRitenuta(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
+
+      const stampaPDFModel = () => {
+        const win = window.open("", "_blank");
+        if (!win) { showToast("Abilita i popup per stampare", true); return; }
+        win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ritenuta</title><style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Georgia, serif; font-size: 11px; color: #000; padding: 24px 36px; line-height: 1.45; }
+          .num { font-size: 11px; text-align: right; margin-bottom: 14px; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
+          .num strong { font-size: 13px; display: block; }
+          .body { white-space: pre-wrap; font-size: 11px; line-height: 1.45; }
+          @media print { body { padding: 0; } @page { margin: 1cm; size: A4; } }
+        </style></head><body>
+          <div class="num"><span>Ritenuta n.</span><strong>${numRitenuta}</strong></div>
+          <div class="body">${testo.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+        </body></html>`);
+        win.document.close();
+        win.focus();
+        setTimeout(() => { win.print(); }, 400);
+      };
+
+      return (
+        <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+          {toast && (
+            <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toastErr ? "#DC2626" : "#1C1714", color: "#FFF", padding: "10px 20px", borderRadius: 100, fontSize: 16, fontWeight: 500, zIndex: 100, boxShadow: "0 4px 24px rgba(0,0,0,0.15)", whiteSpace: "nowrap" }}>
+              {toast}
+            </div>
+          )}
+          <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <img src="/p-logo.png" alt="P" style={{ height: 48, objectFit: "contain" }} />
+            <button onClick={() => setModelView("job_dettaglio")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+          </div>
+          <div style={{ padding: "16px", flex: 1, overflowY: "auto" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#000", marginBottom: 16 }}>Ritenuta d'acconto</div>
+            <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Compila</div>
+              <Field label="N° ritenuta" value={numRitenuta} onChange={setNumRitenuta} type="text" />
+              <Field label="Descrizione prestazione" value={descRitenuta} onChange={setDescRitenuta} placeholder="Model" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <Field label="Data inizio" value={dataInizioRitenuta} onChange={setDataInizioRitenuta} placeholder="gg/mm/aaaa" />
+                <Field label="Data fine" value={dataFineRitenuta} onChange={setDataFineRitenuta} placeholder="gg/mm/aaaa" />
+              </div>
+            </div>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, border: "0.5px solid #EBEBEB", padding: "20px 18px", fontSize: 15, color: "#000000", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+              {testo}
+            </div>
+            <button onClick={stampaPDFModel}
+              style={{ width: "100%", padding: "15px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
+              🖨️ Genera PDF
+            </button>
+            <button onClick={() => {
+              navigator.clipboard.writeText(testo).then(() => { showToast("Ritenuta copiata ✓"); });
+            }}
+              style={{ width: "100%", padding: "13px", background: "transparent", border: "0.5px solid #EBEBEB", borderRadius: 16, color: "#767676", fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
+              📋 Copia testo
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
         <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -856,7 +991,8 @@ export default function App() {
               <div style={{ fontSize: 17, color: "#767676" }}>No jobs yet</div>
             </div>
           ) : myJobs.map(j => (
-            <div key={j.id} style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+            <div key={j.id} onClick={() => { setModelSelectedJob(j); setModelView("job_dettaglio"); }}
+              style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB", cursor: "pointer" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <div style={{ fontSize: 17, fontWeight: 600, color: "#000" }}>{j.titolo}</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>{fmt(calcNetto(j))}</div>
