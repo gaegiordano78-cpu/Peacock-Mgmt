@@ -1,18 +1,13 @@
 // @ts-nocheck
 "use client";
-
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
 const LOGO_SPLASH = "/logo-peacock.png";
-
 // ── DATI ────────────────────────────────────────────────────────────────────
-
 const initialModelle = [
   { id: "m1", nome: "Abir Aouidet", tipo: "Advance", scadenza: "", polas: "" },
   { id: "m2", nome: "Alessandro Mincuzzi", tipo: "Start", scadenza: "", polas: "" },
@@ -116,21 +111,18 @@ const initialModelle = [
   { id: "m100", nome: "Claudia Lo Cascio", tipo: "Start", scadenza: "", polas: "" },
   { id: "m101", nome: "Donato De Lucia", tipo: "Start", scadenza: "", polas: "" }
 ];
-
 const initialJobs = [
   { id: 1, titolo: "Editorial Summer", cliente: "Modo Magazine",   modella: "Sofia Amendolara", data_shooting: "2026-04-12", luogo: "Studio Bari, Via Sparano 14", fatturato: 320, rimborso: 0,  fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
   { id: 2, titolo: "Lookbook SS26",    cliente: "Oriana Studio",   modella: "Giulia Ferrante",  data_shooting: "2026-04-20", luogo: "Lecce, masseria zona Sud",  fatturato: 450, rimborso: 40, fee_pct: 20, stato_job: "in attesa",  stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "Conferma entro 5 apr" },
   { id: 3, titolo: "Campagna Social",  cliente: "Masseria Priori", modella: "Sofia Amendolara", data_shooting: "2026-03-05", luogo: "Fasano (BR)",               fatturato: 280, rimborso: 0,  fee_pct: 20, stato_job: "completato", stato_pagamento: "pagato",    data_pagamento_cliente: "2026-03-20", note: "" },
   { id: 4, titolo: "TVC Spot",         cliente: "Brand XYZ",       modella: "Chiara Monti",     data_shooting: "2026-04-10", luogo: "Bari",                      fatturato: 600, rimborso: 80, fee_pct: 20, stato_job: "completato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
 ];
-
 const calcFee      = j => j.fatturato * (j.fee_pct / 100);
 const calcLordo    = j => j.fatturato - calcFee(j) + j.rimborso;
 const calcRitenuta = j => calcLordo(j) * 0.2;
 const calcNetto    = j => calcLordo(j) - calcRitenuta(j);
 const fmt     = n => n === 0 ? "—" : `€${Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtDate = d => { if (!d) return "—"; const [y, m, g] = d.split("-"); return `${g}/${m}/${y}`; };
-
 // Contratto helpers
 const CONTRATTO_COLORS = { Start: { color: "#7C3AED", bg: "#F5F3FF" }, Advance: { color: "#D97706", bg: "#FFFBEB" }, Top: { color: "#000000", bg: "#FEF2F2" } };
 const contrattoScadenzaAlert = (scadenza) => {
@@ -141,26 +133,19 @@ const contrattoScadenzaAlert = (scadenza) => {
   if (diff <= 30) return "in scadenza";
   return null;
 };
-
 const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9A96E" };
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
-
 const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, rimborso: 0, fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
-
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
-
 function apriCalendar(job, tipo) {
   const dataBase = job.data_shooting;
   if (!dataBase) { alert("Data shooting mancante"); return; }
-
   const toGcalDate = (iso, time) => iso.replace(/-/g, "") + "T" + time.replace(/:/g, "") + "00";
-
   let title, details, start, end;
-
   if (tipo === "shooting") {
     title   = "📷 Shooting: " + job.titolo;
     details = "Cliente: " + job.cliente + " | Modella: " + job.modella + " | Luogo: " + job.luogo;
@@ -180,92 +165,64 @@ function apriCalendar(job, tipo) {
     start   = toGcalDate(oggi, "10:00");
     end     = toGcalDate(oggi, "10:30");
   }
-
   const url = "https://calendar.google.com/calendar/render?action=TEMPLATE"
     + "&text=" + encodeURIComponent(title)
     + "&details=" + encodeURIComponent(details)
     + "&dates=" + start + "/" + end
     + "&ctz=Europe/Rome";
-
   window.open(url, "_blank");
 }
-
 // ── GENERATORE CONTRATTO ─────────────────────────────────────────────────────
-
 function generaContratto(job, modella) {
   const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
   const netto = calcNetto(job);
   const rimb = job.rimborso > 0 ? ` + spese trasporto €${job.rimborso.toFixed(2)}` : "";
   const dataJob = fmtDate(job.data_shooting);
-
   return `CONTRATTO DI INCARICO PER MODELLO/A
-
 Tra:
 L\'Agenzia Peacock Models Mgmt, con sede in Bari, in via Giacomo Matteotti, 16, rappresentata dal Sig. Gaetano Giordano
-
 e
-
 Il/La Sig./Sig.ra ${modella.nome}, nato/a il ${modella.data_nascita} a ${modella.luogo_nascita}, C.F. ${modella.cf}, residente in ${modella.indirizzo}, (di seguito "Modello/a"),
-
 SI CONVIENE E SI STIPULA QUANTO SEGUE:
-
 Art. 1 – Oggetto del contratto
 Il/La Modello/a si impegna a prestare la propria immagine e collaborazione per il lavoro di shooting fotografico per il cliente ${job.cliente} presso ${job.luogo}, previsto per il giorno ${dataJob}, per conto dell\'Agenzia.
-
 Art. 2 – Compenso
 Il compenso pattuito per la prestazione è pari a €${netto.toFixed(2)} netti${rimb}, che verrà corrisposto tramite bonifico bancario a pagamento ricevuto dal cliente.
-
 Art. 3 – Diritti di utilizzo delle immagini
 Il/La Modello/a autorizza l\'uso delle proprie immagini e riprese realizzate durante il lavoro per finalità editoriali, pubblicitarie, promozionali e commerciali, su qualsiasi supporto e territorio, da parte dell\'Agenzia e/o del Cliente finale.
-
 Art. 4 – Obblighi del/della Modello/a
 Il/La Modello/a si impegna a:
 - presentarsi puntualmente al lavoro;
 - mantenere un comportamento professionale;
 - rispettare le indicazioni fornite;
 - non divulgare informazioni riservate.
-
 Art. 5 – Obblighi dell\'Agenzia
 L\'Agenzia si impegna a:
 - fornire tutte le informazioni necessarie;
 - garantire un ambiente di lavoro sicuro e rispettoso;
 - tutelare i diritti d\'immagine del Modello/a.
-
 Art. 6 – Recesso
 Ciascuna parte può recedere con almeno 3 giorni di preavviso, salvo cause di forza maggiore.
-
 Art. 7 – Trattamento dei dati personali
 Ai sensi del GDPR, le parti autorizzano il trattamento dei dati per finalità contrattuali.
-
 ──────────────────────────────────────
-
 LIBERATORIA PER L\'USO DELL\'IMMAGINE
-
 Io sottoscritta ${modella.nome}, nato/a il ${modella.data_nascita} a ${modella.luogo_nascita}, C.F. ${modella.cf}, residente in ${modella.indirizzo},
-
 AUTORIZZO
-
 L\'Agenzia Peacock Models Mgmt ad utilizzare le immagini fotografiche, video o altri materiali audiovisivi che mi ritraggono, realizzati in occasione del lavoro indicato nel presente contratto.
 L\'uso potrà includere: social media e siti web.
 Dichiaro di non avere nulla a pretendere oltre al compenso pattuito nel contratto di incarico.
-
 Luogo e data: Bari, ${oggi}
-
 Firma Modello/a: _______________________________
-
 Firma Agenzia: _______________________________`;
 }
-
 // ── GENERATORE RITENUTA ─────────────────────────────────────────────────────
-
 function generaRitenuta(job, modella, numRitenuta, descrizione, dataInizio, dataFine) {
   const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
   const lordo = calcLordo(job);
   const ritenuta = calcRitenuta(job);
   const netto = calcNetto(job);
-
   return `MODULO DI RITENUTA D'ACCONTO                                    Ritenuta n° ${numRitenuta}
-
 Dati del prestatore (lavoratore):
 Nome e Cognome:    ${modella.nome}
 Codice Fiscale:    ${modella.cf || "_______________"}
@@ -273,65 +230,49 @@ Indirizzo:         ${modella.indirizzo || "_______________"}
 Città:             ${modella.citta || "_______________"}    Cap: ${modella.cap || "_____"}
 Telefono:          ${modella.telefono || "_______________"}
 Email:             ${modella.email || "_______________"}
-
 Dati del committente (azienda / privato):
 Ragione Sociale / Nome e Cognome: Peacock Mgmt di Gaetano Giordano
 Indirizzo: Via Giacomo Matteotti Cap: 70121 Bari (Ba)
 Partita IVA: IT 07164570728
-
 Oggetto della prestazione:
 Descrizione:             ${descrizione || "Model"}
 Data della prestazione:  ${dataInizio}${dataFine ? " al " + dataFine : ""}
-
 Compenso e ritenuta:
 Compenso lordo pattuito:                    ${lordo.toFixed(2)}€
 Ritenuta d'acconto (20% su compenso lordo): ${ritenuta.toFixed(2)}€
 Compenso netto da corrispondere:            ${netto.toFixed(2)}€
 ${job.rimborso > 0 ? `Rimborso spese:                             ${job.rimborso.toFixed(2)}€` : ""}
-
 Coordinate Bancarie del prestatore:
 Banca:        ${modella.banca || "_______________"}
 Account holder:  ${modella.intestato_a || modella.nome}
 IBAN:         ${modella.iban || "_______________"}
-
 Dichiarazione del prestatore per redditi d'importo non superiore a 5.000€:
 Ai sensi della Legge 335/1995 e dell'art. 44, comma 2, della Legge 24 Novembre 2003 N.326 di conversione del Decreto Legge 269/2003:
-
 Il sottoscritto dichiara che ha fino ad ora percepito, nel corso del periodo d'imposta ${new Date().getFullYear()}, redditi d'importo non superiore ad € 5.000,00 per attività di lavoro autonomo occasionale, a fronte di un unico o di una pluralità di rapporti, (di cui all'art.67 – precedente art.81 – comma 1, lettera l DPR, 917/1986) e pertanto invita codesta amministrazione a tenere conto di tale informazione agli effetti della trattenuta contributiva INPS.
-
 Si impegna a comunicare l'eventuale superamento del limite di € 5.000,00 al fine di permettere l'applicazione della ritenuta e di consentire all'Ente il versamento degli importi dovuti.
-
 In difetto si dichiara disponibile a sostenere integralmente i relativi costi in misura intera sollevando codesta Società da oneri e responsabilità per l'omesso involontario versamento alla gestione separata INPS.
-
 Data: ${oggi}                    Firma del prestatore: _______________________________`;
 }
-
 // ── UI COMPONENTS ────────────────────────────────────────────────────────────
-
 const Badge = ({ label, color, bg }) => (
   <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 100, fontSize: 10, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color, background: bg, border: `1px solid ${color}22` }}>{label}</span>
 );
-
 const Chip = ({ children, active, onClick }) => (
   <button onClick={onClick} style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 100, fontSize: 17, fontWeight: active ? 600 : 400, cursor: "pointer", border: active ? "1.5px solid #1C1714" : "1.5px solid #E5E0D8", background: active ? "#1C1714" : "transparent", color: active ? "#FFF" : "#6B6560", fontFamily: "inherit", transition: "all 0.15s" }}>{children}</button>
 );
-
 const Divider = () => <div style={{ height: 1, background: "#F5EFE8", margin: "0" }} />;
-
 const InfoRow = ({ label, val }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "9px 0" }}>
     <span style={{ fontSize: 16, color: "#767676", flexShrink: 0, marginRight: 12 }}>{label}</span>
     <span style={{ fontSize: 16, color: "#000000", textAlign: "right", wordBreak: "break-all" }}>{val || "—"}</span>
   </div>
 );
-
 const CalcRow = ({ label, val, bold, big }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
     <span style={{ fontSize: bold ? 13 : 12, fontWeight: bold ? 600 : 400, color: bold ? "#1C1714" : "#9C948A" }}>{label}</span>
     <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#000000", letterSpacing: big ? "-0.03em" : "0" }}>{val}</span>
   </div>
 );
-
 const Section = ({ title, children, action }) => (
   <div style={{ marginBottom: 20 }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -343,13 +284,11 @@ const Section = ({ title, children, action }) => (
     </div>
   </div>
 );
-
 const PaddedSection = ({ title, children, action }) => (
   <Section title={title} action={action}>
     <div style={{ padding: "4px 16px 8px" }}>{children}</div>
   </Section>
 );
-
 const Field = ({ label, value, onChange, type = "text", placeholder }) => (
   <div style={{ marginBottom: 14 }}>
     <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
@@ -357,7 +296,6 @@ const Field = ({ label, value, onChange, type = "text", placeholder }) => (
       style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
   </div>
 );
-
 const SelectField = ({ label, value, onChange, options }) => (
   <div style={{ marginBottom: 14 }}>
     <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>{label}</label>
@@ -367,7 +305,6 @@ const SelectField = ({ label, value, onChange, options }) => (
     </select>
   </div>
 );
-
 const CalBtn = ({ icon, label, sub, onClick, loading }) => (
   <button onClick={onClick} disabled={loading}
     style={{ width: "100%", marginBottom: 8, padding: "12px 14px", background: loading ? "#F5F0EA" : "#FAFAF8", border: "0.5px solid #EBEBEB", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 12, fontFamily: "inherit" }}>
@@ -379,26 +316,21 @@ const CalBtn = ({ icon, label, sub, onClick, loading }) => (
     <span style={{ fontSize: 16, color: "#C4A882", fontWeight: 300 }}>+</span>
   </button>
 );
-
 const PrimaryBtn = ({ children, onClick, color = "#1C1714", disabled }) => (
   <button onClick={onClick} disabled={disabled}
     style={{ width: "100%", marginTop: 8, padding: "15px", background: disabled ? "#E5E0D8" : color, border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit", letterSpacing: "0.01em" }}>
     {children}
   </button>
 );
-
 const GhostBtn = ({ children, onClick }) => (
   <button onClick={onClick}
     style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "0.5px solid #EBEBEB", borderRadius: 14, color: "#767676", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
     {children}
   </button>
 );
-
 const IMG_MEN   = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-image-2-non-cambiare-il-modello-metti-soltanto-sfondo-bianco-ottico-con-retroilluminazio-0-4.jpg";
 const IMG_WOMEN = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-image-2-metti-sfondo-bianco-con-retroilluminazione-delicata-1-4.jpg";
-
 // ── MAIN APP ─────────────────────────────────────────────────────────────────
-
 export default function App() {
   const [user, setUser]         = useState(null);
   const [userRuolo, setUserRuolo] = useState(null);
@@ -439,7 +371,6 @@ export default function App() {
   const [formMyProfile, setFormMyProfile] = useState<any>({});
   const [polaUploading, setPolaUploading] = useState("");
   const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
-
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
       setTimeout(() => { window.__hideSplash(); setSplash(false); }, 2200);
@@ -464,7 +395,6 @@ export default function App() {
       const { data: candidatureData } = await supabase.from("candidature").select("*");
       if (candidatureData) setCandidature(candidatureData);
     };
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
@@ -505,15 +435,13 @@ export default function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
   const doLogin = async () => {
     setLoginError("");
     setLoginLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
+    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail.trim().toLowerCase(), password: loginPassword });
     if (error) setLoginError("Email o password errati");
     setLoginLoading(false);
   };
-
   const doSetPassword = async () => {
     if (!newPassword || newPassword.length < 6) { setLoginError("La password deve avere almeno 6 caratteri"); return; }
     if (newPassword !== confirmPassword) { setLoginError("Le password non coincidono"); return; }
@@ -528,14 +456,12 @@ export default function App() {
     showToast("Password impostata ✓");
     setLoginLoading(false);
   };
-
   const doLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setUserRuolo(null);
     setSplash(true);
   };
-
   const doInvite = async (nomeModella) => {
     if (!inviteEmail) { showToast("Inserisci un'email", true); return; }
     setInviteLoading(true);
@@ -557,9 +483,7 @@ export default function App() {
     }
     setInviteLoading(false);
   };
-
   const showToast = (msg, err = false) => { setToast(msg); setToastErr(err); setTimeout(() => setToast(""), 3000); };
-
   // Job helpers
   const saveJob = async () => {
     if (!formJob.titolo || !formJob.cliente) { showToast("Inserisci titolo e cliente", true); return; }
@@ -587,13 +511,11 @@ export default function App() {
     setJobs(prev => prev.filter(j => j.id !== id));
     showToast("Job eliminato"); setView("lista");
   };
-
   const deleteMod = async id => {
     await supabase.from("modelle").delete().eq("id", id);
     setModelle(prev => prev.filter(m => m.id !== id));
     showToast("Profile deleted"); setView("modelle");
   };
-
   // Casting helpers
   const saveCasting = async () => {
     if (!formCasting.brand || !formCasting.tipologia) { showToast("Inserisci brand e tipologia", true); return; }
@@ -630,7 +552,6 @@ export default function App() {
     setCandidature(prev => prev.filter(c => !(c.casting_id === castingId && c.modella_id === myModella.id)));
     showToast("Candidatura rimossa");
   };
-
   // Profilo personale del model (self-service)
   const saveMyProfile = async () => {
     const { error } = await supabase.rpc("update_my_profile", {
@@ -658,7 +579,6 @@ export default function App() {
     showToast("Profilo aggiornato ✓");
     setModelView("home");
   };
-
   // Upload singola pola
   const uploadPola = async (slot: string, file: File) => {
     if (!myModella || !user) return;
@@ -679,7 +599,6 @@ export default function App() {
     }
     setPolaUploading("");
   };
-
   const marcaPagato = async id => {
     const oggi = new Date().toISOString().split("T")[0];
     await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
@@ -689,7 +608,6 @@ export default function App() {
   const aggiungiCal = (job, tipo) => {
     apriCalendar(job, tipo);
   };
-
   // Modella helpers
   const saveModella = async () => {
     if (!formMod.nome) { showToast("Enter name", true); return; }
@@ -705,7 +623,6 @@ export default function App() {
     }
     showToast("Profile saved ✓"); setView("modelle");
   };
-
   // Contratto
   const copiaContratto = (job) => {
     const mod = modelle.find(m => m.nome === job.modella);
@@ -713,19 +630,14 @@ export default function App() {
     const testo = generaContratto(job, mod);
     navigator.clipboard.writeText(testo).then(() => { setContrattoCopied(true); setTimeout(() => setContrattoCopied(false), 3000); showToast("Contratto copiato ✓"); });
   };
-
   const jobFiltrati = jobs
     .filter(j => filtroStato === "tutti" || j.stato_pagamento === filtroStato)
     .sort((a, b) => new Date(b.data_shooting) - new Date(a.data_shooting));
-
   const totDaIncassare = jobs.filter(j => j.stato_pagamento === "da pagare").reduce((s, j) => s + j.fatturato, 0);
   const totDaPagare    = jobs.filter(j => j.stato_pagamento === "da pagare").reduce((s, j) => s + calcNetto(j), 0);
   const totPagato      = jobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
-
   const nomiModelle = modelle.map(m => m.nome);
-
   // ── NAV ──────────────────────────────────────────────────────────────────
-
   const backView = () => {
     if (view === "dettaglio") return setView("lista");
     if (view === "nuovo_job") return setView("lista");
@@ -737,7 +649,6 @@ export default function App() {
     if (view === "dettaglio_casting") return setView("castings");
     setView("lista");
   };
-
   const pageTitle = () => {
     if (view === "lista") return "";
     if (view === "dettaglio") return selectedJob?.titolo || "";
@@ -753,7 +664,6 @@ export default function App() {
     if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
     return "";
   };
-
   // ── IMPOSTA PASSWORD (dopo invito o reset) ─────────────────────────────
   if (needsPassword) return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
@@ -770,7 +680,6 @@ export default function App() {
       </div>
     </div>
   );
-
   // ── LOGIN ────────────────────────────────────────────────────────────────
   if (!user) return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
@@ -780,13 +689,12 @@ export default function App() {
       <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "28px 24px", border: "0.5px solid #EBEBEB" }}>
         <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>Accedi</div>
         {loginError && <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 16, color: "#000000" }}>{loginError}</div>}
-        <Field label="Email" value={loginEmail} onChange={setLoginEmail} type="text" />
+        <Field label="Email" value={loginEmail} onChange={v => setLoginEmail(v.trim().toLowerCase())} type="text" />
         <Field label="Password" value={loginPassword} onChange={setLoginPassword} type="password" />
         <PrimaryBtn onClick={doLogin} disabled={loginLoading}>{loginLoading ? "Accesso..." : "Entra"}</PrimaryBtn>
       </div>
     </div>
   );
-
   // ── VISTA MODELLA ────────────────────────────────────────────────────────
   if (user && userRuolo === "model") {
     // Sub-view: profilo personale
@@ -805,12 +713,10 @@ export default function App() {
           <div style={{ padding: "20px 16px 40px", flex: 1, overflowY: "auto" }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>Il mio profilo</div>
             <div style={{ fontSize: 17, color: "#767676", marginBottom: 20 }}>Aggiorna i tuoi dati personali</div>
-
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Contatti</div>
             <Field label="Telefono" value={formMyProfile.telefono || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, telefono: v }))} placeholder="+39..." />
             <Field label="Email" value={formMyProfile.email || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, email: v }))} />
             <Field label="Link sito / portfolio" value={formMyProfile.link_sito || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, link_sito: v }))} placeholder="https://..." />
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Dati personali</div>
             <Field label="Codice Fiscale" value={formMyProfile.cf || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, cf: v.toUpperCase() }))} />
@@ -819,11 +725,9 @@ export default function App() {
               <Field label="Città" value={formMyProfile.citta || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, citta: v }))} placeholder="Bari" />
               <Field label="CAP" value={formMyProfile.cap || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, cap: v }))} placeholder="70121" />
             </div>
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Coordinate bancarie</div>
             <Field label="IBAN" value={formMyProfile.iban || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, iban: v.toUpperCase() }))} placeholder="IT..." />
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Polas</div>
             <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Carica 4 foto su sfondo neutro, senza filtri e senza trucco.</div>
@@ -860,23 +764,19 @@ export default function App() {
                 );
               })}
             </div>
-
             <PrimaryBtn onClick={saveMyProfile}>Salva</PrimaryBtn>
             <div style={{ marginTop: 14, fontSize: 14, color: "#9C948A", textAlign: "center", lineHeight: 1.5 }}>
               Per modificare nome, contratto o altri dati<br />contatta l'agenzia.
             </div>
-
             <div style={{ height: 28 }} />
             <ChangePasswordSection showToast={showToast} />
           </div>
         </div>
       );
     }
-
     const myJobs = jobs.filter(j => j.modella === myModella?.nome).sort((a, b) => new Date(b.data_shooting).getTime() - new Date(a.data_shooting).getTime());
     const totNetto = myJobs.reduce((s, j) => s + calcNetto(j), 0);
     const totPagato = myJobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
-
     // Sub-view: dettaglio job del model
     if (modelView === "job_dettaglio" && modelSelectedJob) {
       const job = jobs.find(j => j.id === modelSelectedJob.id) || modelSelectedJob;
@@ -897,7 +797,6 @@ export default function App() {
               <Badge label={job.stato_job} color={JOB_COLOR[job.stato_job]} bg={JOB_BG[job.stato_job]} />
               <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
             </div>
-
             <PaddedSection title="Dettagli">
               <InfoRow label="Cliente" val={job.cliente} />
               <Divider />
@@ -905,7 +804,6 @@ export default function App() {
               <Divider />
               <InfoRow label="Luogo" val={job.luogo} />
             </PaddedSection>
-
             <PaddedSection title="Compenso">
               <CalcRow label="Fatturato" val={fmt(job.fatturato)} />
               <Divider />
@@ -927,7 +825,6 @@ export default function App() {
                 </div>
               )}
             </PaddedSection>
-
             {job.stato_pagamento === "pagato" && myModella && (
               <Section title="Ritenuta d'acconto">
                 <div style={{ padding: "14px 16px" }}>
@@ -945,12 +842,10 @@ export default function App() {
         </div>
       );
     }
-
     // Sub-view: ritenuta model
     if (modelView === "ritenuta_model" && modelSelectedJob && myModella) {
       const job = jobs.find(j => j.id === modelSelectedJob.id) || modelSelectedJob;
       const testo = generaRitenuta(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
-
       const stampaPDFModel = () => {
         const win = window.open("", "_blank");
         if (!win) { showToast("Abilita i popup per stampare", true); return; }
@@ -969,7 +864,6 @@ export default function App() {
         win.focus();
         setTimeout(() => { win.print(); }, 400);
       };
-
       return (
         <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
           {toast && (
@@ -1009,7 +903,6 @@ export default function App() {
         </div>
       );
     }
-
     return (
       <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
         <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1091,21 +984,17 @@ export default function App() {
       </div>
     );
   }
-
   if (splash) return (
     <div style={{ background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto" }} />
   );
-
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
-
       {/* TOAST */}
       {toast && (
         <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toastErr ? "#DC2626" : "#1C1714", color: "#FFF", padding: "10px 20px", borderRadius: 100, fontSize: 16, fontWeight: 500, zIndex: 100, boxShadow: "0 4px 24px rgba(0,0,0,0.15)", whiteSpace: "nowrap" }}>
           {toast}
         </div>
       )}
-
       {/* HEADER */}
       <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 1px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1171,10 +1060,8 @@ export default function App() {
           </div>
         )}
       </div>
-
       {/* CONTENT */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: 30 }}>
-
         {/* ── LISTA ── */}
         {view === "lista" && (
           <div>
@@ -1191,14 +1078,12 @@ export default function App() {
                 </div>
               ))}
             </div>
-
             {/* Filtri */}
             <div style={{ padding: "12px 16px", display: "flex", gap: 6, overflowX: "auto", background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB" }}>
               {["tutti", "da pagare", "pagato", "in attesa"].map(f => (
                 <Chip key={f} active={filtroStato === f} onClick={() => setFiltroStato(f)}>{f}</Chip>
               ))}
             </div>
-
             {/* Lista job */}
             <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
               {jobFiltrati.length === 0 && (
@@ -1221,7 +1106,6 @@ export default function App() {
             </div>
           </div>
         )}
-
         {/* ── DETTAGLIO JOB ── */}
         {view === "dettaglio" && selectedJob && (() => {
           const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
@@ -1233,7 +1117,6 @@ export default function App() {
                 <Badge label={job.stato_job} color={JOB_COLOR[job.stato_job]} bg={JOB_BG[job.stato_job]} />
                 <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
               </div>
-
               <PaddedSection title="Dettagli">
                 <InfoRow label="Cliente"       val={job.cliente} />
                 <Divider />
@@ -1244,7 +1127,6 @@ export default function App() {
                 <InfoRow label="Luogo"         val={job.luogo} />
                 {job.note && <><Divider /><InfoRow label="Note" val={job.note} /></>}
               </PaddedSection>
-
               <PaddedSection title="Pagamento">
                 <CalcRow label="Fatturato"           val={fmt(job.fatturato)} />
                 <Divider />
@@ -1271,7 +1153,6 @@ export default function App() {
                   </div>
                 )}
               </PaddedSection>
-
               {/* CONTRATTO */}
               <Section title="Contratto & Liberatoria"
                 action={contrattoPronto ? null : (
@@ -1303,7 +1184,6 @@ export default function App() {
                   )}
                 </div>
               </Section>
-
               <Section title="📅 Calendario">
                 <div style={{ padding: "8px 8px 4px" }}>
                   <CalBtn icon="📷" label="Giorno shooting" sub={`${fmtDate(job.data_shooting)} · tutto il giorno`} onClick={() => aggiungiCal(job, "shooting")} loading={loading === "shooting"} />
@@ -1311,7 +1191,6 @@ export default function App() {
                   <CalBtn icon="💸" label={`Promemoria pagamento · ${fmt(calcNetto(job))}`} sub="Oggi · ore 10:00" onClick={() => aggiungiCal(job, "pagamento")} loading={loading === "pagamento"} />
                 </div>
               </Section>
-
               <Section title="💬 WhatsApp">
                 <div style={{ padding: "14px 16px", background: "#FFFFFF", fontSize: 17, color: "#767676", lineHeight: 1.6, whiteSpace: "pre-wrap", borderRadius: 16 }}>
                   {`Ciao ${job.modella.split(" ")[0]}! Ti ricordo lo shooting di domani:
@@ -1320,7 +1199,6 @@ Luogo: ${job.luogo}
 A domani 🤍`}
                 </div>
               </Section>
-
               <GhostBtn onClick={() => { setFormJob(job); setView("nuovo_job"); }}>Modifica job</GhostBtn>
               <button onClick={() => { if (window.confirm("Eliminare questo job?")) deleteJob(job.id); }}
                 style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 14, color: "#000000", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
@@ -1329,7 +1207,6 @@ A domani 🤍`}
             </div>
           );
         })()}
-
         {/* ── CONTRATTO ── */}
         {view === "contratto" && selectedJob && (() => {
           const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
@@ -1348,14 +1225,12 @@ A domani 🤍`}
             </div>
           );
         })()}
-
         {/* ── RITENUTA D'ACCONTO ── */}
         {view === "ritenuta" && selectedJob && (() => {
           const job = jobs.find(j => j.id === selectedJob.id) || selectedJob;
           const mod = modelle.find(m => m.nome === job.modella);
           if (!mod) return <div style={{ padding: 16, color: "#000000" }}>Completa prima la scheda anagrafica del model.</div>;
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
-
           const stampaPDF = () => {
             const win = window.open("", "_blank");
             if (!win) { showToast("Abilita i popup per stampare", true); return; }
@@ -1377,7 +1252,6 @@ A domani 🤍`}
             win.focus();
             setTimeout(() => { win.print(); }, 400);
           };
-
           return (
             <div style={{ padding: "16px" }}>
               <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
@@ -1409,7 +1283,6 @@ A domani 🤍`}
             </div>
           );
         })()}
-
         {/* ── MODELLE ── */}
         {view === "modelle" && (
           <div style={{ padding: "16px" }}>
@@ -1450,7 +1323,6 @@ A domani 🤍`}
             </div>
           </div>
         )}
-
         {/* ── SCHEDA MODELLA ── */}
         {view === "scheda_modella" && selectedModella && (() => {
           const mod = modelle.find(m => m.id === selectedModella.id) || selectedModella;
@@ -1476,7 +1348,6 @@ A domani 🤍`}
                 <InfoRow label="Sito"       val={mod.link_sito} />
                 {mod.note && <><Divider /><InfoRow label="Note" val={mod.note} /></>}
               </PaddedSection>
-
               {/* POLAS */}
               <Section title="Polas">
                 {(mod.pola_primo_piano || mod.pola_profilo_sx || mod.pola_profilo_dx || mod.pola_figura_intera) ? (
@@ -1505,7 +1376,6 @@ A domani 🤍`}
                   <div style={{ padding: "16px", fontSize: 16, color: "#767676" }}>Il model non ha ancora caricato le polas.</div>
                 )}
               </Section>
-
               {/* CONTRATTO AGENZIA */}
               {(() => {
                 const alert = contrattoScadenzaAlert(mod.contratto_scadenza);
@@ -1543,7 +1413,6 @@ A domani 🤍`}
                   </Section>
                 );
               })()}
-
               <Section title={`Job (${mj.length}) · ${fmt(totNetto)} netto`}>
                 <div>
                   {mj.map((job, i) => (
@@ -1568,7 +1437,6 @@ A domani 🤍`}
             </div>
           );
         })()}
-
         {/* ── NUOVA / MODIFICA MODELLA ── */}
         {view === "nuova_modella" && (
           <div style={{ padding: "16px" }}>
@@ -1578,7 +1446,6 @@ A domani 🤍`}
             <Field label="Email"      value={formMod.email}      onChange={v => setFormMod(f => ({ ...f, email: v }))} />
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
             <Field label="Internal notes" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Personal data (for tax)</div>
             <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
@@ -1591,18 +1458,15 @@ A domani 🤍`}
               <Field label="Città" value={formMod.citta} onChange={v => setFormMod(f => ({ ...f, citta: v }))} placeholder="Bari" />
               <Field label="CAP" value={formMod.cap} onChange={v => setFormMod(f => ({ ...f, cap: v }))} placeholder="70121" />
             </div>
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Bank details</div>
             <Field label="Banca" value={formMod.banca} onChange={v => setFormMod(f => ({ ...f, banca: v }))} placeholder="UniCredit" />
             <Field label="Account holder" value={formMod.intestato_a} onChange={v => setFormMod(f => ({ ...f, intestato_a: v }))} />
             <Field label="IBAN" value={formMod.iban} onChange={v => setFormMod(f => ({ ...f, iban: v }))} placeholder="IT..." />
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Polas</div>
             <Field label="Drive folder link" value={formMod.link_polas} onChange={v => setFormMod(f => ({ ...f, link_polas: v }))} placeholder="https://drive.google.com/..." />
             <Field label="Last update" value={formMod.data_polas} onChange={v => setFormMod(f => ({ ...f, data_polas: v }))} placeholder="gg/mm/aaaa" />
-
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Agency contract</div>
             <SelectField label="Type" value={formMod.contratto_tipo} onChange={v => setFormMod(f => ({ ...f, contratto_tipo: v }))} options={["Start", "Advance", "Top"]} />
@@ -1619,7 +1483,6 @@ A domani 🤍`}
             )}
           </div>
         )}
-
         {/* ── NUOVO / MODIFICA JOB ── */}
         {view === "nuovo_job" && (
           <div style={{ padding: "16px" }}>
@@ -1633,7 +1496,6 @@ A domani 🤍`}
               <Field label="Rimborso €"  value={formJob.rimborso}  onChange={v => setFormJob(f => ({ ...f, rimborso: Number(v) }))}  type="number" />
             </div>
             <Field label="Fee agenzia %" value={formJob.fee_pct} onChange={v => setFormJob(f => ({ ...f, fee_pct: Number(v) }))} type="number" />
-
             {formJob.fatturato > 0 && (
               <div style={{ background: "#F5F5F5", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "0.5px solid #EBEBEB" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
@@ -1647,14 +1509,12 @@ A domani 🤍`}
                 </div>
               </div>
             )}
-
             <SelectField label="Stato job"       value={formJob.stato_job}       onChange={v => setFormJob(f => ({ ...f, stato_job: v }))}       options={["confermato", "in attesa", "completato", "interno"]} />
             <SelectField label="Stato pagamento" value={formJob.stato_pagamento} onChange={v => setFormJob(f => ({ ...f, stato_pagamento: v }))} options={["da pagare", "in attesa", "pagato"]} />
             <Field label="Note" value={formJob.note} onChange={v => setFormJob(f => ({ ...f, note: v }))} />
             <PrimaryBtn onClick={saveJob}>Salva Job</PrimaryBtn>
           </div>
         )}
-
         {/* ── LISTA CASTINGS (admin) ── */}
         {view === "castings" && (
           <div style={{ padding: "16px" }}>
@@ -1690,7 +1550,6 @@ A domani 🤍`}
             )}
           </div>
         )}
-
         {/* ── NUOVO / MODIFICA CASTING ── */}
         {view === "nuovo_casting" && (
           <div style={{ padding: "16px" }}>
@@ -1698,13 +1557,11 @@ A domani 🤍`}
             <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
             <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
             <Field label="Data shooting" value={formCasting.data} onChange={v => setFormCasting(f => ({ ...f, data: v }))} type="date" />
-
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>Caratteristiche richieste</label>
               <textarea value={formCasting.caratteristiche} onChange={e => setFormCasting(f => ({ ...f, caratteristiche: e.target.value }))} placeholder="Altezza, età, tipologia, note aggiuntive..."
                 style={{ width: "100%", minHeight: 110, background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", resize: "vertical", lineHeight: 1.5 }} />
             </div>
-
             <PrimaryBtn onClick={saveCasting}>Salva casting</PrimaryBtn>
             {formCasting.id && (
               <button onClick={() => { if (window.confirm("Eliminare questo casting? Verranno rimosse anche tutte le candidature.")) deleteCasting(formCasting.id); }}
@@ -1714,7 +1571,6 @@ A domani 🤍`}
             )}
           </div>
         )}
-
         {/* ── DETTAGLIO CASTING ── */}
         {view === "dettaglio_casting" && selectedCasting && (() => {
           const cast = castings.find(c => c.id === selectedCasting.id) || selectedCasting;
@@ -1722,14 +1578,12 @@ A domani 🤍`}
             .filter(k => k.casting_id === cast.id)
             .map(k => ({ cand: k, mod: modelle.find(m => m.id === k.modella_id) }))
             .filter(x => x.mod);
-
           return (
             <div style={{ padding: "20px 16px" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
                 <Badge label={cast.genere} color="#000000" bg="#F5F5F5" />
                 {cast.data && <Badge label={fmtDate(cast.data)} color="#767676" bg="#F5F5F5" />}
               </div>
-
               <PaddedSection title="Dettagli casting">
                 <InfoRow label="Brand" val={cast.brand} />
                 <Divider />
@@ -1746,7 +1600,6 @@ A domani 🤍`}
                   </>
                 )}
               </PaddedSection>
-
               <Section title={`Candidature · ${candidati.length}`}>
                 {candidati.length === 0 ? (
                   <div style={{ padding: "20px 16px", fontSize: 16, color: "#767676", textAlign: "center" }}>Nessuna candidatura ancora</div>
@@ -1773,7 +1626,6 @@ A domani 🤍`}
                   ))
                 )}
               </Section>
-
               <GhostBtn onClick={() => { setFormCasting(cast); setView("nuovo_casting"); }}>Modifica casting</GhostBtn>
               <button onClick={() => { if (window.confirm("Eliminare questo casting? Verranno rimosse anche tutte le candidature.")) deleteCasting(cast.id); }}
                 style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 14, color: "#000000", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
@@ -1782,7 +1634,6 @@ A domani 🤍`}
             </div>
           );
         })()}
-
         {/* ── CALCOLATRICE ── */}
         {view === "calcolatrice" && (
           <div style={{ padding: "20px 16px" }}>
@@ -1790,22 +1641,18 @@ A domani 🤍`}
             <CalcolatoreSemplice />
           </div>
         )}
-
       </div>
     </div>
   );
 }
-
 function CalcolatoreSemplice() {
   const [tab, setTab] = useState("inversa"); // "inversa" | "diretta"
-
   // Calcolatrice inversa (dal netto)
   const [nettoDes, setNettoDes] = useState(0);
   const [rimborsoInv, setRimborsoInv] = useState(0);
   const lordoInv    = nettoDes > 0 ? nettoDes / 0.8 : 0;
   const ritenuta    = lordoInv * 0.2;
   const totaleInv   = lordoInv + rimborsoInv;
-
   // Calcolatrice diretta (dal fatturato)
   const [fatturato, setFatturato] = useState(0);
   const [rimborso, setRimborso]   = useState(0);
@@ -1814,7 +1661,6 @@ function CalcolatoreSemplice() {
   const lordo    = fatturato - feeEur + rimborso;
   const ritenuta2 = lordo * 0.2;
   const netto    = lordo - ritenuta2;
-
   const Field2 = ({ label, value, onChange, placeholder = "" }) => (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: "block", fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
@@ -1822,14 +1668,12 @@ function CalcolatoreSemplice() {
         style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
     </div>
   );
-
   const Row = ({ l, v, bold, big }) => (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #EBEBEB" }}>
       <span style={{ fontSize: bold ? 13 : 12, fontWeight: bold ? 600 : 400, color: bold ? "#1C1714" : "#9C948A" }}>{l}</span>
       <span style={{ fontSize: big ? 20 : bold ? 13 : 12, fontWeight: big ? 800 : bold ? 600 : 400, color: "#000000" }}>{v}</span>
     </div>
   );
-
   return (
     <>
       {/* Tab switcher */}
@@ -1841,7 +1685,6 @@ function CalcolatoreSemplice() {
           </button>
         ))}
       </div>
-
       {tab === "inversa" && (
         <>
           <Field2 label="Netto desiderato €" value={nettoDes} onChange={setNettoDes} placeholder="es. 400" />
@@ -1871,7 +1714,6 @@ function CalcolatoreSemplice() {
           )}
         </>
       )}
-
       {tab === "diretta" && (
         <>
           <Field2 label="Fatturato cliente €" value={fatturato} onChange={setFatturato} placeholder="es. 500" />
@@ -1903,12 +1745,10 @@ function CalcolatoreSemplice() {
     </>
   );
 }
-
 function ChangePasswordSection({ showToast }) {
   const [pw1, setPw1] = useState("");
   const [pw2, setPw2] = useState("");
   const [loading, setLoading] = useState(false);
-
   const submit = async () => {
     if (!pw1 || pw1.length < 6) { showToast("La password deve avere almeno 6 caratteri", true); return; }
     if (pw1 !== pw2) { showToast("Le password non coincidono", true); return; }
@@ -1919,7 +1759,6 @@ function ChangePasswordSection({ showToast }) {
     setPw1(""); setPw2("");
     showToast("Password aggiornata ✓");
   };
-
   return (
     <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
       <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Cambia password</div>
