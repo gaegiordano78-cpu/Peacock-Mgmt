@@ -406,6 +406,9 @@ export default function App() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError]     = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [newPassword, setNewPassword]   = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [inviteEmail, setInviteEmail]   = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [splash, setSplash]     = useState(true);
@@ -443,6 +446,13 @@ export default function App() {
     } else {
       setTimeout(() => setSplash(false), 2200);
     }
+    // Detect invite/recovery tokens in URL hash
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash.includes("type=invite") || hash.includes("type=recovery")) {
+        setNeedsPassword(true);
+      }
+    }
     const loadData = async () => {
       const { data: jobsData } = await supabase.from("jobs").select("*").order("data_shooting", { ascending: false });
       if (jobsData) setJobs(jobsData);
@@ -472,6 +482,12 @@ export default function App() {
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === "PASSWORD_RECOVERY" || _event === "INITIAL_SESSION") {
+        const hash = typeof window !== "undefined" ? window.location.hash : "";
+        if (hash.includes("type=invite") || hash.includes("type=recovery") || _event === "PASSWORD_RECOVERY") {
+          setNeedsPassword(true);
+        }
+      }
       setUser(session?.user ?? null);
       if (session?.user) {
         supabase.from("profiles").select("ruolo").eq("id", session.user.id).single()
@@ -495,6 +511,21 @@ export default function App() {
     setLoginLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
     if (error) setLoginError("Email o password errati");
+    setLoginLoading(false);
+  };
+
+  const doSetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) { setLoginError("La password deve avere almeno 6 caratteri"); return; }
+    if (newPassword !== confirmPassword) { setLoginError("Le password non coincidono"); return; }
+    setLoginLoading(true);
+    setLoginError("");
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) { setLoginError(error.message); setLoginLoading(false); return; }
+    setNeedsPassword(false);
+    setNewPassword("");
+    setConfirmPassword("");
+    if (typeof window !== "undefined") window.location.hash = "";
+    showToast("Password impostata ✓");
     setLoginLoading(false);
   };
 
@@ -722,6 +753,23 @@ export default function App() {
     if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
     return "";
   };
+
+  // ── IMPOSTA PASSWORD (dopo invito o reset) ─────────────────────────────
+  if (needsPassword) return (
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 24px" }}>
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <img src={LOGO} alt="Peacock" style={{ height: 56, objectFit: "contain" }} />
+      </div>
+      <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "28px 24px", border: "0.5px solid #EBEBEB" }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Benvenuto in Peacock</div>
+        <div style={{ fontSize: 15, color: "#9C948A", marginBottom: 20, lineHeight: 1.5 }}>Imposta la tua password per accedere all'app.</div>
+        {loginError && <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 16, color: "#000000" }}>{loginError}</div>}
+        <Field label="Nuova password" value={newPassword} onChange={setNewPassword} type="password" />
+        <Field label="Conferma password" value={confirmPassword} onChange={setConfirmPassword} type="password" />
+        <PrimaryBtn onClick={doSetPassword} disabled={loginLoading}>{loginLoading ? "Salvataggio..." : "Imposta password"}</PrimaryBtn>
+      </div>
+    </div>
+  );
 
   // ── LOGIN ────────────────────────────────────────────────────────────────
   if (!user) return (
