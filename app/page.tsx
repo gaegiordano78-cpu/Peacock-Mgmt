@@ -865,6 +865,9 @@ export default function App() {
             <div style={{ marginTop: 14, fontSize: 14, color: "#9C948A", textAlign: "center", lineHeight: 1.5 }}>
               Per modificare nome, contratto o altri dati<br />contatta l'agenzia.
             </div>
+
+            <div style={{ height: 28 }} />
+            <ChangePasswordSection showToast={showToast} />
           </div>
         </div>
       );
@@ -1898,5 +1901,35 @@ function CalcolatoreSemplice() {
         </>
       )}
     </>
+  );
+}
+
+function ChangePasswordSection({ showToast }) {
+  const [pw1, setPw1] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!pw1 || pw1.length < 6) { showToast("La password deve avere almeno 6 caratteri", true); return; }
+    if (pw1 !== pw2) { showToast("Le password non coincidono", true); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: pw1 });
+    setLoading(false);
+    if (error) { showToast(error.message, true); return; }
+    setPw1(""); setPw2("");
+    showToast("Password aggiornata ✓");
+  };
+
+  return (
+    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Cambia password</div>
+      <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Se sei entrato con la password temporanea, cambiala subito con una tua personale.</div>
+      <Field label="Nuova password" value={pw1} onChange={setPw1} type="password" />
+      <Field label="Conferma password" value={pw2} onChange={setPw2} type="password" />
+      <button onClick={submit} disabled={loading}
+        style={{ width: "100%", padding: "13px", background: loading ? "#E5E0D8" : "#1C1714", border: "none", borderRadius: 14, color: "#FFF", fontSize: 16, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+        {loading ? "Aggiornamento..." : "Aggiorna password"}
+      </button>
+    </div>
   );
 }
