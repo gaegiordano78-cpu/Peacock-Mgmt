@@ -548,9 +548,27 @@ export default function App() {
     showToast("Job eliminato"); setView("lista");
   };
   const deleteMod = async id => {
-    await supabase.from("modelle").delete().eq("id", id);
-    setModelle(prev => prev.filter(m => m.id !== id));
-    showToast("Profile deleted"); setView("modelle");
+    const mod = modelle.find(m => m.id === id);
+    if (!mod) return;
+    try {
+      const res = await fetch("https://xtpafxourildjnofeulr.supabase.co/functions/v1/delete-model", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ nome: mod.nome, modella_id: id })
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      setModelle(prev => prev.filter(m => m.id !== id));
+      setJobs(prev => prev.filter(j => j.modella !== mod.nome));
+      showToast("Profile deleted \u2713");
+      setView("modelle");
+    } catch (e) {
+      showToast("Errore: " + e.message, true);
+    }
+  };
   };
   // Casting helpers
   const saveCasting = async () => {
