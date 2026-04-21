@@ -1128,15 +1128,10 @@ export default function App() {
                 {job.note && <><Divider /><InfoRow label="Note" val={job.note} /></>}
               </PaddedSection>
               <PaddedSection title="Pagamento">
-                <CalcRow label="Fatturato"           val={fmt(job.fatturato)} />
+<CalcRow label="Fatturato" val={fmt(job.fatturato)} />
                 <Divider />
-                <CalcRow label="Rimborso spese"      val={fmt(job.rimborso)} />
-                <Divider />
-                <CalcRow label={`Fee (${job.fee_pct}%)`} val={`– ${fmt(calcFee(job))}`} />
-                <Divider />
-                <CalcRow label="Lordo model"       val={fmt(calcLordo(job))} />
-                <Divider />
-                <CalcRow label="Ritenuta 20%"        val={`– ${fmt(calcRitenuta(job))}`} />
+                <CalcRow label="Netto model" val={`– ${fmt(calcNetto(job))}`} />
+                {job.rimborso > 0 && <><Divider /><CalcRow label="Rimborso spese" val={`– ${fmt(job.rimborso)}`} /></>}
                 <div style={{ height: 8 }} />
                 <div style={{ background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto da pagare</span>
