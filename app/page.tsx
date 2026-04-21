@@ -258,30 +258,32 @@ Data: ${oggi}                    Firma del prestatore: _________________________
 // ── GENERATORE CALL SHEET ────────────────────────────────────────────────────
 function generaCallSheet(job) {
   const dataIT = (() => {
-    if (!job.data_shooting) return "_______";
+    if (!job.data_shooting) return "";
     const [y, m, g] = job.data_shooting.split("-");
     return `${g}/${m}/${y}`;
   })();
   const netto = Number(job.netto_model) || 0;
   const rimb  = Number(job.rimborso) || 0;
-  const feeStr = rimb > 0
-    ? `${netto} euro netti + rimborso spese ${rimb} euro (gestito tramite agenzia)`
-    : `${netto} euro netti (gestiti tramite agenzia)`;
+  const feeStr = netto > 0
+    ? (rimb > 0
+      ? `${netto} euro netti + rimborso spese ${rimb} euro (gestito tramite agenzia)`
+      : `${netto} euro netti (gestiti tramite agenzia)`)
+    : "";
   return `📸 CALL SHEET — MODELS
 
-PRODUZIONE: ${job.cliente || "_______"}
-TIPO SHOOT: ${job.titolo || "_______"}
+PRODUZIONE: ${job.cliente || ""}
+TIPO SHOOT: ${job.titolo || ""}
 DATA: ${dataIT}
-CALL TIME: ${job.call_time || "_______"}
+CALL TIME: ${job.call_time || ""}
 FEE: ${feeStr}
 ⸻
-📍 LOCATION ${job.luogo || "_______"}
+📍 LOCATION ${job.luogo || ""}
 ⸻
 👗 STYLING & PREP • Capelli puliti (no prodotti pesanti) • Unghie naturali • Mani e piedi curati • Pelle curata (evitare segni evidenti di elastici o abiti stretti) • No abbronzature recenti o segni di costume • Mantenere il look coerente con la propria scheda (foto recenti) • Portare underwear neutro (nude/nero) • No trucco (se previsto MUA in loco)
 ⸻
 📱 COMPORTAMENTO SUL SET • Durante lo shooting manteniamo il focus sul lavoro, evitando l'uso del telefono • Il telefono può essere utilizzato durante le pause • Eventuali stories/post solo dopo approvazione del brand • Tag: @peacockmodelsmgmt • Attitudine collaborativa e reattiva alle indicazioni del team • Per questioni economiche, fare riferimento esclusivamente all'agenzia
 ⸻
-📞 CONTATTI ${job.contatto_referente || "_______"}
+📞 CONTATTI ${job.contatto_referente || ""}
 ⸻
 ⚠️ NOTE • Si raccomanda puntualità • Indicare eventuali allergie o intolleranze • Per eventuali rimborsi (benzina/treno) è necessario conservare copia dello scontrino o del biglietto • Seguire le indicazioni del team creativo
 
