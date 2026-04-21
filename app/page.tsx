@@ -577,12 +577,37 @@ export default function App() {
       const { error } = await supabase.from("castings").update(castingData).eq("id", id);
       if (error) { showToast(error.message, true); return; }
       setCastings(prev => prev.map(c => c.id === id ? { ...c, ...castingData } : c));
+      showToast("Casting salvato ✓"); setView("castings");
     } else {
       const { data, error } = await supabase.from("castings").insert(castingData).select().single();
       if (error) { showToast(error.message, true); return; }
       if (data) setCastings(prev => [data, ...prev]);
+      showToast("Casting salvato · invio email..."); setView("castings");
+      // Notifica email ai model (fire-and-forget)
+      try {
+        const res = await fetch("https://xtpafxourildjnofeulr.supabase.co/functions/v1/notify-casting", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify({
+            titolo: castingData.tipologia,
+            cliente: castingData.brand,
+            data_shooting: castingData.data ? fmtDate(castingData.data) : "",
+            luogo: "",
+            compenso: "",
+            descrizione: castingData.caratteristiche || "",
+            casting_id: data?.id
+          })
+        });
+        const json = await res.json();
+        if (json.error) showToast("Casting ok · errore email: " + json.error, true);
+        else showToast(`Casting salvato · ${json.sent || 0} email inviate ✓`);
+      } catch (e) {
+        showToast("Casting ok · errore email: " + e.message, true);
+      }
     }
-    showToast("Casting salvato ✓"); setView("castings");
   };
   const deleteCasting = async id => {
     await supabase.from("castings").delete().eq("id", id);
