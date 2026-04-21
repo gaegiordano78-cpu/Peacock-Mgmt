@@ -139,7 +139,7 @@ const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
-const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
+const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", call_time: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
@@ -254,6 +254,38 @@ Il sottoscritto dichiara che ha fino ad ora percepito, nel corso del periodo d'i
 Si impegna a comunicare l'eventuale superamento del limite di € 5.000,00 al fine di permettere l'applicazione della ritenuta e di consentire all'Ente il versamento degli importi dovuti.
 In difetto si dichiara disponibile a sostenere integralmente i relativi costi in misura intera sollevando codesta Società da oneri e responsabilità per l'omesso involontario versamento alla gestione separata INPS.
 Data: ${oggi}                    Firma del prestatore: _______________________________`;
+}
+// ── GENERATORE CALL SHEET ────────────────────────────────────────────────────
+function generaCallSheet(job) {
+  const dataIT = (() => {
+    if (!job.data_shooting) return "_______";
+    const [y, m, g] = job.data_shooting.split("-");
+    return `${g}/${m}/${y}`;
+  })();
+  const netto = Number(job.netto_model) || 0;
+  const rimb  = Number(job.rimborso) || 0;
+  const feeStr = rimb > 0
+    ? `${netto} euro netti + rimborso spese ${rimb} euro (gestito tramite agenzia)`
+    : `${netto} euro netti (gestiti tramite agenzia)`;
+  return `📸 CALL SHEET — MODELS
+
+PRODUZIONE: ${job.cliente || "_______"}
+TIPO SHOOT: ${job.titolo || "_______"}
+DATA: ${dataIT}
+CALL TIME: ${job.call_time || "_______"}
+FEE: ${feeStr}
+⸻
+📍 LOCATION ${job.luogo || "_______"}
+⸻
+👗 STYLING & PREP • Capelli puliti (no prodotti pesanti) • Unghie naturali • Mani e piedi curati • Pelle curata (evitare segni evidenti di elastici o abiti stretti) • No abbronzature recenti o segni di costume • Mantenere il look coerente con la propria scheda (foto recenti) • Portare underwear neutro (nude/nero) • No trucco (se previsto MUA in loco)
+⸻
+📱 COMPORTAMENTO SUL SET • Durante lo shooting manteniamo il focus sul lavoro, evitando l'uso del telefono • Il telefono può essere utilizzato durante le pause • Eventuali stories/post solo dopo approvazione del brand • Tag: @peacockmodelsmgmt • Attitudine collaborativa e reattiva alle indicazioni del team • Per questioni economiche, fare riferimento esclusivamente all'agenzia
+⸻
+📞 CONTATTI ${job.contatto_referente || "_______"}
+⸻
+⚠️ NOTE • Si raccomanda puntualità • Indicare eventuali allergie o intolleranze • Per eventuali rimborsi (benzina/treno) è necessario conservare copia dello scontrino o del biglietto • Seguire le indicazioni del team creativo
+
+Buon lavoro ✨`;
 }
 // ── UI COMPONENTS ────────────────────────────────────────────────────────────
 const Badge = ({ label, color, bg }) => (
@@ -1148,34 +1180,24 @@ export default function App() {
                   </div>
                 )}
               </PaddedSection>
-              {/* CONTRATTO */}
-              <Section title="Contratto & Liberatoria"
-                action={contrattoPronto ? null : (
-                  <button onClick={() => { setFormMod(mod ? mod : { ...emptyModella, nome: job.modella }); setView("nuova_modella"); }} style={{ fontSize: 10, color: "#000000", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                    Completa anagrafica →
-                  </button>
-                )}>
+              {/* CALL SHEET */}
+              <Section title="📸 Call Sheet">
                 <div style={{ padding: "14px 16px" }}>
-                  {contrattoPronto ? (
-                    <>
-                      <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.5, marginBottom: 14 }}>
-                        Genera il contratto precompilato con i dati di <strong>{job.modella}</strong> per il job <strong>{job.titolo}</strong> con {job.cliente}.
-                      </div>
-                      <button onClick={() => { setView("contratto"); }}
-                        style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                        📄 Visualizza contratto
-                      </button>
-                      {job.stato_pagamento === "pagato" && (
-                        <button onClick={() => { setView("ritenuta"); }}
-                          style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                          🧾 Genera ritenuta d'acconto
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.6 }}>
-                      Per generare il contratto completa la scheda anagrafica di <strong style={{ color: "#000000" }}>{job.modella}</strong> con CF, data di nascita e residenza.
-                    </div>
+                  <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.5, marginBottom: 14 }}>
+                    Genera il call sheet precompilato per <strong>{job.modella.split(" ")[0]}</strong> e copialo per incollarlo su WhatsApp.
+                  </div>
+                  <button onClick={() => {
+                    const testo = generaCallSheet(job);
+                    navigator.clipboard.writeText(testo).then(() => { showToast("Call sheet copiato ✓"); });
+                  }}
+                    style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    📋 Copia call sheet
+                  </button>
+                  {job.stato_pagamento === "pagato" && (
+                    <button onClick={() => { setView("ritenuta"); }}
+                      style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                      🧾 Genera ritenuta d'acconto
+                    </button>
                   )}
                 </div>
               </Section>
@@ -1184,14 +1206,6 @@ export default function App() {
                   <CalBtn icon="📷" label="Giorno shooting" sub={`${fmtDate(job.data_shooting)} · tutto il giorno`} onClick={() => aggiungiCal(job, "shooting")} loading={loading === "shooting"} />
                   <CalBtn icon="💬" label="Promemoria WhatsApp" sub="Sera prima · ore 19:00" onClick={() => aggiungiCal(job, "promemoria")} loading={loading === "promemoria"} />
                   <CalBtn icon="💸" label={`Promemoria pagamento · ${fmt(calcNetto(job))}`} sub="Oggi · ore 10:00" onClick={() => aggiungiCal(job, "pagamento")} loading={loading === "pagamento"} />
-                </div>
-              </Section>
-              <Section title="💬 WhatsApp">
-                <div style={{ padding: "14px 16px", background: "#FFFFFF", fontSize: 17, color: "#767676", lineHeight: 1.6, whiteSpace: "pre-wrap", borderRadius: 16 }}>
-                  {`Ciao ${job.modella.split(" ")[0]}! Ti ricordo lo shooting di domani:
-"${job.titolo}" con ${job.cliente}
-Luogo: ${job.luogo}
-A domani 🤍`}
                 </div>
               </Section>
               <GhostBtn onClick={() => { setFormJob(job); setView("nuovo_job"); }}>Modifica job</GhostBtn>
@@ -1484,8 +1498,12 @@ A domani 🤍`}
             <Field label="Titolo job *" value={formJob.titolo} onChange={v => setFormJob(f => ({ ...f, titolo: v }))} />
             <Field label="Cliente *"   value={formJob.cliente} onChange={v => setFormJob(f => ({ ...f, cliente: v }))} />
             <SelectField label="Model" value={formJob.modella} onChange={v => setFormJob(f => ({ ...f, modella: v }))} options={nomiModelle} />
-            <Field label="Data shooting" value={formJob.data_shooting} onChange={v => setFormJob(f => ({ ...f, data_shooting: v }))} type="date" />
-            <Field label="Luogo"         value={formJob.luogo}         onChange={v => setFormJob(f => ({ ...f, luogo: v }))} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Data shooting" value={formJob.data_shooting} onChange={v => setFormJob(f => ({ ...f, data_shooting: v }))} type="date" />
+              <Field label="Call time"     value={formJob.call_time}     onChange={v => setFormJob(f => ({ ...f, call_time: v }))} type="time" />
+            </div>
+            <Field label="Luogo"              value={formJob.luogo}              onChange={v => setFormJob(f => ({ ...f, luogo: v }))} placeholder="Indirizzo o link Google Maps" />
+            <Field label="Contatto referente" value={formJob.contatto_referente} onChange={v => setFormJob(f => ({ ...f, contatto_referente: v }))} placeholder="Nome + telefono (es. Stefania 3394240321)" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Fatturato €"   value={formJob.fatturato}   onChange={v => setFormJob(f => ({ ...f, fatturato: Number(v) }))}   type="number" />
               <Field label="Netto model €" value={formJob.netto_model} onChange={v => setFormJob(f => ({ ...f, netto_model: Number(v) }))} type="number" />
