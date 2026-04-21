@@ -112,11 +112,12 @@ const initialModelle = [
   { id: "m101", nome: "Donato De Lucia", tipo: "Start", scadenza: "", polas: "" }
 ];
 const initialJobs = [
-  { id: 1, titolo: "Editorial Summer", cliente: "Modo Magazine",   modella: "Sofia Amendolara", data_shooting: "2026-04-12", luogo: "Studio Bari, Via Sparano 14", fatturato: 320, rimborso: 0,  fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
-  { id: 2, titolo: "Lookbook SS26",    cliente: "Oriana Studio",   modella: "Giulia Ferrante",  data_shooting: "2026-04-20", luogo: "Lecce, masseria zona Sud",  fatturato: 450, rimborso: 40, fee_pct: 20, stato_job: "in attesa",  stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "Conferma entro 5 apr" },
-  { id: 3, titolo: "Campagna Social",  cliente: "Masseria Priori", modella: "Sofia Amendolara", data_shooting: "2026-03-05", luogo: "Fasano (BR)",               fatturato: 280, rimborso: 0,  fee_pct: 20, stato_job: "completato", stato_pagamento: "pagato",    data_pagamento_cliente: "2026-03-20", note: "" },
-  { id: 4, titolo: "TVC Spot",         cliente: "Brand XYZ",       modella: "Chiara Monti",     data_shooting: "2026-04-10", luogo: "Bari",                      fatturato: 600, rimborso: 80, fee_pct: 20, stato_job: "completato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
+  { id: 1, titolo: "Editorial Summer", cliente: "Modo Magazine",   modella: "Sofia Amendolara", data_shooting: "2026-04-12", luogo: "Studio Bari, Via Sparano 14", fatturato: 320, netto_model: 200, rimborso: 0,  stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
+  { id: 2, titolo: "Lookbook SS26",    cliente: "Oriana Studio",   modella: "Giulia Ferrante",  data_shooting: "2026-04-20", luogo: "Lecce, masseria zona Sud",  fatturato: 450, netto_model: 280, rimborso: 40, stato_job: "in attesa",  stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "Conferma entro 5 apr" },
+  { id: 3, titolo: "Campagna Social",  cliente: "Masseria Priori", modella: "Sofia Amendolara", data_shooting: "2026-03-05", luogo: "Fasano (BR)",               fatturato: 280, netto_model: 180, rimborso: 0,  stato_job: "completato", stato_pagamento: "pagato",    data_pagamento_cliente: "2026-03-20", note: "" },
+  { id: 4, titolo: "TVC Spot",         cliente: "Brand XYZ",       modella: "Chiara Monti",     data_shooting: "2026-04-10", luogo: "Bari",                      fatturato: 600, netto_model: 400, rimborso: 80, stato_job: "completato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
 ];
+// Nuova logica: netto_model inserito manualmente; lordo/ritenuta derivati per ritenuta PDF.
 const calcLordo           = j => (Number(j.netto_model) || 0) / 0.8;
 const calcRitenuta        = j => calcLordo(j) * 0.2;
 const calcNetto           = j => Number(j.netto_model) || 0;
@@ -138,7 +139,7 @@ const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
-const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, rimborso: 0, fee_pct: 20, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
+const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
@@ -806,19 +807,15 @@ export default function App() {
               <InfoRow label="Luogo" val={job.luogo} />
             </PaddedSection>
             <PaddedSection title="Compenso">
-              <CalcRow label="Fatturato" val={fmt(job.fatturato)} />
-              <Divider />
-              <CalcRow label="Rimborso spese" val={fmt(job.rimborso)} />
-              <Divider />
-              <CalcRow label={`Fee (${job.fee_pct}%)`} val={`– ${fmt(calcFee(job))}`} />
-              <Divider />
-              <CalcRow label="Lordo" val={fmt(calcLordo(job))} />
-              <Divider />
-              <CalcRow label="Ritenuta 20%" val={`– ${fmt(calcRitenuta(job))}`} />
-              <div style={{ height: 8 }} />
+              {job.rimborso > 0 && (
+                <>
+                  <CalcRow label="Rimborso spese" val={fmt(job.rimborso)} />
+                  <div style={{ height: 8 }} />
+                </>
+              )}
               <div style={{ background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto</span>
-                <span style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.03em" }}>{fmt(calcNetto(job))}</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.03em" }}>{fmt(calcDaPagareModel(job))}</span>
               </div>
               {job.stato_pagamento === "pagato" && (
                 <div style={{ marginTop: 10, padding: "13px", background: "#F0FDF4", border: "1.5px solid #16A34A33", borderRadius: 14, color: "#767676", fontSize: 17, fontWeight: 600, textAlign: "center" }}>
@@ -1133,10 +1130,12 @@ export default function App() {
                 <Divider />
                 <CalcRow label="Netto model" val={`– ${fmt(calcNetto(job))}`} />
                 {job.rimborso > 0 && <><Divider /><CalcRow label="Rimborso spese" val={`– ${fmt(job.rimborso)}`} /></>}
+                <Divider />
+                <CalcRow label="Guadagno Peacock" val={fmt(calcGuadagnoPeacock(job))} />
                 <div style={{ height: 8 }} />
                 <div style={{ background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto da pagare</span>
-                  <span style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.03em" }}>{fmt(calcNetto(job))}</span>
+                  <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto da pagare al model</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.03em" }}>{fmt(calcDaPagareModel(job))}</span>
                 </div>
                 {job.stato_pagamento !== "pagato" ? (
                   <button onClick={() => { marcaPagato(job.id); setSelectedJob({ ...job, stato_pagamento: "pagato" }); }}
@@ -1488,20 +1487,20 @@ A domani 🤍`}
             <Field label="Data shooting" value={formJob.data_shooting} onChange={v => setFormJob(f => ({ ...f, data_shooting: v }))} type="date" />
             <Field label="Luogo"         value={formJob.luogo}         onChange={v => setFormJob(f => ({ ...f, luogo: v }))} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Fatturato €" value={formJob.fatturato} onChange={v => setFormJob(f => ({ ...f, fatturato: Number(v) }))} type="number" />
-              <Field label="Rimborso €"  value={formJob.rimborso}  onChange={v => setFormJob(f => ({ ...f, rimborso: Number(v) }))}  type="number" />
+              <Field label="Fatturato €"   value={formJob.fatturato}   onChange={v => setFormJob(f => ({ ...f, fatturato: Number(v) }))}   type="number" />
+              <Field label="Netto model €" value={formJob.netto_model} onChange={v => setFormJob(f => ({ ...f, netto_model: Number(v) }))} type="number" />
             </div>
-            <Field label="Fee agenzia %" value={formJob.fee_pct} onChange={v => setFormJob(f => ({ ...f, fee_pct: Number(v) }))} type="number" />
-            {formJob.fatturato > 0 && (
+            <Field label="Rimborso €" value={formJob.rimborso} onChange={v => setFormJob(f => ({ ...f, rimborso: Number(v) }))} type="number" />
+            {(formJob.fatturato > 0 || formJob.netto_model > 0) && (
               <div style={{ background: "#F5F5F5", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "0.5px solid #EBEBEB" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 16, color: "#767676" }}>Fee agenzia</span>
-                  <span style={{ fontSize: 16, color: "#000000" }}>{fmt(calcFee(formJob))}</span>
+                  <span style={{ fontSize: 16, color: "#767676" }}>Guadagno Peacock</span>
+                  <span style={{ fontSize: 16, color: "#000000" }}>{fmt(calcGuadagnoPeacock(formJob))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto model</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: "#000000" }}>{fmt(calcNetto(formJob))}</span>
+                  <span style={{ fontSize: 17, fontWeight: 600, color: "#000000" }}>Netto al model</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: "#000000" }}>{fmt(calcDaPagareModel(formJob))}</span>
                 </div>
               </div>
             )}
@@ -1649,14 +1648,12 @@ function CalcolatoreSemplice() {
   const lordoInv    = nettoDes > 0 ? nettoDes / 0.8 : 0;
   const ritenuta    = lordoInv * 0.2;
   const totaleInv   = lordoInv + rimborsoInv;
-  // Calcolatrice diretta (dal fatturato)
-  const [fatturato, setFatturato] = useState(0);
-  const [rimborso, setRimborso]   = useState(0);
-  const [fee, setFee]             = useState(20);
-  const feeEur   = fatturato * (fee / 100);
-  const lordo    = fatturato - feeEur + rimborso;
-  const ritenuta2 = lordo * 0.2;
-  const netto    = lordo - ritenuta2;
+  // Calcolatrice diretta (dal fatturato): planning pre-job
+  const [fatturato, setFatturato]     = useState(0);
+  const [nettoModelD, setNettoModelD] = useState(0);
+  const [rimborso, setRimborso]       = useState(0);
+  const guadagnoPeacock = fatturato - nettoModelD - rimborso;
+  const nettoDaPagare   = nettoModelD + rimborso;
   const Field2 = ({ label, value, onChange, placeholder = "" }) => (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: "block", fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
@@ -1712,18 +1709,17 @@ function CalcolatoreSemplice() {
       )}
       {tab === "diretta" && (
         <>
-          <Field2 label="Fatturato cliente €" value={fatturato} onChange={setFatturato} placeholder="es. 500" />
-          <Field2 label="Rimborso spese €"    value={rimborso}  onChange={setRimborso} placeholder="es. 50" />
-          <Field2 label="Fee agenzia %"       value={fee}       onChange={setFee} />
-          {fatturato > 0 && (
+          <Field2 label="Fatturato cliente €" value={fatturato}   onChange={setFatturato}   placeholder="es. 500" />
+          <Field2 label="Netto model €"       value={nettoModelD} onChange={setNettoModelD} placeholder="es. 300" />
+          <Field2 label="Rimborso spese €"    value={rimborso}    onChange={setRimborso}    placeholder="es. 50" />
+          {fatturato > 0 && nettoModelD > 0 && (
             <div style={{ background: "#FFFFFF", borderRadius: 20, padding: "20px", border: "0.5px solid #EBEBEB", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Risultato</div>
               {[
                 { l: "Fatturato", v: `€${fatturato.toFixed(2)}` },
-                { l: `Fee (${fee}%)`, v: `– €${feeEur.toFixed(2)}` },
-                ...(rimborso > 0 ? [{ l: "Rimborso", v: `+ €${rimborso.toFixed(2)}` }] : []),
-                { l: "Lordo", v: `€${lordo.toFixed(2)}` },
-                { l: "Ritenuta 20%", v: `– €${ritenuta2.toFixed(2)}` },
+                { l: "Netto model", v: `– €${nettoModelD.toFixed(2)}` },
+                ...(rimborso > 0 ? [{ l: "Rimborso", v: `– €${rimborso.toFixed(2)}` }] : []),
+                { l: "Guadagno Peacock", v: `€${guadagnoPeacock.toFixed(2)}` },
               ].map((r, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "0.5px solid #EBEBEB" }}>
                   <span style={{ fontSize: 16, color: "#767676" }}>{r.l}</span>
@@ -1731,8 +1727,8 @@ function CalcolatoreSemplice() {
                 </div>
               ))}
               <div style={{ marginTop: 14, background: "#F5F5F5", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 16, fontWeight: 600, color: "#000000" }}>Netto da pagare</span>
-                <span style={{ fontSize: 26, fontWeight: 800, color: "#000000", letterSpacing: "-0.04em" }}>€{netto.toFixed(2)}</span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: "#000000" }}>Netto da pagare al model</span>
+                <span style={{ fontSize: 26, fontWeight: 800, color: "#000000", letterSpacing: "-0.04em" }}>€{nettoDaPagare.toFixed(2)}</span>
               </div>
             </div>
           )}
