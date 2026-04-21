@@ -117,10 +117,11 @@ const initialJobs = [
   { id: 3, titolo: "Campagna Social",  cliente: "Masseria Priori", modella: "Sofia Amendolara", data_shooting: "2026-03-05", luogo: "Fasano (BR)",               fatturato: 280, rimborso: 0,  fee_pct: 20, stato_job: "completato", stato_pagamento: "pagato",    data_pagamento_cliente: "2026-03-20", note: "" },
   { id: 4, titolo: "TVC Spot",         cliente: "Brand XYZ",       modella: "Chiara Monti",     data_shooting: "2026-04-10", luogo: "Bari",                      fatturato: 600, rimborso: 80, fee_pct: 20, stato_job: "completato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" },
 ];
-const calcFee      = j => j.fatturato * (j.fee_pct / 100);
-const calcLordo    = j => j.fatturato - calcFee(j) + j.rimborso;
-const calcRitenuta = j => calcLordo(j) * 0.2;
-const calcNetto    = j => calcLordo(j) - calcRitenuta(j);
+const calcLordo           = j => (Number(j.netto_model) || 0) / 0.8;
+const calcRitenuta        = j => calcLordo(j) * 0.2;
+const calcNetto           = j => Number(j.netto_model) || 0;
+const calcDaPagareModel   = j => (Number(j.netto_model) || 0) + (Number(j.rimborso) || 0);
+const calcGuadagnoPeacock = j => (Number(j.fatturato) || 0) - (Number(j.netto_model) || 0) - (Number(j.rimborso) || 0);
 const fmt     = n => n === 0 ? "—" : `€${Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtDate = d => { if (!d) return "—"; const [y, m, g] = d.split("-"); return `${g}/${m}/${y}`; };
 // Contratto helpers
