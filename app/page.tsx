@@ -1222,7 +1222,6 @@ export default function App() {
               <Section title="📅 Calendario">
                 <div style={{ padding: "8px 8px 4px" }}>
                   <CalBtn icon="📷" label="Giorno shooting" sub={`${fmtDate(job.data_shooting)} · tutto il giorno`} onClick={() => aggiungiCal(job, "shooting")} loading={loading === "shooting"} />
-                  <CalBtn icon="💬" label="Promemoria WhatsApp" sub="Sera prima · ore 19:00" onClick={() => aggiungiCal(job, "promemoria")} loading={loading === "promemoria"} />
                   <CalBtn icon="💸" label={`Promemoria pagamento · ${fmt(calcNetto(job))}`} sub="Oggi · ore 10:00" onClick={() => aggiungiCal(job, "pagamento")} loading={loading === "pagamento"} />
                 </div>
               </Section>
