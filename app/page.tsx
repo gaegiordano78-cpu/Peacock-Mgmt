@@ -1317,7 +1317,7 @@ export default function App() {
                     style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     📋 Copia call sheet
                   </button>
-                  <button onClick={() => { setView("ritenuta"); }}
+                  <button onClick={() => { setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(""); setView("ritenuta"); }}
                     style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     🧾 Genera ritenuta d'acconto
                   </button>
