@@ -898,7 +898,7 @@ export default function App() {
                 </div>
               )}
             </PaddedSection>
-            {job.stato_pagamento === "pagato" && myModella && (
+            {myModella && (
               <Section title="Ritenuta d'acconto">
                 <div style={{ padding: "14px 16px" }}>
                   <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.5, marginBottom: 14 }}>
@@ -1236,12 +1236,10 @@ export default function App() {
                     style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     📋 Copia call sheet
                   </button>
-                  {job.stato_pagamento === "pagato" && (
-                    <button onClick={() => { setView("ritenuta"); }}
-                      style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                      🧾 Genera ritenuta d'acconto
-                    </button>
-                  )}
+                  <button onClick={() => { setView("ritenuta"); }}
+                    style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    🧾 Genera ritenuta d'acconto
+                  </button>
                 </div>
               </Section>
               <Section title="📅 Calendario">
