@@ -265,80 +265,84 @@ function generaRitenutaHTML(job, modella, numRitenuta, descrizione, dataInizio, 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ritenuta d'acconto - ${esc(modella.nome)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Georgia, "Times New Roman", serif; font-size: 13px; color: #000; padding: 36px 48px; line-height: 1.55; }
-    .head { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-    .head h1 { font-size: 18px; letter-spacing: 0.02em; font-weight: 700; }
-    .head .num { font-size: 13px; text-align: right; }
-    .head .num strong { font-size: 16px; display: block; margin-top: 2px; }
-    h2 { font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #999; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-    td { padding: 4px 0; vertical-align: top; font-size: 13px; }
-    td.lbl { width: 42%; color: #555; }
-    td.val { width: 58%; color: #000; }
-    .compensi td { padding: 8px 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
-    .compensi tr:last-child td { border-bottom: none; border-top: 2px solid #000; font-weight: 700; }
-    .compensi td.importo { text-align: right; font-weight: 700; }
-    .dich { margin-top: 22px; padding: 14px; background: #f7f7f7; font-size: 12px; line-height: 1.55; text-align: justify; }
-    .dich p { margin-bottom: 8px; }
-    .firma { margin-top: 24px; display: flex; justify-content: space-between; font-size: 13px; }
-    .firma .linea { border-bottom: 1px solid #000; min-width: 260px; display: inline-block; margin-left: 8px; padding-bottom: 2px; }
+    body { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 11px; color: #000; padding: 24px 32px; line-height: 1.35; }
+    .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .head h1 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+    .head .num { font-size: 13px; font-style: italic; }
+    h2 { font-size: 12px; font-weight: 700; margin: 10px 0 6px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 4px; table-layout: fixed; }
+    table td { border: 1px solid #000; padding: 5px 8px; font-size: 11px; vertical-align: middle; }
+    table td.lbl { font-weight: 700; width: 32%; white-space: nowrap; }
+    table td.val { width: 68%; }
+    table.dati td.lbl { width: 28%; }
+    .compensi td.lbl { font-weight: 700; width: 75%; }
+    .compensi td.importo { text-align: right; font-weight: 400; width: 25%; white-space: nowrap; }
+    .cap-row td { padding: 0; border: none; }
+    .cap-row table { margin: 0; }
+    .plain { margin: 4px 0 8px; font-size: 11px; }
+    .dich { margin-top: 10px; }
+    .dich h3 { font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+    .dich p { font-size: 10px; line-height: 1.4; margin-bottom: 5px; text-align: justify; }
+    .firma-row { margin-top: 18px; display: flex; justify-content: space-between; font-size: 11px; }
+    .firma-row .left { white-space: nowrap; }
+    .firma-row .right { flex: 1; margin-left: 40px; }
+    .firma-row .linea { border-bottom: 1px solid #000; display: inline-block; min-width: 220px; height: 14px; vertical-align: bottom; margin-left: 6px; }
     @media print {
-      body { padding: 20px 28px; }
-      @page { margin: 1cm; size: A4; }
+      body { padding: 14px 22px; }
+      @page { margin: 0.7cm; size: A4; }
     }
   </style></head><body>
     <div class="head">
-      <h1>RITENUTA D'ACCONTO</h1>
-      <div class="num"><span>Ritenuta n°</span><strong>${esc(numRitenuta)}</strong></div>
+      <h1>Modulo di ritenuta d'acconto</h1>
+      <div class="num">Ricevuta n° ${esc(numRitenuta) || "____"}</div>
     </div>
 
-    <h2>Prestatore</h2>
-    <table>
-      <tr><td class="lbl">Nome e Cognome</td><td class="val"><strong>${esc(modella.nome)}</strong></td></tr>
-      <tr><td class="lbl">Codice Fiscale</td><td class="val">${esc(modella.cf || "_______________")}</td></tr>
-      <tr><td class="lbl">Indirizzo</td><td class="val">${esc(modella.indirizzo || "_______________")}</td></tr>
-      <tr><td class="lbl">Città / CAP</td><td class="val">${esc(modella.citta || "_______________")} — ${esc(modella.cap || "_____")}</td></tr>
-      <tr><td class="lbl">Telefono</td><td class="val">${esc(modella.telefono || "_______________")}</td></tr>
-      <tr><td class="lbl">Email</td><td class="val">${esc(modella.email || "_______________")}</td></tr>
+    <h2>Dati del prestatore (lavoratore):</h2>
+    <table class="dati">
+      <tr><td class="lbl">Nome e Cognome:</td><td class="val">${esc(modella.nome)}</td></tr>
+      <tr><td class="lbl">Codice Fiscale:</td><td class="val">${esc(modella.cf || "")}</td></tr>
+      <tr><td class="lbl">Indirizzo:</td><td class="val">${esc(modella.indirizzo || "")}</td></tr>
+      <tr><td class="lbl">Città:</td><td class="val" style="padding:0;"><table style="border:none;"><tr><td style="border:none;border-right:1px solid #000;width:60%;">${esc(modella.citta || "")}</td><td class="lbl" style="border:none;border-right:1px solid #000;width:12%;text-align:center;">Cap:</td><td style="border:none;">${esc(modella.cap || "")}</td></tr></table></td></tr>
+      <tr><td class="lbl">Telefono:</td><td class="val">${esc(modella.telefono || "")}</td></tr>
+      <tr><td class="lbl">Email:</td><td class="val">${esc(modella.email || "")}</td></tr>
     </table>
 
-    <h2>Committente</h2>
-    <table>
-      <tr><td class="lbl">Ragione Sociale</td><td class="val">Peacock Mgmt di Gaetano Giordano</td></tr>
-      <tr><td class="lbl">Indirizzo</td><td class="val">Via Giacomo Matteotti, 70121 Bari (BA)</td></tr>
-      <tr><td class="lbl">Partita IVA</td><td class="val">IT 07164570728</td></tr>
+    <h2>Dati del committente (azienda / privato):</h2>
+    <p class="plain"><strong>Ragione Sociale / Nome e Cognome:</strong> Peacock Mgmt di Gaetano Giordano</p>
+    <p class="plain"><strong>Indirizzo:</strong> Via Giacomo Matteotti Cap: 70121 Bari (Ba)</p>
+    <p class="plain"><strong>Partita IVA:</strong> IT 07164570728</p>
+
+    <h2>Oggetto della prestazione:</h2>
+    <table class="dati">
+      <tr><td class="lbl">Descrizione:</td><td class="val">${esc(descrizione || "Model")}</td></tr>
+      <tr><td class="lbl">Data della prestazione:</td><td class="val">${esc(dataInizio)}${dataFine ? " al " + esc(dataFine) : ""}</td></tr>
     </table>
 
-    <h2>Oggetto della prestazione</h2>
-    <table>
-      <tr><td class="lbl">Descrizione</td><td class="val">${esc(descrizione || "Model")}</td></tr>
-      <tr><td class="lbl">Data prestazione</td><td class="val">${esc(dataInizio)}${dataFine ? " al " + esc(dataFine) : ""}</td></tr>
-    </table>
-
-    <h2>Compenso</h2>
+    <h2>Compenso e ritenuta:</h2>
     <table class="compensi">
-      <tr><td>Compenso lordo pattuito</td><td class="importo">${lordo.toFixed(2)} €</td></tr>
-      <tr><td>Ritenuta d'acconto (20% su compenso lordo)</td><td class="importo">${ritenuta.toFixed(2)} €</td></tr>
-      <tr><td>Compenso netto da corrispondere</td><td class="importo">${netto.toFixed(2)} €</td></tr>
+      <tr><td class="lbl">Compenso lordo pattuito:</td><td class="importo">${lordo.toFixed(2)}€</td></tr>
+      <tr><td class="lbl">Ritenuta d'acconto (20% su compenso lordo):</td><td class="importo">${ritenuta.toFixed(2)}€</td></tr>
+      <tr><td class="lbl">Compenso netto da corrispondere:</td><td class="importo">${netto.toFixed(2)}€</td></tr>
     </table>
 
-    <h2>Coordinate bancarie</h2>
-    <table>
-      <tr><td class="lbl">Banca</td><td class="val">${esc(modella.banca || "_______________")}</td></tr>
-      <tr><td class="lbl">Intestatario</td><td class="val">${esc(modella.intestato_a || modella.nome)}</td></tr>
-      <tr><td class="lbl">IBAN</td><td class="val"><strong>${esc(modella.iban || "_______________")}</strong></td></tr>
+    <h2>Coordinate Bancarie del prestatore:</h2>
+    <table class="dati">
+      <tr><td class="lbl">Banca</td><td class="val">${esc(modella.banca || "")}</td></tr>
+      <tr><td class="lbl">Intestato a</td><td class="val">${esc(modella.intestato_a || modella.nome)}</td></tr>
+      <tr><td class="lbl">Iban</td><td class="val">${esc(modella.iban || "")}</td></tr>
     </table>
 
     <div class="dich">
-      <p><strong>Dichiarazione del prestatore per redditi d'importo non superiore a 5.000€</strong></p>
+      <h3>Dichiarazione del prestatore per redditi d'importo non superiore a 5.000€:</h3>
       <p>Ai sensi della Legge 335/1995 e dell'art. 44, comma 2, della Legge 24 Novembre 2003 N.326 di conversione del Decreto Legge 269/2003:</p>
       <p>Il sottoscritto dichiara che ha fino ad ora percepito, nel corso del periodo d'imposta ${anno}, redditi d'importo non superiore ad € 5.000,00 per attività di lavoro autonomo occasionale, a fronte di un unico o di una pluralità di rapporti, (di cui all'art.67 – precedente art.81 – comma 1, lettera l DPR, 917/1986) e pertanto invita codesta amministrazione a tenere conto di tale informazione agli effetti della trattenuta contributiva INPS.</p>
-      <p>Si impegna a comunicare l'eventuale superamento del limite di € 5.000,00 al fine di permettere l'applicazione della ritenuta e di consentire all'Ente il versamento degli importi dovuti. In difetto si dichiara disponibile a sostenere integralmente i relativi costi in misura intera sollevando codesta Società da oneri e responsabilità per l'omesso involontario versamento alla gestione separata INPS.</p>
+      <p>Si impegna a comunicare l'eventuale superamento del limite di € 5.000,00 al fine di permettere l'applicazione della ritenuta e di consentire all'Ente il versamento di importi dovuti.</p>
+      <p>In difetto si dichiara disponibile a sostenere integralmente i relativi costi in misura intera sollevando codesta Società da oneri e responsabilità per l'omesso involontario versamento alla gestione separata INPS.</p>
     </div>
 
-    <div class="firma">
-      <div>Data: <strong>${oggi}</strong></div>
-      <div>Firma del prestatore <span class="linea"></span></div>
+    <div class="firma-row">
+      <div class="left">Data: ${oggi}</div>
+      <div class="right">Firma del prestatore: <span class="linea"></span></div>
     </div>
   </body></html>`;
 }
