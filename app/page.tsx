@@ -1131,10 +1131,6 @@ export default function App() {
               })}
             </div>
           )}
-          <div style={{ marginTop: 10, background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Calcolatrice ritenuta</div>
-            <CalcolatoreSemplice />
-          </div>
         </div>
       </div>
     );
@@ -1675,7 +1671,7 @@ export default function App() {
         {/* ── NUOVO / MODIFICA CASTING ── */}
         {view === "nuovo_casting" && (
           <div style={{ padding: "16px" }}>
-            <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo"]} />
+            <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo", "uomo + donna"]} />
             <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
             <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
             <Field label="Data shooting" value={formCasting.data} onChange={v => setFormCasting(f => ({ ...f, data: v }))} type="date" />
