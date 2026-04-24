@@ -804,6 +804,7 @@ export default function App() {
   const totDaIncassare = jobs.filter(j => j.stato_pagamento === "da pagare").reduce((s, j) => s + j.fatturato, 0);
   const totDaPagare    = jobs.filter(j => j.stato_pagamento === "da pagare").reduce((s, j) => s + calcNetto(j), 0);
   const totPagato      = jobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
+  const totGuadagnoPeacock = jobs.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
   const nomiModelle = modelle.map(m => m.nome);
   // ── NAV ──────────────────────────────────────────────────────────────────
   const backView = () => {
@@ -1222,13 +1223,14 @@ export default function App() {
             {/* Stats */}
             <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", display: "flex" }}>
               {[
-                { label: "Da incassare", val: fmt(totDaIncassare), color: "#000000" },
-                { label: "Da pagare",    val: fmt(totDaPagare),    color: "#C4A882" },
-                { label: "Pagato YTD",   val: fmt(totPagato),      color: "#767676" },
+                { label: "Da incassare",  val: fmt(totDaIncassare),     color: "#000000" },
+                { label: "Da pagare",     val: fmt(totDaPagare),        color: "#C4A882" },
+                { label: "Mio guadagno",  val: fmt(totGuadagnoPeacock), color: "#16A34A" },
+                { label: "Pagato YTD",    val: fmt(totPagato),          color: "#767676" },
               ].map((s, i) => (
-                <div key={i} style={{ flex: 1, padding: "16px 8px", textAlign: "center", borderRight: i < 2 ? "1px solid #F0EAE0" : "none" }}>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: s.color, letterSpacing: "-0.01em" }}>{s.val}</div>
-                  <div style={{ fontSize: 9, color: "#767676", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
+                <div key={i} style={{ flex: 1, padding: "14px 4px", textAlign: "center", borderRight: i < 3 ? "1px solid #F0EAE0" : "none" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: s.color, letterSpacing: "-0.01em" }}>{s.val}</div>
+                  <div style={{ fontSize: 8, color: "#767676", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
                 </div>
               ))}
             </div>
