@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Peacock Mgmt",
@@ -61,6 +62,20 @@ export default function RootLayout({
             }
           };
         `}} />
+
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18059680840"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18059680840');
+          `}
+        </Script>
+
         {children}
       </body>
     </html>
