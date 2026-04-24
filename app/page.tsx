@@ -1772,11 +1772,11 @@ export default function App() {
           </div>
         )}
         {view === "report" && (() => {
-          // Raggruppa job per mese (YYYY-MM) basandosi su data_pagamento_cliente
+          // Raggruppa job per mese (YYYY-MM) basandosi su data_shooting
           const byMonth: Record<string, any[]> = {};
           jobs.forEach(j => {
-            if (!j.data_pagamento_cliente) return;
-            const mese = j.data_pagamento_cliente.substring(0, 7); // "2026-04"
+            if (!j.data_shooting) return;
+            const mese = j.data_shooting.substring(0, 7); // "2026-04"
             if (!byMonth[mese]) byMonth[mese] = [];
             byMonth[mese].push(j);
           });
@@ -1839,8 +1839,8 @@ export default function App() {
               {/* SELETTORE MESE */}
               {mesi.length === 0 ? (
                 <div style={{ background: "#FFFFFF", borderRadius: 18, padding: "28px 20px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
-                  <div style={{ fontSize: 17, color: "#767676" }}>Nessun pagamento registrato</div>
-                  <div style={{ fontSize: 14, color: "#9C948A", marginTop: 8, lineHeight: 1.4 }}>Marca come pagati i job per vedere i report mensili.</div>
+                  <div style={{ fontSize: 17, color: "#767676" }}>Nessun job registrato</div>
+                  <div style={{ fontSize: 14, color: "#9C948A", marginTop: 8, lineHeight: 1.4 }}>Aggiungi job con data shooting per vedere i report mensili.</div>
                 </div>
               ) : (
                 <>
@@ -1875,7 +1875,7 @@ export default function App() {
                   </div>
 
                   {/* LISTA JOB */}
-                  <Section title={`${jobsMese.length} job pagati`}>
+                  <Section title={`${jobsMese.length} ${jobsMese.length === 1 ? "job" : "job"}`}>
                     <div>
                       {jobsMese.map((j, i) => (
                         <div key={j.id}>
