@@ -498,6 +498,7 @@ export default function App() {
   const [formMyProfile, setFormMyProfile] = useState<any>({});
   const [polaUploading, setPolaUploading] = useState("");
   const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
+  const [reportMese, setReportMese] = useState<string>("");
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
       setTimeout(() => { window.__hideSplash(); setSplash(false); }, 2200);
@@ -831,6 +832,7 @@ export default function App() {
     if (view === "castings") return "Castings";
     if (view === "nuovo_casting") return formCasting.id ? "Modifica Casting" : "Nuovo Casting";
     if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
+    if (view === "report") return "Report";
     return "";
   };
   // ── IMPOSTA PASSWORD (dopo invito o reset) ─────────────────────────────
@@ -1151,8 +1153,11 @@ export default function App() {
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <img src="/p-logo.png" alt="P" style={{ height: 110, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && (
+            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && view !== "report" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+            )}
+            {view === "report" && (
+              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
             )}
             {view === "castings" && (
               <>
@@ -1183,6 +1188,12 @@ export default function App() {
                   <button onClick={() => setView("castings")}
                     style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     📋
+                  </button>
+                )}
+                {userRuolo === "admin" && (
+                  <button onClick={() => setView("report")}
+                    style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    📊
                   </button>
                 )}
                 <button onClick={() => setView("calcolatrice")}
@@ -1759,6 +1770,123 @@ export default function App() {
             <CalcolatoreSemplice />
           </div>
         )}
+        {view === "report" && (() => {
+          // Raggruppa job per mese (YYYY-MM) basandosi su data_pagamento_cliente
+          const byMonth: Record<string, any[]> = {};
+          jobs.forEach(j => {
+            if (!j.data_pagamento_cliente) return;
+            const mese = j.data_pagamento_cliente.substring(0, 7); // "2026-04"
+            if (!byMonth[mese]) byMonth[mese] = [];
+            byMonth[mese].push(j);
+          });
+          const mesi = Object.keys(byMonth).sort().reverse();
+          const meseSelezionato = reportMese && byMonth[reportMese] ? reportMese : (mesi[0] || "");
+          const jobsMese = meseSelezionato ? byMonth[meseSelezionato] || [] : [];
+          const fatturatoMese = jobsMese.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const utileMese = jobsMese.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
+          // Ultimi 6 mesi per il grafico
+          const oggi = new Date();
+          const ultimi6: { key: string; label: string; fatt: number; utile: number }[] = [];
+          for (let i = 5; i >= 0; i--) {
+            const d = new Date(oggi.getFullYear(), oggi.getMonth() - i, 1);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+            const label = d.toLocaleDateString("it-IT", { month: "short" });
+            const js = byMonth[key] || [];
+            ultimi6.push({
+              key,
+              label,
+              fatt: js.reduce((s, j) => s + (Number(j.fatturato) || 0), 0),
+              utile: js.reduce((s, j) => s + calcGuadagnoPeacock(j), 0)
+            });
+          }
+          const maxVal = Math.max(1, ...ultimi6.map(m => Math.max(m.fatt, m.utile)));
+          const meseLabel = (k: string) => {
+            if (!k) return "";
+            const [y, m] = k.split("-");
+            const d = new Date(Number(y), Number(m) - 1, 1);
+            return d.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+          };
+          return (
+            <div style={{ padding: "20px 16px" }}>
+              {/* GRAFICO */}
+              <Section title="Ultimi 6 mesi">
+                <div style={{ padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 140, gap: 8, marginBottom: 10 }}>
+                    {ultimi6.map(m => {
+                      const hFatt = (m.fatt / maxVal) * 110;
+                      const hUtile = (m.utile / maxVal) * 110;
+                      return (
+                        <div key={m.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                          <div style={{ display: "flex", gap: 2, alignItems: "flex-end", height: 110 }}>
+                            <div title={`Fatturato: ${fmt(m.fatt)}`} style={{ width: 10, height: Math.max(2, hFatt), background: "#000", borderRadius: 2 }} />
+                            <div title={`Utile: ${fmt(m.utile)}`} style={{ width: 10, height: Math.max(2, hUtile), background: "#16A34A", borderRadius: 2 }} />
+                          </div>
+                          <div style={{ fontSize: 10, color: "#767676", textTransform: "uppercase", letterSpacing: "0.04em" }}>{m.label}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: "flex", gap: 14, justifyContent: "center", fontSize: 11, color: "#767676", marginTop: 4 }}>
+                    <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#000", borderRadius: 2, marginRight: 6 }} />Fatturato</span>
+                    <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#16A34A", borderRadius: 2, marginRight: 6 }} />Utile Peacock</span>
+                  </div>
+                </div>
+              </Section>
+
+              {/* SELETTORE MESE */}
+              {mesi.length === 0 ? (
+                <div style={{ background: "#FFFFFF", borderRadius: 18, padding: "28px 20px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 17, color: "#767676" }}>Nessun pagamento registrato</div>
+                  <div style={{ fontSize: 14, color: "#9C948A", marginTop: 8, lineHeight: 1.4 }}>Marca come pagati i job per vedere i report mensili.</div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Mese</label>
+                    <select value={meseSelezionato} onChange={e => setReportMese(e.target.value)}
+                      style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", textTransform: "capitalize" }}>
+                      {mesi.map(m => <option key={m} value={m}>{meseLabel(m)}</option>)}
+                    </select>
+                  </div>
+
+                  {/* CARDS */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fatturatoMese)}</div>
+                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Fatturato</div>
+                    </div>
+                    <div style={{ background: "#F0FDF4", borderRadius: 16, padding: "16px", border: "0.5px solid #86EFAC" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#16A34A", letterSpacing: "-0.02em" }}>{fmt(utileMese)}</div>
+                      <div style={{ fontSize: 10, color: "#16A34A", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Utile Peacock</div>
+                    </div>
+                  </div>
+
+                  {/* LISTA JOB */}
+                  <Section title={`${jobsMese.length} job pagati`}>
+                    <div>
+                      {jobsMese.map((j, i) => (
+                        <div key={j.id}>
+                          <div onClick={() => { setSelectedJob(j); setView("dettaglio"); }}
+                            style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: "#000", marginBottom: 2 }}>{j.titolo}</div>
+                              <div style={{ fontSize: 13, color: "#767676" }}>{j.cliente} · {j.modella?.split(" ")[0]}</div>
+                            </div>
+                            <div style={{ textAlign: "right", marginLeft: 12 }}>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: "#16A34A" }}>{fmt(calcGuadagnoPeacock(j))}</div>
+                              <div style={{ fontSize: 10, color: "#767676", marginTop: 2 }}>fatt. {fmt(j.fatturato)}</div>
+                            </div>
+                          </div>
+                          {i < jobsMese.length - 1 && <Divider />}
+                        </div>
+                      ))}
+                    </div>
+                  </Section>
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
