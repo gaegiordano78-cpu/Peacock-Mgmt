@@ -1785,6 +1785,8 @@ export default function App() {
           const jobsMese = meseSelezionato ? byMonth[meseSelezionato] || [] : [];
           const fatturatoMese = jobsMese.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
           const utileMese = jobsMese.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
+          const nLavori = jobsMese.length;
+          const nModelli = new Set(jobsMese.map(j => j.modella).filter(Boolean)).size;
           // Ultimi 6 mesi per il grafico
           const oggi = new Date();
           const ultimi6: { key: string; label: string; fatt: number; utile: number }[] = [];
@@ -1851,7 +1853,7 @@ export default function App() {
                   </div>
 
                   {/* CARDS */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                     <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
                       <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fatturatoMese)}</div>
                       <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Fatturato</div>
@@ -1859,6 +1861,16 @@ export default function App() {
                     <div style={{ background: "#F0FDF4", borderRadius: 16, padding: "16px", border: "0.5px solid #86EFAC" }}>
                       <div style={{ fontSize: 20, fontWeight: 800, color: "#16A34A", letterSpacing: "-0.02em" }}>{fmt(utileMese)}</div>
                       <div style={{ fontSize: 10, color: "#16A34A", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Utile Peacock</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{nLavori}</div>
+                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{nLavori === 1 ? "Lavoro" : "Lavori"}</div>
+                    </div>
+                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{nModelli}</div>
+                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{nModelli === 1 ? "Model coinvolto" : "Model coinvolti"}</div>
                     </div>
                   </div>
 
