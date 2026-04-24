@@ -770,9 +770,10 @@ export default function App() {
   };
   const marcaPagato = async id => {
     const oggi = new Date().toISOString().split("T")[0];
-    await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
+    const { error } = await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
+    if (error) { showToast("Errore: " + error.message, true); return; }
     setJobs(prev => prev.map(j => j.id === id ? { ...j, stato_pagamento: "pagato", data_pagamento_cliente: oggi } : j));
-    showToast("Pagamento registrato ✓");
+    showToast("Pagamento registrato ✓ " + oggi);
   };
   const aggiungiCal = (job, tipo) => {
     apriCalendar(job, tipo);
