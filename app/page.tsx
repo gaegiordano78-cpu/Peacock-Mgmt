@@ -1772,21 +1772,30 @@ export default function App() {
           </div>
         )}
         {view === "report" && (() => {
-          // Raggruppa job per mese (YYYY-MM) basandosi su data_shooting
-          const byMonth: Record<string, any[]> = {};
+          // Tutti i job del mese (per contare lavori e model)
+          const byMonthAll: Record<string, any[]> = {};
           jobs.forEach(j => {
             if (!j.data_shooting) return;
-            const mese = j.data_shooting.substring(0, 7); // "2026-04"
+            const mese = j.data_shooting.substring(0, 7);
+            if (!byMonthAll[mese]) byMonthAll[mese] = [];
+            byMonthAll[mese].push(j);
+          });
+          // Solo job pagati (per fatturato, utile, lista)
+          const byMonth: Record<string, any[]> = {};
+          jobs.forEach(j => {
+            if (!j.data_pagamento_cliente) return;
+            const mese = j.data_pagamento_cliente.substring(0, 7);
             if (!byMonth[mese]) byMonth[mese] = [];
             byMonth[mese].push(j);
           });
-          const mesi = Object.keys(byMonth).sort().reverse();
-          const meseSelezionato = reportMese && byMonth[reportMese] ? reportMese : (mesi[0] || "");
+          const mesi = Array.from(new Set([...Object.keys(byMonth), ...Object.keys(byMonthAll)])).sort().reverse();
+          const meseSelezionato = reportMese && (byMonth[reportMese] || byMonthAll[reportMese]) ? reportMese : (mesi[0] || "");
           const jobsMese = meseSelezionato ? byMonth[meseSelezionato] || [] : [];
+          const jobsMeseAll = meseSelezionato ? byMonthAll[meseSelezionato] || [] : [];
           const fatturatoMese = jobsMese.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
           const utileMese = jobsMese.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
-          const nLavori = jobsMese.length;
-          const nModelli = new Set(jobsMese.map(j => j.modella).filter(Boolean)).size;
+          const nLavori = jobsMeseAll.length;
+          const nModelli = new Set(jobsMeseAll.map(j => j.modella).filter(Boolean)).size;
           // Ultimi 6 mesi per il grafico
           const oggi = new Date();
           const ultimi6: { key: string; label: string; fatt: number; utile: number }[] = [];
@@ -1875,7 +1884,7 @@ export default function App() {
                   </div>
 
                   {/* LISTA JOB */}
-                  <Section title={`${jobsMese.length} ${jobsMese.length === 1 ? "job" : "job"}`}>
+                  <Section title={`${jobsMese.length} ${jobsMese.length === 1 ? "job pagato" : "job pagati"}`}>
                     <div>
                       {jobsMese.map((j, i) => (
                         <div key={j.id}>
