@@ -139,7 +139,7 @@ const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
-const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", call_time: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", data_pagamento_cliente: "", note: "" };
+const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", call_time: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", metodo_pagamento: "bonifico", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
@@ -1310,7 +1310,7 @@ export default function App() {
                   </button>
                 ) : (
                   <div style={{ marginTop: 10, padding: "13px", background: "#F0FDF4", border: "1.5px solid #16A34A33", borderRadius: 14, color: "#767676", fontSize: 17, fontWeight: 600, textAlign: "center" }}>
-                    ✓ Pagamento completato · {fmtDate(job.data_pagamento_cliente)}
+                    ✓ Pagato {job.metodo_pagamento === "cash" ? "in cash" : "con bonifico"} · {fmtDate(job.data_pagamento_cliente)}
                   </div>
                 )}
               </PaddedSection>
@@ -1641,6 +1641,7 @@ export default function App() {
             )}
             <SelectField label="Stato job"       value={formJob.stato_job}       onChange={v => setFormJob(f => ({ ...f, stato_job: v }))}       options={["confermato", "in attesa", "completato", "interno"]} />
             <SelectField label="Stato pagamento" value={formJob.stato_pagamento} onChange={v => setFormJob(f => ({ ...f, stato_pagamento: v }))} options={["da pagare", "in attesa", "pagato"]} />
+            <SelectField label="Metodo pagamento" value={formJob.metodo_pagamento || "bonifico"} onChange={v => setFormJob(f => ({ ...f, metodo_pagamento: v }))} options={["bonifico", "cash"]} />
             <Field label="Note" value={formJob.note} onChange={v => setFormJob(f => ({ ...f, note: v }))} />
             <PrimaryBtn onClick={saveJob}>Salva Job</PrimaryBtn>
           </div>
@@ -1794,6 +1795,8 @@ export default function App() {
           const jobsMeseAll = meseSelezionato ? byMonthAll[meseSelezionato] || [] : [];
           const fatturatoMese = jobsMese.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
           const utileMese = jobsMese.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
+          const fattCash = jobsMese.filter(j => j.metodo_pagamento === "cash").reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const fattBonifico = jobsMese.filter(j => j.metodo_pagamento !== "cash").reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
           const nLavori = jobsMeseAll.length;
           const nModelli = new Set(jobsMeseAll.map(j => j.modella).filter(Boolean)).size;
           // Ultimi 6 mesi per il grafico
@@ -1870,6 +1873,16 @@ export default function App() {
                     <div style={{ background: "#F0FDF4", borderRadius: 16, padding: "16px", border: "0.5px solid #86EFAC" }}>
                       <div style={{ fontSize: 20, fontWeight: 800, color: "#16A34A", letterSpacing: "-0.02em" }}>{fmt(utileMese)}</div>
                       <div style={{ fontSize: 10, color: "#16A34A", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Utile Peacock</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fattBonifico)}</div>
+                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Bonifico</div>
+                    </div>
+                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fattCash)}</div>
+                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Cash</div>
                     </div>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
