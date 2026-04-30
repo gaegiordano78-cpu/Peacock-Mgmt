@@ -499,6 +499,11 @@ export default function App() {
   const [polaUploading, setPolaUploading] = useState("");
   const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
   const [reportMese, setReportMese] = useState<string>("");
+  const [reportPeriodo, setReportPeriodo] = useState<"mese" | "trimestre" | "anno" | "custom">("mese");
+  const [reportTrimestre, setReportTrimestre] = useState<string>(""); // "2026-Q1"
+  const [reportAnno, setReportAnno] = useState<string>("");
+  const [reportDa, setReportDa] = useState<string>("");
+  const [reportA, setReportA] = useState<string>("");
   useEffect(() => {
     if (typeof window !== "undefined" && window.__hideSplash) {
       setTimeout(() => { window.__hideSplash(); setSplash(false); }, 2200);
@@ -1773,35 +1778,106 @@ export default function App() {
           </div>
         )}
         {view === "report" && (() => {
-          // Tutti i job del mese (per contare lavori e model)
-          const byMonthAll: Record<string, any[]> = {};
-          jobs.forEach(j => {
-            if (!j.data_shooting) return;
-            const mese = j.data_shooting.substring(0, 7);
-            if (!byMonthAll[mese]) byMonthAll[mese] = [];
-            byMonthAll[mese].push(j);
-          });
-          // Solo job pagati raggruppati per mese (data_shooting)
+          // Helper: estrae job del periodo da/a (incluso) con eventuale filtro pagato
+          const jobsInRange = (da: Date, a: Date, soloPagati: boolean) => {
+            return jobs.filter(j => {
+              if (!j.data_shooting) return false;
+              if (soloPagati && j.stato_pagamento !== "pagato") return false;
+              const d = new Date(j.data_shooting);
+              return d >= da && d <= a;
+            });
+          };
+          const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+          const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; };
+          const oggi = new Date();
+          const annoOggi = oggi.getFullYear();
+          // Determina periodo corrente e precedente in base al filtro
+          let daCorr: Date, aCorr: Date, daPrev: Date, aPrev: Date, etichettaPeriodo = "";
+          if (reportPeriodo === "mese") {
+            const meseKey = reportMese || `${annoOggi}-${String(oggi.getMonth() + 1).padStart(2, "0")}`;
+            const [yy, mm] = meseKey.split("-").map(Number);
+            daCorr = startOfDay(new Date(yy, mm - 1, 1));
+            aCorr = endOfDay(new Date(yy, mm, 0));
+            daPrev = startOfDay(new Date(yy, mm - 2, 1));
+            aPrev = endOfDay(new Date(yy, mm - 1, 0));
+            etichettaPeriodo = daCorr.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+          } else if (reportPeriodo === "trimestre") {
+            const tk = reportTrimestre || `${annoOggi}-Q${Math.floor(oggi.getMonth() / 3) + 1}`;
+            const [ys, qs] = tk.split("-");
+            const y = Number(ys);
+            const q = Number(qs.replace("Q", ""));
+            const startMonth = (q - 1) * 3;
+            daCorr = startOfDay(new Date(y, startMonth, 1));
+            aCorr = endOfDay(new Date(y, startMonth + 3, 0));
+            // trimestre precedente
+            const qp = q === 1 ? 4 : q - 1;
+            const yp = q === 1 ? y - 1 : y;
+            const startMonthP = (qp - 1) * 3;
+            daPrev = startOfDay(new Date(yp, startMonthP, 1));
+            aPrev = endOfDay(new Date(yp, startMonthP + 3, 0));
+            etichettaPeriodo = `Q${q} ${y}`;
+          } else if (reportPeriodo === "anno") {
+            const y = Number(reportAnno) || annoOggi;
+            daCorr = startOfDay(new Date(y, 0, 1));
+            aCorr = endOfDay(new Date(y, 11, 31));
+            daPrev = startOfDay(new Date(y - 1, 0, 1));
+            aPrev = endOfDay(new Date(y - 1, 11, 31));
+            etichettaPeriodo = String(y);
+          } else {
+            // custom
+            const da = reportDa ? new Date(reportDa) : new Date(annoOggi, oggi.getMonth(), 1);
+            const a = reportA ? new Date(reportA) : oggi;
+            daCorr = startOfDay(da);
+            aCorr = endOfDay(a);
+            const giorni = Math.max(1, Math.round((aCorr.getTime() - daCorr.getTime()) / 86400000));
+            daPrev = startOfDay(new Date(daCorr.getTime() - giorni * 86400000));
+            aPrev = endOfDay(new Date(daCorr.getTime() - 86400000));
+            etichettaPeriodo = `${daCorr.toLocaleDateString("it-IT")} → ${aCorr.toLocaleDateString("it-IT")}`;
+          }
+          const jobsCorr = jobsInRange(daCorr, aCorr, true);
+          const jobsCorrAll = jobsInRange(daCorr, aCorr, false);
+          const jobsPrev = jobsInRange(daPrev, aPrev, true);
+          const fatturato = jobsCorr.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const utile = jobsCorr.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
+          const fattCash = jobsCorr.filter(j => j.metodo_pagamento === "cash").reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const fattBonifico = jobsCorr.filter(j => j.metodo_pagamento !== "cash").reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const nLavori = jobsCorrAll.length;
+          const nModelli = new Set(jobsCorrAll.map(j => j.modella).filter(Boolean)).size;
+          // Periodo precedente per delta
+          const fatturatoP = jobsPrev.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const utileP = jobsPrev.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
+          // YTD (anno corrente, stesso anno di oggi, pagati)
+          const ytdDa = startOfDay(new Date(annoOggi, 0, 1));
+          const ytdA = endOfDay(oggi);
+          const jobsYTD = jobsInRange(ytdDa, ytdA, true);
+          const jobsYTDAll = jobsInRange(ytdDa, ytdA, false);
+          const fatturatoYTD = jobsYTD.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
+          const utileYTD = jobsYTD.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
+          const nLavoriYTD = jobsYTDAll.length;
+          const nModelliYTD = new Set(jobsYTDAll.map(j => j.modella).filter(Boolean)).size;
+          // Delta helper
+          const deltaPct = (cur: number, prev: number) => {
+            if (prev === 0 && cur === 0) return null;
+            if (prev === 0) return null; // niente confronto se non c'erano dati prima
+            return Math.round(((cur - prev) / Math.abs(prev)) * 100);
+          };
+          const Delta = ({ cur, prev }: { cur: number; prev: number }) => {
+            const d = deltaPct(cur, prev);
+            if (d === null) return null;
+            const color = d > 0 ? "#16A34A" : d < 0 ? "#DC2626" : "#767676";
+            const bg = d > 0 ? "#F0FDF4" : d < 0 ? "#FEF2F2" : "#F5F5F5";
+            const sign = d > 0 ? "+" : "";
+            return <span style={{ display: "inline-block", marginLeft: 8, fontSize: 11, fontWeight: 700, color, background: bg, padding: "2px 7px", borderRadius: 100 }}>{sign}{d}%</span>;
+          };
+          // Ultimi 6 mesi per il grafico (sempre, indipendente dal filtro)
           const byMonth: Record<string, any[]> = {};
           jobs.forEach(j => {
             if (!j.data_shooting) return;
             if (j.stato_pagamento !== "pagato") return;
-            const mese = j.data_shooting.substring(0, 7);
-            if (!byMonth[mese]) byMonth[mese] = [];
-            byMonth[mese].push(j);
+            const k = j.data_shooting.substring(0, 7);
+            if (!byMonth[k]) byMonth[k] = [];
+            byMonth[k].push(j);
           });
-          const mesi = Array.from(new Set([...Object.keys(byMonth), ...Object.keys(byMonthAll)])).sort().reverse();
-          const meseSelezionato = reportMese && (byMonth[reportMese] || byMonthAll[reportMese]) ? reportMese : (mesi[0] || "");
-          const jobsMese = meseSelezionato ? byMonth[meseSelezionato] || [] : [];
-          const jobsMeseAll = meseSelezionato ? byMonthAll[meseSelezionato] || [] : [];
-          const fatturatoMese = jobsMese.reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
-          const utileMese = jobsMese.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
-          const fattCash = jobsMese.filter(j => j.metodo_pagamento === "cash").reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
-          const fattBonifico = jobsMese.filter(j => j.metodo_pagamento !== "cash").reduce((s, j) => s + (Number(j.fatturato) || 0), 0);
-          const nLavori = jobsMeseAll.length;
-          const nModelli = new Set(jobsMeseAll.map(j => j.modella).filter(Boolean)).size;
-          // Ultimi 6 mesi per il grafico
-          const oggi = new Date();
           const ultimi6: { key: string; label: string; fatt: number; utile: number }[] = [];
           for (let i = 5; i >= 0; i--) {
             const d = new Date(oggi.getFullYear(), oggi.getMonth() - i, 1);
@@ -1809,18 +1885,27 @@ export default function App() {
             const label = d.toLocaleDateString("it-IT", { month: "short" });
             const js = byMonth[key] || [];
             ultimi6.push({
-              key,
-              label,
+              key, label,
               fatt: js.reduce((s, j) => s + (Number(j.fatturato) || 0), 0),
               utile: js.reduce((s, j) => s + calcGuadagnoPeacock(j), 0)
             });
           }
           const maxVal = Math.max(1, ...ultimi6.map(m => Math.max(m.fatt, m.utile)));
+          // Liste mesi/trimestri/anni disponibili (da tutti i job con data_shooting)
+          const allMesi = Array.from(new Set(jobs.filter(j => j.data_shooting).map(j => j.data_shooting.substring(0, 7)))).sort().reverse();
+          const allAnni = Array.from(new Set(jobs.filter(j => j.data_shooting).map(j => j.data_shooting.substring(0, 4)))).sort().reverse();
+          const allTrimestri: string[] = [];
+          jobs.forEach(j => {
+            if (!j.data_shooting) return;
+            const [y, m] = j.data_shooting.split("-").map(Number);
+            const q = Math.floor((m - 1) / 3) + 1;
+            const k = `${y}-Q${q}`;
+            if (!allTrimestri.includes(k)) allTrimestri.push(k);
+          });
+          allTrimestri.sort().reverse();
           const meseLabel = (k: string) => {
-            if (!k) return "";
             const [y, m] = k.split("-");
-            const d = new Date(Number(y), Number(m) - 1, 1);
-            return d.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+            return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
           };
           return (
             <div style={{ padding: "20px 16px" }}>
@@ -1849,77 +1934,124 @@ export default function App() {
                 </div>
               </Section>
 
-              {/* SELETTORE MESE */}
-              {mesi.length === 0 ? (
-                <div style={{ background: "#FFFFFF", borderRadius: 18, padding: "28px 20px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
-                  <div style={{ fontSize: 17, color: "#767676" }}>Nessun job registrato</div>
-                  <div style={{ fontSize: 14, color: "#9C948A", marginTop: 8, lineHeight: 1.4 }}>Aggiungi job con data shooting per vedere i report mensili.</div>
+              {/* SELETTORE PERIODO */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Periodo</label>
+                <div style={{ display: "flex", background: "#F0EAE0", borderRadius: 12, padding: 3, marginBottom: 10 }}>
+                  {[["mese", "Mese"], ["trimestre", "Trim."], ["anno", "Anno"], ["custom", "Custom"]].map(([k, l]) => (
+                    <button key={k} onClick={() => setReportPeriodo(k as any)}
+                      style={{ flex: 1, padding: "7px", borderRadius: 10, border: "none", background: reportPeriodo === k ? "#1C1714" : "transparent", color: reportPeriodo === k ? "#FFF" : "#9C948A", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                      {l}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <>
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Mese</label>
-                    <select value={meseSelezionato} onChange={e => setReportMese(e.target.value)}
-                      style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", textTransform: "capitalize" }}>
-                      {mesi.map(m => <option key={m} value={m}>{meseLabel(m)}</option>)}
-                    </select>
+                {reportPeriodo === "mese" && (
+                  <select value={reportMese || allMesi[0] || ""} onChange={e => setReportMese(e.target.value)}
+                    style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none", textTransform: "capitalize" }}>
+                    {allMesi.map(m => <option key={m} value={m}>{meseLabel(m)}</option>)}
+                  </select>
+                )}
+                {reportPeriodo === "trimestre" && (
+                  <select value={reportTrimestre || allTrimestri[0] || ""} onChange={e => setReportTrimestre(e.target.value)}
+                    style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }}>
+                    {allTrimestri.map(t => <option key={t} value={t}>{t.replace("-", " ")}</option>)}
+                  </select>
+                )}
+                {reportPeriodo === "anno" && (
+                  <select value={reportAnno || allAnni[0] || ""} onChange={e => setReportAnno(e.target.value)}
+                    style={{ width: "100%", background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }}>
+                    {allAnni.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                )}
+                {reportPeriodo === "custom" && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <input type="date" value={reportDa} onChange={e => setReportDa(e.target.value)}
+                      style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+                    <input type="date" value={reportA} onChange={e => setReportA(e.target.value)}
+                      style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000", fontSize: 16, padding: "10px 14px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
                   </div>
+                )}
+                <div style={{ marginTop: 8, fontSize: 12, color: "#767676", textTransform: "capitalize" }}>{etichettaPeriodo}</div>
+              </div>
 
-                  {/* CARDS */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fatturatoMese)}</div>
-                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Fatturato</div>
-                    </div>
-                    <div style={{ background: "#F0FDF4", borderRadius: 16, padding: "16px", border: "0.5px solid #86EFAC" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#16A34A", letterSpacing: "-0.02em" }}>{fmt(utileMese)}</div>
-                      <div style={{ fontSize: 10, color: "#16A34A", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Utile Peacock</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fattBonifico)}</div>
-                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Bonifico</div>
-                    </div>
-                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fattCash)}</div>
-                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Cash</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{nLavori}</div>
-                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{nLavori === 1 ? "Lavoro" : "Lavori"}</div>
-                    </div>
-                    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{nModelli}</div>
-                      <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{nModelli === 1 ? "Model coinvolto" : "Model coinvolti"}</div>
-                    </div>
-                  </div>
+              {/* CARDS PRINCIPALI */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fatturato)}<Delta cur={fatturato} prev={fatturatoP} /></div>
+                  <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Fatturato</div>
+                </div>
+                <div style={{ background: "#F0FDF4", borderRadius: 16, padding: "16px", border: "0.5px solid #86EFAC" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#16A34A", letterSpacing: "-0.02em" }}>{fmt(utile)}<Delta cur={utile} prev={utileP} /></div>
+                  <div style={{ fontSize: 10, color: "#16A34A", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Utile Peacock</div>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fattBonifico)}</div>
+                  <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Bonifico</div>
+                </div>
+                <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{fmt(fattCash)}</div>
+                  <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Cash</div>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{nLavori}</div>
+                  <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{nLavori === 1 ? "Lavoro" : "Lavori"}</div>
+                </div>
+                <div style={{ background: "#FFFFFF", borderRadius: 16, padding: "16px", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#000", letterSpacing: "-0.02em" }}>{nModelli}</div>
+                  <div style={{ fontSize: 10, color: "#767676", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{nModelli === 1 ? "Model coinvolto" : "Model coinvolti"}</div>
+                </div>
+              </div>
 
-                  {/* LISTA JOB */}
-                  <Section title={`${jobsMese.length} ${jobsMese.length === 1 ? "job pagato" : "job pagati"}`}>
-                    <div>
-                      {jobsMese.map((j, i) => (
-                        <div key={j.id}>
-                          <div onClick={() => { setSelectedJob(j); setView("dettaglio"); }}
-                            style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 15, fontWeight: 600, color: "#000", marginBottom: 2 }}>{j.titolo}</div>
-                              <div style={{ fontSize: 13, color: "#767676" }}>{j.cliente} · {j.modella?.split(" ")[0]}</div>
-                            </div>
-                            <div style={{ textAlign: "right", marginLeft: 12 }}>
-                              <div style={{ fontSize: 15, fontWeight: 700, color: "#16A34A" }}>{fmt(calcGuadagnoPeacock(j))}</div>
-                              <div style={{ fontSize: 10, color: "#767676", marginTop: 2 }}>fatt. {fmt(j.fatturato)}</div>
-                            </div>
-                          </div>
-                          {i < jobsMese.length - 1 && <Divider />}
+              {/* LISTA JOB */}
+              <Section title={`${jobsCorr.length} ${jobsCorr.length === 1 ? "job pagato" : "job pagati"}`}>
+                <div>
+                  {jobsCorr.length === 0 && (
+                    <div style={{ padding: "20px 16px", fontSize: 15, color: "#767676", textAlign: "center" }}>Nessun job pagato in questo periodo</div>
+                  )}
+                  {jobsCorr.map((j, i) => (
+                    <div key={j.id}>
+                      <div onClick={() => { setSelectedJob(j); setView("dettaglio"); }}
+                        style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: "#000", marginBottom: 2 }}>{j.titolo}</div>
+                          <div style={{ fontSize: 13, color: "#767676" }}>{j.cliente} · {j.modella?.split(" ")[0]}</div>
                         </div>
-                      ))}
+                        <div style={{ textAlign: "right", marginLeft: 12 }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#16A34A" }}>{fmt(calcGuadagnoPeacock(j))}</div>
+                          <div style={{ fontSize: 10, color: "#767676", marginTop: 2 }}>fatt. {fmt(j.fatturato)}</div>
+                        </div>
+                      </div>
+                      {i < jobsCorr.length - 1 && <Divider />}
                     </div>
-                  </Section>
-                </>
-              )}
+                  ))}
+                </div>
+              </Section>
+
+              {/* YTD */}
+              <Section title={`Anno ${annoOggi} (YTD)`}>
+                <div style={{ padding: "12px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "#000" }}>{fmt(fatturatoYTD)}</div>
+                    <div style={{ fontSize: 10, color: "#767676", marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Fatturato</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "#16A34A" }}>{fmt(utileYTD)}</div>
+                    <div style={{ fontSize: 10, color: "#16A34A", marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Utile</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "#000" }}>{nLavoriYTD}</div>
+                    <div style={{ fontSize: 10, color: "#767676", marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Lavori</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "#000" }}>{nModelliYTD}</div>
+                    <div style={{ fontSize: 10, color: "#767676", marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>Model</div>
+                  </div>
+                </div>
+              </Section>
             </div>
           );
         })()}
