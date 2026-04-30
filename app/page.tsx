@@ -2033,6 +2033,76 @@ export default function App() {
                 </div>
               </Section>
 
+              {/* TOP MODEL */}
+              {(() => {
+                const byModel: Record<string, { fatturato: number; n: number }> = {};
+                jobsCorr.forEach(j => {
+                  const k = j.modella || "—";
+                  if (!byModel[k]) byModel[k] = { fatturato: 0, n: 0 };
+                  byModel[k].fatturato += Number(j.fatturato) || 0;
+                  byModel[k].n += 1;
+                });
+                const top = Object.entries(byModel)
+                  .map(([nome, v]) => ({ nome, ...v }))
+                  .sort((a, b) => b.fatturato - a.fatturato)
+                  .slice(0, 5);
+                if (top.length === 0) return null;
+                return (
+                  <Section title="Top 5 model">
+                    <div>
+                      {top.map((m, i) => (
+                        <div key={m.nome}>
+                          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 24, height: 24, borderRadius: 100, background: i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#EBEBEB", color: i < 3 ? "#000" : "#767676", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: "#000" }}>{m.nome}</div>
+                              <div style={{ fontSize: 12, color: "#767676" }}>{m.n} {m.n === 1 ? "job" : "job"}</div>
+                            </div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: "#16A34A" }}>{fmt(m.fatturato)}</div>
+                          </div>
+                          {i < top.length - 1 && <Divider />}
+                        </div>
+                      ))}
+                    </div>
+                  </Section>
+                );
+              })()}
+
+              {/* TOP CLIENTI */}
+              {(() => {
+                const byCli: Record<string, { fatturato: number; n: number }> = {};
+                jobsCorr.forEach(j => {
+                  const k = j.cliente || "—";
+                  if (!byCli[k]) byCli[k] = { fatturato: 0, n: 0 };
+                  byCli[k].fatturato += Number(j.fatturato) || 0;
+                  byCli[k].n += 1;
+                });
+                const top = Object.entries(byCli)
+                  .map(([nome, v]) => ({ nome, ...v }))
+                  .sort((a, b) => b.fatturato - a.fatturato)
+                  .slice(0, 5);
+                if (top.length === 0) return null;
+                return (
+                  <Section title="Top 5 clienti">
+                    <div>
+                      {top.map((c, i) => (
+                        <div key={c.nome}>
+                          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 24, height: 24, borderRadius: 100, background: i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#EBEBEB", color: i < 3 ? "#000" : "#767676", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: "#000" }}>{c.nome}</div>
+                              <div style={{ fontSize: 12, color: "#767676" }}>{c.n} {c.n === 1 ? "job" : "job"}</div>
+                            </div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: "#16A34A" }}>{fmt(c.fatturato)}</div>
+                          </div>
+                          {i < top.length - 1 && <Divider />}
+                        </div>
+                      ))}
+                    </div>
+                  </Section>
+                );
+              })()}
+
               {/* YTD */}
               <Section title={`Anno ${annoOggi} (YTD)`}>
                 <div style={{ padding: "12px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
