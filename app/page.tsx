@@ -1781,11 +1781,12 @@ export default function App() {
             if (!byMonthAll[mese]) byMonthAll[mese] = [];
             byMonthAll[mese].push(j);
           });
-          // Solo job pagati (per fatturato, utile, lista)
+          // Solo job pagati raggruppati per mese (data_shooting)
           const byMonth: Record<string, any[]> = {};
           jobs.forEach(j => {
-            if (!j.data_pagamento_cliente) return;
-            const mese = j.data_pagamento_cliente.substring(0, 7);
+            if (!j.data_shooting) return;
+            if (j.stato_pagamento !== "pagato") return;
+            const mese = j.data_shooting.substring(0, 7);
             if (!byMonth[mese]) byMonth[mese] = [];
             byMonth[mese].push(j);
           });
