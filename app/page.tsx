@@ -1478,6 +1478,7 @@ export default function App() {
                 <Divider />
                 <InfoRow label="Sito"       val={mod.link_sito} />
                 {mod.note && <><Divider /><InfoRow label="Note" val={mod.note} /></>}
+                {mod.allergie && <><Divider /><InfoRow label="⚠️ Allergie" val={mod.allergie} /></>}
               </PaddedSection>
               {/* POLAS */}
               <Section title="Polas">
@@ -1577,6 +1578,7 @@ export default function App() {
             <Field label="Email"      value={formMod.email}      onChange={v => setFormMod(f => ({ ...f, email: v }))} />
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
             <Field label="Internal notes" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
+            <Field label="Allergie / intolleranze" value={formMod.allergie || ""} onChange={v => setFormMod(f => ({ ...f, allergie: v }))} placeholder="es. nichel, lattice, polline..." />
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Personal data (for tax)</div>
             <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
