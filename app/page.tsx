@@ -149,8 +149,8 @@ function apriCalendar(job, tipo) {
   const toGcalDate = (iso, time) => iso.replace(/-/g, "") + "T" + time.replace(/:/g, "") + "00";
   let title, details, start, end;
   if (tipo === "shooting") {
-    title   = "📷 Shooting: " + job.titolo;
-    details = "Cliente: " + job.cliente + " | Modella: " + job.modella + " | Luogo: " + job.luogo;
+    title   = "📷 " + job.modella + " per " + (job.cliente || "").toUpperCase();
+    details = "Job: " + job.titolo + " | Cliente: " + job.cliente + " | Model: " + job.modella + " | Luogo: " + job.luogo;
     start   = toGcalDate(dataBase, "09:00");
     end     = toGcalDate(dataBase, "18:00");
   } else if (tipo === "promemoria") {
@@ -628,16 +628,22 @@ export default function App() {
     if (isExisting) {
       await supabase.from("jobs").update(jobData).eq("id", id);
       setJobs(prev => prev.map(j => j.id === id ? { ...jobData, id } : j));
+      showToast("Job salvato ✓"); setView("lista");
     } else {
       const { data, error } = await supabase.from("jobs").insert(jobData).select().single();
       if (data) {
         setJobs(prev => [...prev, data]);
+        showToast("Job salvato ✓ apro il calendario...");
+        setView("lista");
+        // Apri Google Calendar in automatico per nuovo job con data shooting
+        if (data.data_shooting) {
+          setTimeout(() => apriCalendar(data, "shooting"), 600);
+        }
       } else {
         showToast(error?.message || "Errore salvataggio", true);
         return;
       }
     }
-    showToast("Job salvato ✓"); setView("lista");
   };
   const deleteJob = async id => {
     await supabase.from("jobs").delete().eq("id", id);
