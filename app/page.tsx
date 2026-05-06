@@ -845,6 +845,7 @@ export default function App() {
     if (view === "nuovo_casting") return formCasting.id ? "Modifica Casting" : "Nuovo Casting";
     if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
     if (view === "report") return "Report";
+    if (view === "agenda") return "Prossimi shooting";
     return "";
   };
   // ── IMPOSTA PASSWORD (dopo invito o reset) ─────────────────────────────
@@ -1165,10 +1166,13 @@ export default function App() {
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <img src="/p-logo.png" alt="P" style={{ height: 110, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && view !== "report" && (
+            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && view !== "report" && view !== "agenda" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
             )}
             {view === "report" && (
+              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
+            )}
+            {view === "agenda" && (
               <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
             )}
             {view === "castings" && (
@@ -1208,10 +1212,12 @@ export default function App() {
                     📊
                   </button>
                 )}
-                <button onClick={() => setView("calcolatrice")}
-                  style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  ÷
-                </button>
+                {userRuolo === "admin" && (
+                  <button onClick={() => setView("agenda")}
+                    style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    📅
+                  </button>
+                )}
               </>
             )}
             {view === "modelle" && (
@@ -1223,9 +1229,7 @@ export default function App() {
                 </button>
               </>
             )}
-            {view === "calcolatrice" && (
-              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
-            )}
+            {view === "calcolatrice" && null}
           </div>
         </div>
         {pageTitle() && (
@@ -1779,6 +1783,67 @@ export default function App() {
           );
         })()}
         {/* ── CALCOLATRICE ── */}
+        {view === "agenda" && (() => {
+          const oggi = new Date();
+          oggi.setHours(0, 0, 0, 0);
+          const limite = new Date(oggi);
+          limite.setDate(limite.getDate() + 3);
+          limite.setHours(23, 59, 59, 999);
+          const prossimi = jobs
+            .filter(j => {
+              if (!j.data_shooting) return false;
+              const d = new Date(j.data_shooting);
+              return d >= oggi && d <= limite;
+            })
+            .sort((a, b) => new Date(a.data_shooting).getTime() - new Date(b.data_shooting).getTime());
+          // Raggruppa per giorno
+          const byDay: Record<string, any[]> = {};
+          prossimi.forEach(j => {
+            if (!byDay[j.data_shooting]) byDay[j.data_shooting] = [];
+            byDay[j.data_shooting].push(j);
+          });
+          const giorni = Object.keys(byDay).sort();
+          const labelGiorno = (iso: string) => {
+            const d = new Date(iso);
+            d.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((d.getTime() - oggi.getTime()) / 86400000);
+            if (diffDays === 0) return "Oggi";
+            if (diffDays === 1) return "Domani";
+            return d.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long" });
+          };
+          return (
+            <div style={{ padding: "20px 16px" }}>
+              <p style={{ fontSize: 14, color: "#767676", marginBottom: 16, lineHeight: 1.4 }}>Shooting nei prossimi 3 giorni</p>
+              {prossimi.length === 0 ? (
+                <div style={{ background: "#FFFFFF", borderRadius: 18, padding: "32px 20px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
+                  <div style={{ fontSize: 17, color: "#767676" }}>Nessuno shooting nei prossimi 3 giorni</div>
+                </div>
+              ) : giorni.map(iso => (
+                <div key={iso} style={{ marginBottom: 18 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, padding: "0 4px" }}>
+                    {labelGiorno(iso)} · {fmtDate(iso)}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {byDay[iso].map(j => (
+                      <div key={j.id} onClick={() => { setSelectedJob(j); setView("dettaglio"); }}
+                        style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 16, padding: "14px 16px", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: "#000", marginBottom: 3 }}>{j.modella || "—"} <span style={{ color: "#767676", fontWeight: 400 }}>per</span> {j.cliente}</div>
+                            <div style={{ fontSize: 13, color: "#767676", marginBottom: 6 }}>
+                              {j.call_time ? `Call ${j.call_time} · ` : ""}{j.luogo || "Luogo da definire"}
+                            </div>
+                            <Badge label={j.stato_job} color={JOB_COLOR[j.stato_job]} bg={JOB_BG[j.stato_job]} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         {view === "calcolatrice" && (
           <div style={{ padding: "20px 16px" }}>
             <p style={{ fontSize: 16, color: "#767676", marginBottom: 20, lineHeight: 1.5 }}>Calcolo rapido ritenuta e netto model.</p>
