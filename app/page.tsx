@@ -499,6 +499,8 @@ export default function App() {
   const [polaUploading, setPolaUploading] = useState("");
   const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
   const [reportMese, setReportMese] = useState<string>("");
+  const [bulkCommon, setBulkCommon] = useState<any>({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 });
+  const [bulkRows, setBulkRows] = useState<any[]>([]);
   const [reportPeriodo, setReportPeriodo] = useState<"mese" | "trimestre" | "anno" | "custom">("mese");
   const [reportTrimestre, setReportTrimestre] = useState<string>(""); // "2026-Q1"
   const [reportAnno, setReportAnno] = useState<string>("");
@@ -644,6 +646,41 @@ export default function App() {
         return;
       }
     }
+  };
+  const saveBulkJobs = async () => {
+    if (!bulkCommon.titolo || !bulkCommon.cliente) { showToast("Inserisci titolo e cliente", true); return; }
+    if (bulkRows.length === 0) { showToast("Aggiungi almeno un model", true); return; }
+    const fattTot = Number(bulkCommon.fatturato_totale) || 0;
+    const sommaNetti = bulkRows.reduce((s, r) => s + (Number(r.netto_model) || 0), 0);
+    const insertRows = bulkRows.map(r => {
+      const netto = Number(r.netto_model) || 0;
+      // Fatturato proporzionale al netto. Se sommaNetti = 0, divide in parti uguali
+      const fatt = sommaNetti > 0 ? (netto / sommaNetti) * fattTot : (fattTot / bulkRows.length);
+      return {
+        titolo: bulkCommon.titolo,
+        cliente: bulkCommon.cliente,
+        modella: r.modella,
+        data_shooting: r.data_shooting || null,
+        call_time: r.call_time || "",
+        luogo: bulkCommon.luogo || "",
+        contatto_referente: bulkCommon.contatto_referente || "",
+        fatturato: Math.round(fatt * 100) / 100,
+        netto_model: netto,
+        rimborso: 0,
+        stato_job: "confermato",
+        stato_pagamento: "da pagare",
+        metodo_pagamento: "bonifico",
+        data_pagamento_cliente: null,
+        note: bulkCommon.note || ""
+      };
+    });
+    const { data, error } = await supabase.from("jobs").insert(insertRows).select();
+    if (error) { showToast(error.message, true); return; }
+    if (data) setJobs(prev => [...prev, ...data]);
+    showToast(`${insertRows.length} job creati ✓`);
+    setBulkCommon({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 });
+    setBulkRows([]);
+    setView("lista");
   };
   const deleteJob = async id => {
     await supabase.from("jobs").delete().eq("id", id);
@@ -856,6 +893,7 @@ export default function App() {
     if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
     if (view === "report") return "Report";
     if (view === "agenda") return "Prossimi shooting";
+    if (view === "nuovo_job_bulk") return "Nuovo job — più model";
     return "";
   };
   // ── IMPOSTA PASSWORD (dopo invito o reset) ─────────────────────────────
@@ -1176,8 +1214,11 @@ export default function App() {
         <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <img src="/p-logo.png" alt="P" style={{ height: 110, objectFit: "contain" }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && view !== "report" && view !== "agenda" && (
+            {view !== "lista" && view !== "modelle" && view !== "calcolatrice" && view !== "castings" && view !== "report" && view !== "agenda" && view !== "nuovo_job_bulk" && (
               <button onClick={backView} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Indietro</button>
+            )}
+            {view === "nuovo_job_bulk" && (
+              <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
             )}
             {view === "report" && (
               <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
@@ -1200,6 +1241,12 @@ export default function App() {
                   <button onClick={() => { setFormJob({ ...emptyJob, id: Date.now() }); setView("nuovo_job"); }}
                     style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     + Job
+                  </button>
+                )}
+                {userRuolo === "admin" && (
+                  <button onClick={() => { setBulkCommon({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 }); setBulkRows([]); setView("nuovo_job_bulk"); }}
+                    style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #000", background: "transparent", color: "#000", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    + Bulk
                   </button>
                 )}
                 <button onClick={doLogout}
@@ -1793,6 +1840,87 @@ export default function App() {
           );
         })()}
         {/* ── CALCOLATRICE ── */}
+        {view === "nuovo_job_bulk" && (() => {
+          const sommaNetti = bulkRows.reduce((s, r) => s + (Number(r.netto_model) || 0), 0);
+          const fattTot = Number(bulkCommon.fatturato_totale) || 0;
+          const guadagno = fattTot - sommaNetti;
+          const addRow = () => {
+            setBulkRows(rs => [...rs, { id: Date.now() + Math.random(), modella: nomiModelle[0] || "", data_shooting: "", call_time: "", netto_model: 0 }]);
+          };
+          const removeRow = (id) => setBulkRows(rs => rs.filter(r => r.id !== id));
+          const updateRow = (id, field, val) => setBulkRows(rs => rs.map(r => r.id === id ? { ...r, [field]: val } : r));
+          return (
+            <div style={{ padding: "20px 16px" }}>
+              <p style={{ fontSize: 13, color: "#767676", marginBottom: 18, lineHeight: 1.5 }}>
+                Crea più job in un colpo per uno stesso lavoro multi-model (es. campagna con più persone).
+                Il fatturato totale viene suddiviso proporzionalmente al netto di ogni model.
+              </p>
+              <Section title="Dati comuni">
+                <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <Field label="Titolo job *" value={bulkCommon.titolo} onChange={v => setBulkCommon(c => ({ ...c, titolo: v }))} />
+                  <Field label="Cliente *" value={bulkCommon.cliente} onChange={v => setBulkCommon(c => ({ ...c, cliente: v }))} />
+                  <Field label="Luogo" value={bulkCommon.luogo} onChange={v => setBulkCommon(c => ({ ...c, luogo: v }))} placeholder="Indirizzo o link Google Maps" />
+                  <Field label="Contatto referente" value={bulkCommon.contatto_referente} onChange={v => setBulkCommon(c => ({ ...c, contatto_referente: v }))} placeholder="Nome + telefono" />
+                </div>
+              </Section>
+              <Section title={`Model coinvolti (${bulkRows.length})`}>
+                <div>
+                  {bulkRows.length === 0 && (
+                    <div style={{ padding: "20px 16px", fontSize: 14, color: "#767676", textAlign: "center" }}>
+                      Nessun model aggiunto. Tappa "+ Aggiungi model" qui sotto.
+                    </div>
+                  )}
+                  {bulkRows.map((r, idx) => (
+                    <div key={r.id} style={{ padding: "14px 16px", borderBottom: idx < bulkRows.length - 1 ? "0.5px solid #EBEBEB" : "none" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.08em", textTransform: "uppercase" }}>Model {idx + 1}</div>
+                        <button onClick={() => removeRow(r.id)} style={{ padding: "4px 10px", borderRadius: 100, border: "0.5px solid #DC2626", background: "transparent", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                          Rimuovi
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <SelectField label="Model" value={r.modella} onChange={v => updateRow(r.id, "modella", v)} options={nomiModelle} />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          <Field label="Data shooting" value={r.data_shooting} onChange={v => updateRow(r.id, "data_shooting", v)} type="date" />
+                          <Field label="Call time" value={r.call_time} onChange={v => updateRow(r.id, "call_time", v)} type="time" />
+                        </div>
+                        <Field label="Netto model €" value={r.netto_model} onChange={v => updateRow(r.id, "netto_model", v)} type="number" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "14px 16px" }}>
+                  <button onClick={addRow} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1.5px dashed #C4A882", background: "transparent", color: "#000", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    + Aggiungi model
+                  </button>
+                </div>
+              </Section>
+              <Section title="Fatturato">
+                <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <Field label="Fatturato totale €" value={bulkCommon.fatturato_totale} onChange={v => setBulkCommon(c => ({ ...c, fatturato_totale: v }))} type="number" placeholder="es. 10000" />
+                  <div style={{ marginTop: 6, padding: "12px", background: "#F0EAE0", borderRadius: 12, fontSize: 13, color: "#000" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span>Fatturato totale</span>
+                      <strong>{fmt(fattTot)}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span>Netti totali ai model</span>
+                      <strong>– {fmt(sommaNetti)}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid #C4A882", fontWeight: 700, color: guadagno >= 0 ? "#16A34A" : "#DC2626" }}>
+                      <span>Guadagno Peacock</span>
+                      <span>{fmt(guadagno)}</span>
+                    </div>
+                  </div>
+                </div>
+              </Section>
+              <button onClick={saveBulkJobs}
+                style={{ width: "100%", padding: "14px", borderRadius: 100, border: "none", background: "#000", color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", marginTop: 10, fontFamily: "inherit" }}>
+                Crea {bulkRows.length} {bulkRows.length === 1 ? "job" : "job"}
+              </button>
+            </div>
+          );
+        })()}
         {view === "agenda" && (() => {
           const oggi = new Date();
           oggi.setHours(0, 0, 0, 0);
