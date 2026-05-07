@@ -1202,7 +1202,7 @@ export default function App() {
     <div style={{ background: "#FFFFFF", minHeight: "100vh", maxWidth: 430, margin: "0 auto" }} />
   );
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "17px", background: "#F5F5F5", minHeight: "100vh", maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column" }}>
       {/* TOAST */}
       {toast && (
         <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toastErr ? "#DC2626" : "#1C1714", color: "#FFF", padding: "10px 20px", borderRadius: 100, fontSize: 16, fontWeight: 500, zIndex: 100, boxShadow: "0 4px 24px rgba(0,0,0,0.15)", whiteSpace: "nowrap" }}>
@@ -1321,9 +1321,9 @@ export default function App() {
               ))}
             </div>
             {/* Lista job */}
-            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
               {jobFiltrati.length === 0 && (
-                <div style={{ textAlign: "center", color: "#767676", padding: "40px 0", fontSize: 16 }}>Nessun job trovato</div>
+                <div style={{ textAlign: "center", color: "#767676", padding: "40px 0", fontSize: 16, gridColumn: "1 / -1" }}>Nessun job trovato</div>
               )}
               {jobFiltrati.map(job => (
                 <div key={job.id} onClick={() => { setSelectedJob(job); setView("dettaglio"); }}
@@ -1348,7 +1348,7 @@ export default function App() {
           const mod = modelle.find(m => m.nome === job.modella);
           const contrattoPronto = mod && mod.nome;
           return (
-            <div style={{ padding: "20px 16px" }}>
+            <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
                 <Badge label={job.stato_job} color={JOB_COLOR[job.stato_job]} bg={JOB_BG[job.stato_job]} />
                 <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
@@ -1496,7 +1496,7 @@ export default function App() {
                 <button onClick={() => setCercaModella("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#767676" }}>×</button>
               )}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
               {modelle.filter(m => m.nome.toLowerCase().includes(cercaModella.toLowerCase())).map(mod => {
                 const mj = jobs.filter(j => j.modella === mod.nome);
                 const netto = mj.reduce((s, j) => s + calcNetto(j), 0);
@@ -1527,7 +1527,7 @@ export default function App() {
           const mj = jobs.filter(j => j.modella === mod.nome).sort((a, b) => new Date(b.data_shooting) - new Date(a.data_shooting));
           const totNetto = mj.reduce((s, j) => s + calcNetto(j), 0);
           return (
-            <div style={{ padding: "20px 16px" }}>
+            <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               {userRuolo === "admin" && !mod.user_id && (
                 <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Invita all'app</div>
@@ -1685,7 +1685,7 @@ export default function App() {
         )}
         {/* ── NUOVO / MODIFICA JOB ── */}
         {view === "nuovo_job" && (
-          <div style={{ padding: "16px" }}>
+          <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
             <Field label="Titolo job *" value={formJob.titolo} onChange={v => setFormJob(f => ({ ...f, titolo: v }))} />
             <Field label="Cliente *"   value={formJob.cliente} onChange={v => setFormJob(f => ({ ...f, cliente: v }))} />
             <SelectField label="Model" value={formJob.modella} onChange={v => setFormJob(f => ({ ...f, modella: v }))} options={nomiModelle} />
@@ -1729,7 +1729,7 @@ export default function App() {
                 <div style={{ fontSize: 15, color: "#9C948A", lineHeight: 1.5 }}>Crea un casting per raccogliere candidature dai model.</div>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
                 {castings.map(c => {
                   const nCand = candidature.filter(k => k.casting_id === c.id).length;
                   return (
@@ -1757,7 +1757,7 @@ export default function App() {
         )}
         {/* ── NUOVO / MODIFICA CASTING ── */}
         {view === "nuovo_casting" && (
-          <div style={{ padding: "16px" }}>
+          <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
             <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo", "uomo + donna"]} />
             <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
             <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
@@ -1784,7 +1784,7 @@ export default function App() {
             .map(k => ({ cand: k, mod: modelle.find(m => m.id === k.modella_id) }))
             .filter(x => x.mod);
           return (
-            <div style={{ padding: "20px 16px" }}>
+            <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
                 <Badge label={cast.genere} color="#000000" bg="#F5F5F5" />
                 {cast.data && <Badge label={fmtDate(cast.data)} color="#767676" bg="#F5F5F5" />}
@@ -1859,7 +1859,7 @@ export default function App() {
           });
           const updateRow = (id, field, val) => setBulkRows(rs => rs.map(r => r.id === id ? { ...r, [field]: val } : r));
           return (
-            <div style={{ padding: "20px 16px" }}>
+            <div style={{ padding: "20px 16px", maxWidth: 700, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               <p style={{ fontSize: 13, color: "#767676", marginBottom: 18, lineHeight: 1.5 }}>
                 Crea più job in un colpo per uno stesso lavoro multi-model (es. campagna con più persone).
                 Il fatturato totale viene suddiviso proporzionalmente al netto di ogni model.
@@ -1964,7 +1964,7 @@ export default function App() {
             return d.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long" });
           };
           return (
-            <div style={{ padding: "20px 16px" }}>
+            <div style={{ padding: "20px 16px", maxWidth: 800, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               <p style={{ fontSize: 14, color: "#767676", marginBottom: 16, lineHeight: 1.4 }}>Shooting nei prossimi 3 giorni</p>
               {prossimi.length === 0 ? (
                 <div style={{ background: "#FFFFFF", borderRadius: 18, padding: "32px 20px", textAlign: "center", border: "0.5px solid #EBEBEB" }}>
@@ -2133,7 +2133,7 @@ export default function App() {
             return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
           };
           return (
-            <div style={{ padding: "20px 16px" }}>
+            <div style={{ padding: "20px 16px", maxWidth: 900, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               {/* GRAFICO */}
               <Section title="Ultimi 6 mesi">
                 <div style={{ padding: "16px" }}>
