@@ -385,7 +385,7 @@ const Badge = ({ label, color, bg }) => (
   <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 100, fontSize: 10, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color, background: bg, border: `1px solid ${color}22` }}>{label}</span>
 );
 const Chip = ({ children, active, onClick }) => (
-  <button onClick={onClick} style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 100, fontSize: 17, fontWeight: active ? 600 : 400, cursor: "pointer", border: active ? "1.5px solid #1C1714" : "1.5px solid #E5E0D8", background: active ? "#1C1714" : "transparent", color: active ? "#FFF" : "#6B6560", fontFamily: "inherit", transition: "all 0.15s" }}>{children}</button>
+  <button onClick={onClick} style={{ flexShrink: 0, padding: "9px 18px", borderRadius: 100, fontSize: 17, fontWeight: active ? 600 : 400, cursor: "pointer", border: active ? "1.5px solid #1C1714" : "1.5px solid #E5E0D8", background: active ? "#1C1714" : "transparent", color: active ? "#FFF" : "#6B6560", fontFamily: "inherit", transition: "all 0.15s" }}>{children}</button>
 );
 const Divider = () => <div style={{ height: 1, background: "#F5EFE8", margin: "0" }} />;
 const InfoRow = ({ label, val }) => (
@@ -1308,9 +1308,9 @@ export default function App() {
                 { label: "Mio guadagno",  val: fmt(totGuadagnoPeacock), color: "#16A34A" },
                 { label: "Pagato YTD",    val: fmt(totPagato),          color: "#767676" },
               ].map((s, i) => (
-                <div key={i} style={{ flex: 1, padding: "14px 4px", textAlign: "center", borderRight: i < 3 ? "1px solid #F0EAE0" : "none" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: s.color, letterSpacing: "-0.01em" }}>{s.val}</div>
-                  <div style={{ fontSize: 8, color: "#767676", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
+                <div key={i} style={{ flex: 1, padding: "20px 8px", textAlign: "center", borderRight: i < 3 ? "1px solid #F0EAE0" : "none" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.val}</div>
+                  <div style={{ fontSize: 11, color: "#767676", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1321,21 +1321,21 @@ export default function App() {
               ))}
             </div>
             {/* Lista job */}
-            <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10, maxWidth: 700, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               {jobFiltrati.length === 0 && (
-                <div style={{ textAlign: "center", color: "#767676", padding: "40px 0", fontSize: 16, gridColumn: "1 / -1" }}>Nessun job trovato</div>
+                <div style={{ textAlign: "center", color: "#767676", padding: "40px 0", fontSize: 16 }}>Nessun job trovato</div>
               )}
               {jobFiltrati.map(job => (
                 <div key={job.id} onClick={() => { setSelectedJob(job); setView("dettaglio"); }}
-                  style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                  style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 20, padding: "22px 24px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: "#000000", marginBottom: 3 }}>{job.titolo}</div>
-                    <div style={{ fontSize: 16, color: "#767676", marginBottom: 8 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
+                    <div style={{ fontSize: 19, fontWeight: 700, color: "#000000", marginBottom: 6 }}>{job.titolo}</div>
+                    <div style={{ fontSize: 17, color: "#767676", marginBottom: 12 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
                     <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
                   </div>
-                  <div style={{ textAlign: "right", marginLeft: 12, flexShrink: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#000000", letterSpacing: "-0.02em" }}>{fmt(calcNetto(job))}</div>
-                    <div style={{ fontSize: 10, color: "#767676", marginTop: 2 }}>netto</div>
+                  <div style={{ textAlign: "right", marginLeft: 14, flexShrink: 0 }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.02em" }}>{fmt(calcNetto(job))}</div>
+                    <div style={{ fontSize: 11, color: "#767676", marginTop: 3, letterSpacing: "0.04em" }}>netto</div>
                   </div>
                 </div>
               ))}
@@ -1496,25 +1496,25 @@ export default function App() {
                 <button onClick={() => setCercaModella("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#767676" }}>×</button>
               )}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 700, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               {modelle.filter(m => m.nome.toLowerCase().includes(cercaModella.toLowerCase())).map(mod => {
                 const mj = jobs.filter(j => j.modella === mod.nome);
                 const netto = mj.reduce((s, j) => s + calcNetto(j), 0);
                 return (
                   <div key={mod.id} onClick={() => { setSelectedModella(mod); setView("scheda_modella"); }}
-                    style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 18, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ fontSize: 18, color: "#767676" }}>{mod.nome.charAt(0)}</span>
+                    style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 20, padding: "22px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 16, background: "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontSize: 22, color: "#767676", fontWeight: 600 }}>{mod.nome.charAt(0)}</span>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 18, fontWeight: 600, color: "#000000", marginBottom: 2 }}>{mod.nome}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: "#000000", marginBottom: 4 }}>{mod.nome}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
                       <span style={{ fontSize: 17, color: "#767676" }}>{mod.instagram} · {mj.length} job · {fmt(netto)}</span>
-                      {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 9, fontWeight: 700, color: cc.color, background: cc.bg, padding: "2px 7px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
-                      {contrattoScadenzaAlert(mod.contratto_scadenza) && <span style={{ fontSize: 9, fontWeight: 600, color: contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "#DC2626" : "#D97706" }}>{contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "⚠️ scaduto" : "⏰ in scadenza"}</span>}
+                      {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 10, fontWeight: 700, color: cc.color, background: cc.bg, padding: "3px 9px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
+                      {contrattoScadenzaAlert(mod.contratto_scadenza) && <span style={{ fontSize: 10, fontWeight: 600, color: contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "#DC2626" : "#D97706" }}>{contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "⚠️ scaduto" : "⏰ in scadenza"}</span>}
                     </div>
                     </div>
-                    <span style={{ color: "#C4C0BA", fontSize: 16 }}>›</span>
+                    <span style={{ color: "#C4C0BA", fontSize: 20 }}>›</span>
                   </div>
                 );
               })}
@@ -1729,7 +1729,7 @@ export default function App() {
                 <div style={{ fontSize: 15, color: "#9C948A", lineHeight: 1.5 }}>Crea un casting per raccogliere candidature dai model.</div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 700, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
                 {castings.map(c => {
                   const nCand = candidature.filter(k => k.casting_id === c.id).length;
                   return (
