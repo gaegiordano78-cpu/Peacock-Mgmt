@@ -1848,6 +1848,15 @@ export default function App() {
             setBulkRows(rs => [...rs, { id: Date.now() + Math.random(), modella: nomiModelle[0] || "", data_shooting: "", call_time: "", netto_model: 0 }]);
           };
           const removeRow = (id) => setBulkRows(rs => rs.filter(r => r.id !== id));
+          const duplicateRow = (id) => setBulkRows(rs => {
+            const idx = rs.findIndex(r => r.id === id);
+            if (idx === -1) return rs;
+            const orig = rs[idx];
+            const copy = { ...orig, id: Date.now() + Math.random(), data_shooting: "" };
+            const next = [...rs];
+            next.splice(idx + 1, 0, copy);
+            return next;
+          });
           const updateRow = (id, field, val) => setBulkRows(rs => rs.map(r => r.id === id ? { ...r, [field]: val } : r));
           return (
             <div style={{ padding: "20px 16px" }}>
@@ -1874,9 +1883,14 @@ export default function App() {
                     <div key={r.id} style={{ padding: "14px 16px", borderBottom: idx < bulkRows.length - 1 ? "0.5px solid #EBEBEB" : "none" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: "#767676", letterSpacing: "0.08em", textTransform: "uppercase" }}>Model {idx + 1}</div>
-                        <button onClick={() => removeRow(r.id)} style={{ padding: "4px 10px", borderRadius: 100, border: "0.5px solid #DC2626", background: "transparent", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                          Rimuovi
-                        </button>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => duplicateRow(r.id)} style={{ padding: "4px 10px", borderRadius: 100, border: "0.5px solid #C4A882", background: "transparent", color: "#000", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                            Duplica
+                          </button>
+                          <button onClick={() => removeRow(r.id)} style={{ padding: "4px 10px", borderRadius: 100, border: "0.5px solid #DC2626", background: "transparent", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                            Rimuovi
+                          </button>
+                        </div>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <SelectField label="Model" value={r.modella} onChange={v => updateRow(r.id, "modella", v)} options={nomiModelle} />
