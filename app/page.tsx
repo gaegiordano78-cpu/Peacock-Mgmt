@@ -720,6 +720,16 @@ export default function App() {
   };
   const candidati = async (castingId) => {
     if (!myModella) return;
+    const casting = castings.find(c => c.id === castingId);
+    if (casting?.data) {
+      const conflitto = jobs.find(j => j.modella === myModella.nome && j.data_shooting === casting.data);
+      if (conflitto) {
+        window.alert(
+          `⚠️ Sei già impegnato/a il ${fmtDate(casting.data)} per:\n"${conflitto.titolo}" (${conflitto.cliente})`
+        );
+        return;
+      }
+    }
     const { data, error } = await supabase.from("candidature").insert({ casting_id: castingId, modella_id: myModella.id }).select().single();
     if (error) { showToast(error.message, true); return; }
     if (data) setCandidature(prev => [...prev, data]);
