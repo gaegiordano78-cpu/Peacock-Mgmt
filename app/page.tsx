@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
@@ -486,7 +487,7 @@ export default function App() {
   const [contrattoCopied, setContrattoCopied] = useState(false);
   const [myModella, setMyModella] = useState(null);
   const [ritenutaCopied, setRitenutaCopied] = useState(false);
-  const [numRitenuta, setNumRitenuta] = useState("1");
+  const [numRitenuta, setNumRitenuta] = useState("");
   const [descRitenuta, setDescRitenuta] = useState("Model");
   const [dataInizioRitenuta, setDataInizioRitenuta] = useState("");
   const [dataFineRitenuta, setDataFineRitenuta] = useState("");
@@ -1059,7 +1060,7 @@ export default function App() {
                   <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.5, marginBottom: 14 }}>
                     Genera la ritenuta d'acconto per questo job con i tuoi dati precompilati.
                   </div>
-                  <button onClick={() => { setNumRitenuta("1"); setDescRitenuta("Model"); setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(""); setModelView("ritenuta_model"); }}
+                  <button onClick={() => { setNumRitenuta(""); setDescRitenuta("Model"); setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(""); setModelView("ritenuta_model"); }}
                     style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     🧾 Genera ritenuta
                   </button>
