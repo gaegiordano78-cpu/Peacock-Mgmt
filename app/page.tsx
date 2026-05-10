@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
@@ -500,6 +499,7 @@ export default function App() {
   const [polaUploading, setPolaUploading] = useState("");
   const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
   const [reportMese, setReportMese] = useState<string>("");
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [bulkCommon, setBulkCommon] = useState<any>({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 });
   const [bulkRows, setBulkRows] = useState<any[]>([]);
   const [reportPeriodo, setReportPeriodo] = useState<"mese" | "trimestre" | "anno" | "custom">("mese");
@@ -1244,12 +1244,6 @@ export default function App() {
                     + Job
                   </button>
                 )}
-                {userRuolo === "admin" && (
-                  <button onClick={() => { setBulkCommon({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 }); setBulkRows([]); setView("nuovo_job_bulk"); }}
-                    style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #000", background: "transparent", color: "#000", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                    + Bulk
-                  </button>
-                )}
                 <button onClick={doLogout}
                   style={{ padding: "8px 14px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
                   Esci
@@ -1259,22 +1253,31 @@ export default function App() {
                   👤
                 </button>
                 {userRuolo === "admin" && (
-                  <button onClick={() => setView("castings")}
-                    style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    📋
-                  </button>
-                )}
-                {userRuolo === "admin" && (
-                  <button onClick={() => setView("report")}
-                    style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    📊
-                  </button>
-                )}
-                {userRuolo === "admin" && (
-                  <button onClick={() => setView("agenda")}
-                    style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    📅
-                  </button>
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <button onClick={() => setMenuOpen(o => !o)}
+                      style={{ width: 36, height: 36, borderRadius: 100, border: "0.5px solid #EBEBEB", background: menuOpen ? "#1C1714" : "transparent", color: menuOpen ? "#FFF" : "#767676", fontSize: 20, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, fontFamily: "inherit" }}>
+                      ⋯
+                    </button>
+                    {menuOpen && (
+                      <>
+                        <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 50 }} />
+                        <div style={{ position: "absolute", top: 44, right: 0, background: "#FFF", border: "0.5px solid #EBEBEB", borderRadius: 14, boxShadow: "0 8px 30px rgba(0,0,0,0.12)", minWidth: 220, zIndex: 51, overflow: "hidden" }}>
+                          {[
+                            { icon: "+", label: "Crea job multipli", click: () => { setBulkCommon({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 }); setBulkRows([]); setView("nuovo_job_bulk"); } },
+                            { icon: "📋", label: "Casting", click: () => setView("castings") },
+                            { icon: "📊", label: "Report", click: () => setView("report") },
+                            { icon: "📅", label: "Prossimi shooting", click: () => setView("agenda") },
+                          ].map((m, i) => (
+                            <button key={i} onClick={() => { m.click(); setMenuOpen(false); }}
+                              style={{ width: "100%", padding: "12px 16px", border: "none", borderTop: i > 0 ? "0.5px solid #F0EAE0" : "none", background: "transparent", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15, color: "#000", fontFamily: "inherit", textAlign: "left" }}>
+                              <span style={{ fontSize: 17, width: 20, textAlign: "center" }}>{m.icon}</span>
+                              {m.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -1302,16 +1305,16 @@ export default function App() {
         {view === "lista" && (
           <div>
             {/* Stats */}
-            <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", display: "flex" }}>
+            <div style={{ background: "#FFFFFF", borderBottom: "0.5px solid #EBEBEB", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
               {[
                 { label: "Da incassare",  val: fmt(totDaIncassare),     color: "#000000" },
                 { label: "Da pagare",     val: fmt(totDaPagare),        color: "#C4A882" },
                 { label: "Mio guadagno",  val: fmt(totGuadagnoPeacock), color: "#16A34A" },
                 { label: "Pagato YTD",    val: fmt(totPagato),          color: "#767676" },
               ].map((s, i) => (
-                <div key={i} style={{ flex: 1, padding: "20px 8px", textAlign: "center", borderRight: i < 3 ? "1px solid #F0EAE0" : "none" }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.val}</div>
-                  <div style={{ fontSize: 11, color: "#767676", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
+                <div key={i} style={{ padding: "18px 12px", textAlign: "center", borderRight: "1px solid #F0EAE0", borderBottom: "1px solid #F0EAE0" }}>
+                  <div style={{ fontSize: 19, fontWeight: 800, color: s.color, letterSpacing: "-0.02em" }}>{s.val}</div>
+                  <div style={{ fontSize: 10, color: "#767676", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</div>
                 </div>
               ))}
             </div>
