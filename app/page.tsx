@@ -139,7 +139,7 @@ const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
-const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", call_time: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", metodo_pagamento: "bonifico", data_pagamento_cliente: "", note: "" };
+const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", data_fine_shooting: null, call_time: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", metodo_pagamento: "bonifico", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
@@ -364,7 +364,7 @@ function generaCallSheet(job) {
 
 PRODUZIONE: ${job.cliente || ""}
 TIPO SHOOT: ${job.titolo || ""}
-DATA: ${dataIT}
+DATA: ${dataIT}${job.data_fine_shooting ? ` → ${(() => { const [y,m,g] = job.data_fine_shooting.split("-"); return `${g}/${m}/${y}`; })()}` : ""}
 CALL TIME: ${job.call_time || ""}
 FEE: ${feeStr}
 ⸻
@@ -375,7 +375,10 @@ FEE: ${feeStr}
 📱 COMPORTAMENTO SUL SET • Durante lo shooting manteniamo il focus sul lavoro, evitando l'uso del telefono • Il telefono può essere utilizzato durante le pause • Eventuali stories/post solo dopo approvazione del brand • Tag: @peacockmodelsmgmt • Attitudine collaborativa e reattiva alle indicazioni del team • Per questioni economiche, fare riferimento esclusivamente all'agenzia
 ⸻
 📞 CONTATTI ${job.contatto_referente || ""}
-⸻
+⸻${job.note ? `
+📝 NOTE PER QUESTO SHOOTING
+${job.note}
+⸻` : ""}
 ⚠️ NOTE • Si raccomanda puntualità • Indicare eventuali allergie o intolleranze • Per eventuali rimborsi (benzina/treno) è necessario conservare copia dello scontrino o del biglietto • Seguire le indicazioni del team creativo
 
 Buon lavoro ✨`;
@@ -1060,7 +1063,7 @@ export default function App() {
                   <div style={{ fontSize: 16, color: "#767676", lineHeight: 1.5, marginBottom: 14 }}>
                     Genera la ritenuta d'acconto per questo job con i tuoi dati precompilati.
                   </div>
-                  <button onClick={() => { setNumRitenuta(""); setDescRitenuta("Model"); setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(""); setModelView("ritenuta_model"); }}
+                  <button onClick={() => { setNumRitenuta(""); setDescRitenuta("Model"); setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(job.data_fine_shooting ? fmtDate(job.data_fine_shooting) : ""); setModelView("ritenuta_model"); }}
                     style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     🧾 Genera ritenuta
                   </button>
@@ -1334,7 +1337,7 @@ export default function App() {
                   style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 20, padding: "22px 24px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 19, fontWeight: 700, color: "#000000", marginBottom: 6 }}>{job.titolo}</div>
-                    <div style={{ fontSize: 17, color: "#767676", marginBottom: 12 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}</div>
+                    <div style={{ fontSize: 17, color: "#767676", marginBottom: 12 }}>{job.cliente} · {job.modella.split(" ")[0]} · {fmtDate(job.data_shooting)}{job.data_fine_shooting ? ` → ${fmtDate(job.data_fine_shooting)}` : ""}</div>
                     <Badge label={job.stato_pagamento} color={PAG_COLOR[job.stato_pagamento]} bg={PAG_BG[job.stato_pagamento]} />
                   </div>
                   <div style={{ textAlign: "right", marginLeft: 14, flexShrink: 0 }}>
@@ -1362,8 +1365,7 @@ export default function App() {
                 <Divider />
                 <InfoRow label="Model"       val={job.modella} />
                 <Divider />
-                <InfoRow label="Data shooting" val={fmtDate(job.data_shooting)} />
-                <Divider />
+                <InfoRow label="Data shooting" val={job.data_fine_shooting ? `${fmtDate(job.data_shooting)} → ${fmtDate(job.data_fine_shooting)}` : fmtDate(job.data_shooting)} />                <Divider />
                 <InfoRow label="Luogo"         val={job.luogo} />
                 {job.note && <><Divider /><InfoRow label="Note" val={job.note} /></>}
               </PaddedSection>
@@ -1403,7 +1405,7 @@ export default function App() {
                     style={{ width: "100%", padding: "13px", background: "#000000", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     📋 Copia call sheet
                   </button>
-                  <button onClick={() => { setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(""); setView("ritenuta"); }}
+                  <button onClick={() => { setDataInizioRitenuta(fmtDate(job.data_shooting)); setDataFineRitenuta(job.data_fine_shooting ? fmtDate(job.data_fine_shooting) : ""); setView("ritenuta"); }}
                     style={{ width: "100%", marginTop: 8, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     🧾 Genera ritenuta d'acconto
                   </button>
@@ -1693,9 +1695,10 @@ export default function App() {
             <Field label="Titolo job *" value={formJob.titolo} onChange={v => setFormJob(f => ({ ...f, titolo: v }))} />
             <Field label="Cliente *"   value={formJob.cliente} onChange={v => setFormJob(f => ({ ...f, cliente: v }))} />
             <SelectField label="Model" value={formJob.modella} onChange={v => setFormJob(f => ({ ...f, modella: v }))} options={nomiModelle} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Data shooting" value={formJob.data_shooting} onChange={v => setFormJob(f => ({ ...f, data_shooting: v }))} type="date" />
-              <Field label="Call time"     value={formJob.call_time}     onChange={v => setFormJob(f => ({ ...f, call_time: v }))} type="time" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              <Field label="Data inizio" value={formJob.data_shooting} onChange={v => setFormJob(f => ({ ...f, data_shooting: v }))} type="date" />
+              <Field label="Data fine (opz.)" value={formJob.data_fine_shooting || ""} onChange={v => setFormJob(f => ({ ...f, data_fine_shooting: v || null }))} type="date" />
+              <Field label="Call time"   value={formJob.call_time}     onChange={v => setFormJob(f => ({ ...f, call_time: v }))} type="time" />
             </div>
             <Field label="Luogo"              value={formJob.luogo}              onChange={v => setFormJob(f => ({ ...f, luogo: v }))} placeholder="Indirizzo o link Google Maps" />
             <Field label="Contatto referente" value={formJob.contatto_referente} onChange={v => setFormJob(f => ({ ...f, contatto_referente: v }))} placeholder="Nome + telefono (es. Stefania 3394240321)" />
