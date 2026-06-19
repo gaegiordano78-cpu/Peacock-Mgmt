@@ -262,7 +262,7 @@ function generaRitenutaHTML(job, modella, numRitenuta, descrizione, dataInizio, 
   const netto = calcNetto(job);
   const anno = new Date().getFullYear();
   const esc = (s) => String(s || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ritenuta d'acconto - ${esc(modella.nome)}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(modella.nome)} - ${esc((job.cliente||"").trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()))}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 11px; color: #000; padding: 24px 32px; line-height: 1.35; }
