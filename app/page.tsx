@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
-const passwordLinkAtLoad = typeof window !== "undefined" && /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash);
+const passwordLinkAtLoad = typeof window !== "undefined" && (window.__peacockPasswordLink || /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash));
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
 const LOGO_SPLASH = "/logo-peacock.png";
