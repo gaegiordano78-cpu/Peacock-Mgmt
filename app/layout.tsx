@@ -54,6 +54,7 @@ export default function RootLayout({
           <img src="/logo-peacock.png" alt="Peacock" />
         </div>
         <script dangerouslySetInnerHTML={{ __html: `
+          window.__peacockPasswordLink = /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash);
           window.__hideSplash = function() {
             var el = document.getElementById('splash-loader');
             if (el) {
