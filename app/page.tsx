@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
+const passwordLinkAtLoad = typeof window !== "undefined" && /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash);
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
 const LOGO_SPLASH = "/logo-peacock.png";
@@ -519,7 +520,7 @@ export default function App() {
     // Detect invite/recovery tokens in URL hash
     if (typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash.includes("type=invite") || hash.includes("type=recovery")) {
+      if (passwordLinkAtLoad || hash.includes("type=invite") || hash.includes("type=recovery")) {
         setNeedsPassword(true);
       }
     }
@@ -897,6 +898,7 @@ export default function App() {
     if (view === "dettaglio_casting") return selectedCasting?.brand || "Casting";
     if (view === "report") return "Report";
     if (view === "agenda") return "Prossimi shooting";
+    if (view === "password") return "Cambia password";
     if (view === "nuovo_job_bulk") return "Nuovo job — più model";
     return "";
   };
@@ -1270,6 +1272,7 @@ export default function App() {
                             { icon: "📋", label: "Casting", click: () => setView("castings") },
                             { icon: "📊", label: "Report", click: () => setView("report") },
                             { icon: "📅", label: "Prossimi shooting", click: () => setView("agenda") },
+                            { icon: "🔒", label: "Cambia password", click: () => setView("password") },
                           ].map((m, i) => (
                             <button key={i} onClick={() => { m.click(); setMenuOpen(false); }}
                               style={{ width: "100%", padding: "12px 16px", border: "none", borderTop: i > 0 ? "0.5px solid #F0EAE0" : "none", background: "transparent", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15, color: "#000", fontFamily: "inherit", textAlign: "left" }}>
@@ -1304,6 +1307,11 @@ export default function App() {
       </div>
       {/* CONTENT */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: 30 }}>
+        {view === "password" && userRuolo === "admin" && (
+          <div style={{ maxWidth: 430, margin: "24px auto", padding: "0 16px" }}>
+            <ChangePasswordSection showToast={showToast} />
+          </div>
+        )}
         {/* ── LISTA ── */}
         {view === "lista" && (
           <div>
@@ -2485,3 +2493,4 @@ function ChangePasswordSection({ showToast }) {
     </div>
   );
 }
+
