@@ -496,6 +496,7 @@ export default function App() {
   const [dataFineRitenuta, setDataFineRitenuta] = useState("");
   const [castings, setCastings] = useState<any[]>([]);
   const [candidature, setCandidature] = useState<any[]>([]);
+  const [castingSubmissionId, setCastingSubmissionId] = useState<string | null>(null);
   const [formCasting, setFormCasting] = useState(emptyCasting);
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
   const [modelView, setModelView] = useState("home"); // "home" | "profilo" | "job_dettaglio" | "ritenuta_model"
@@ -761,7 +762,22 @@ export default function App() {
     showToast("Casting eliminato"); setView("castings");
   };
   const candidati = async (castingId) => {
-    if (!myModella) return;
+    if (!myModella) {
+      showToast("Profilo model non collegato. Esci e accedi di nuovo.", true);
+      return;
+    }
+    if (castingSubmissionId === castingId) return;
+    const rememberApplication = (application: any) => {
+      if (!application) return;
+      setCandidature(prev => prev.some(c => c.casting_id === castingId && c.modella_id === myModella.id)
+        ? prev
+        : [...prev, application]);
+    };
+    const alreadyVisible = candidature.some(c => c.casting_id === castingId && c.modella_id === myModella.id);
+    if (alreadyVisible) {
+      showToast("Candidatura già registrata ✓");
+      return;
+    }
     const casting = castings.find(c => c.id === castingId);
     if (casting?.data) {
       const conflitto = jobs.find(j => j.modella === myModella.nome && j.data_shooting === casting.data);
@@ -772,10 +788,39 @@ export default function App() {
         return;
       }
     }
-    const { data, error } = await supabase.from("candidature").insert({ casting_id: castingId, modella_id: myModella.id }).select().single();
-    if (error) { showToast(error.message, true); return; }
-    if (data) setCandidature(prev => [...prev, data]);
-    showToast("Candidatura inviata ✓");
+    setCastingSubmissionId(castingId);
+    try {
+      const { data, error } = await supabase
+        .from("candidature")
+        .insert({ casting_id: castingId, modella_id: myModella.id })
+        .select()
+        .single();
+
+      if (!error) {
+        rememberApplication(data);
+        showToast("Candidatura inviata ✓");
+        return;
+      }
+
+      // A doppio tap or a delayed response can make the second insert hit the
+      // unique constraint even though the first application was successful.
+      // Verify the server state before showing an error to the model.
+      const { data: existing } = await supabase
+        .from("candidature")
+        .select("*")
+        .eq("casting_id", castingId)
+        .eq("modella_id", myModella.id)
+        .maybeSingle();
+      if (existing) {
+        rememberApplication(existing);
+        showToast("Candidatura già registrata ✓");
+        return;
+      }
+
+      showToast("Non siamo riusciti a registrare la candidatura. Riprova tra pochi secondi.", true);
+    } finally {
+      setCastingSubmissionId(null);
+    }
   };
   const scandidati = async (castingId) => {
     if (!myModella) return;
@@ -1191,8 +1236,8 @@ export default function App() {
                         ✓ Candidato — annulla
                       </button>
                     ) : (
-                      <button onClick={() => candidati(c.id)} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                        Candidati
+                      <button onClick={() => candidati(c.id)} disabled={castingSubmissionId === c.id} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "none", background: castingSubmissionId === c.id ? "#767676" : "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: castingSubmissionId === c.id ? "wait" : "pointer", fontFamily: "inherit" }}>
+                        {castingSubmissionId === c.id ? "Invio…" : "Candidati"}
                       </button>
                     )}
                   </div>
@@ -2493,4 +2538,3 @@ function ChangePasswordSection({ showToast }) {
     </div>
   );
 }
-
