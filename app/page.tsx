@@ -437,6 +437,39 @@ const SelectField = ({ label, value, onChange, options }) => (
     </select>
   </div>
 );
+// Compenso model: menu a tendina Netto/Lordo. Salva sempre netto_model (lordo = netto / 0.8, ritenuta 20%).
+const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
+const CompensoField = ({ netto, onChange }) => {
+  const [modo, setModo] = useState("netto");
+  const [lordoTxt, setLordoTxt] = useState(() => { const n = Number(netto) || 0; return n ? String(r2(n / 0.8)) : ""; });
+  const n = Number(netto) || 0;
+  const cambiaModo = m => { setModo(m); if (m === "lordo") setLordoTxt(n ? String(r2(n / 0.8)) : ""); };
+  const lbl = { display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" };
+  const box = { background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" };
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={lbl}>Compenso model €</label>
+      <div style={{ display: "flex", gap: 8 }}>
+        <select value={modo} onChange={e => cambiaModo(e.target.value)} style={{ ...box, width: 110, flexShrink: 0, fontSize: 16, fontWeight: 600 }}>
+          <option value="netto">Netto</option>
+          <option value="lordo">Lordo</option>
+        </select>
+        {modo === "netto" ? (
+          <input type="number" value={netto} onChange={e => onChange(Number(e.target.value))} placeholder="es. 400" style={{ ...box, flex: 1, minWidth: 0 }} />
+        ) : (
+          <input type="number" value={lordoTxt} onChange={e => { setLordoTxt(e.target.value); onChange(r2((Number(e.target.value) || 0) * 0.8)); }} placeholder="es. 500" style={{ ...box, flex: 1, minWidth: 0 }} />
+        )}
+      </div>
+      {n > 0 && (
+        <div style={{ fontSize: 13, color: "#767676", marginTop: 6 }}>
+          {modo === "netto"
+            ? `Lordo €${r2(n / 0.8).toFixed(2)} · ritenuta 20% €${r2(n / 0.8 * 0.2).toFixed(2)}`
+            : `Netto al model €${n.toFixed(2)} · ritenuta 20% €${r2(n / 0.8 * 0.2).toFixed(2)}`}
+        </div>
+      )}
+    </div>
+  );
+};
 const CalBtn = ({ icon, label, sub, onClick, loading }) => (
   <button onClick={onClick} disabled={loading}
     style={{ width: "100%", marginBottom: 8, padding: "12px 14px", background: loading ? "#F5F0EA" : "#FAFAF8", border: "0.5px solid #EBEBEB", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 12, fontFamily: "inherit" }}>
@@ -2100,9 +2133,9 @@ export default function App() {
             <Field label="Contatto referente" value={formJob.contatto_referente} onChange={v => setFormJob(f => ({ ...f, contatto_referente: v }))} placeholder="Nome + telefono (es. Stefania 3394240321)" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Fatturato €"   value={formJob.fatturato}   onChange={v => setFormJob(f => ({ ...f, fatturato: Number(v) }))}   type="number" />
-              <Field label="Netto model €" value={formJob.netto_model} onChange={v => setFormJob(f => ({ ...f, netto_model: Number(v) }))} type="number" />
+              <Field label="Rimborso €" value={formJob.rimborso} onChange={v => setFormJob(f => ({ ...f, rimborso: Number(v) }))} type="number" />
             </div>
-            <Field label="Rimborso €" value={formJob.rimborso} onChange={v => setFormJob(f => ({ ...f, rimborso: Number(v) }))} type="number" />
+            <CompensoField key={formJob.id || "nuovo"} netto={formJob.netto_model} onChange={v => setFormJob(f => ({ ...f, netto_model: v }))} />
             {(formJob.fatturato > 0 || formJob.netto_model > 0) && (
               <div style={{ background: "#F5F5F5", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "0.5px solid #EBEBEB" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
@@ -2301,7 +2334,7 @@ export default function App() {
                           <Field label="Data shooting" value={r.data_shooting} onChange={v => updateRow(r.id, "data_shooting", v)} type="date" />
                           <Field label="Call time" value={r.call_time} onChange={v => updateRow(r.id, "call_time", v)} type="time" />
                         </div>
-                        <Field label="Netto model €" value={r.netto_model} onChange={v => updateRow(r.id, "netto_model", v)} type="number" />
+                        <CompensoField key={r.id} netto={r.netto_model} onChange={v => updateRow(r.id, "netto_model", v)} />
                       </div>
                     </div>
                   ))}
