@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { compressImage, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const passwordLinkAtLoad = typeof window !== "undefined" && (window.__peacockPasswordLink || /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash));
@@ -496,11 +497,17 @@ export default function App() {
   const [dataFineRitenuta, setDataFineRitenuta] = useState("");
   const [castings, setCastings] = useState<any[]>([]);
   const [candidature, setCandidature] = useState<any[]>([]);
+  const [castingSubmissionId, setCastingSubmissionId] = useState<string | null>(null);
   const [formCasting, setFormCasting] = useState(emptyCasting);
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
   const [modelView, setModelView] = useState("home"); // "home" | "profilo" | "job_dettaglio" | "ritenuta_model"
   const [formMyProfile, setFormMyProfile] = useState<any>({});
   const [polaUploading, setPolaUploading] = useState("");
+  const [adminUploading, setAdminUploading] = useState("");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [optLog, setOptLog] = useState<string[]>([]);
+  const [optRunning, setOptRunning] = useState(false);
   const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
   const [reportMese, setReportMese] = useState<string>("");
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -761,7 +768,22 @@ export default function App() {
     showToast("Casting eliminato"); setView("castings");
   };
   const candidati = async (castingId) => {
-    if (!myModella) return;
+    if (!myModella) {
+      showToast("Profilo model non collegato. Esci e accedi di nuovo.", true);
+      return;
+    }
+    if (castingSubmissionId === castingId) return;
+    const rememberApplication = (application: any) => {
+      if (!application) return;
+      setCandidature(prev => prev.some(c => c.casting_id === castingId && c.modella_id === myModella.id)
+        ? prev
+        : [...prev, application]);
+    };
+    const alreadyVisible = candidature.some(c => c.casting_id === castingId && c.modella_id === myModella.id);
+    if (alreadyVisible) {
+      showToast("Candidatura già registrata ✓");
+      return;
+    }
     const casting = castings.find(c => c.id === castingId);
     if (casting?.data) {
       const conflitto = jobs.find(j => j.modella === myModella.nome && j.data_shooting === casting.data);
@@ -772,10 +794,39 @@ export default function App() {
         return;
       }
     }
-    const { data, error } = await supabase.from("candidature").insert({ casting_id: castingId, modella_id: myModella.id }).select().single();
-    if (error) { showToast(error.message, true); return; }
-    if (data) setCandidature(prev => [...prev, data]);
-    showToast("Candidatura inviata ✓");
+    setCastingSubmissionId(castingId);
+    try {
+      const { data, error } = await supabase
+        .from("candidature")
+        .insert({ casting_id: castingId, modella_id: myModella.id })
+        .select()
+        .single();
+
+      if (!error) {
+        rememberApplication(data);
+        showToast("Candidatura inviata ✓");
+        return;
+      }
+
+      // A doppio tap or a delayed response can make the second insert hit the
+      // unique constraint even though the first application was successful.
+      // Verify the server state before showing an error to the model.
+      const { data: existing } = await supabase
+        .from("candidature")
+        .select("*")
+        .eq("casting_id", castingId)
+        .eq("modella_id", myModella.id)
+        .maybeSingle();
+      if (existing) {
+        rememberApplication(existing);
+        showToast("Candidatura già registrata ✓");
+        return;
+      }
+
+      showToast("Non siamo riusciti a registrare la candidatura. Riprova tra pochi secondi.", true);
+    } finally {
+      setCastingSubmissionId(null);
+    }
   };
   const scandidati = async (castingId) => {
     if (!myModella) return;
@@ -811,14 +862,150 @@ export default function App() {
     showToast("Profilo aggiornato ✓");
     setModelView("home");
   };
+  // Prepara file: foto compresse a ~2000px JPEG, video caricati così come sono (max 50MB)
+  const prepareMedia = async (slot: string, file: File) => {
+    const isVideoSlot = slot.startsWith("video_");
+    if (isVideoSlot) {
+      if (!isVideoFile(file)) { showToast("Seleziona un video", true); return null; }
+      if (file.size > MAX_VIDEO_MB * 1024 * 1024) { showToast(`Video troppo pesante (max ${MAX_VIDEO_MB} MB). Mandalo prima su WhatsApp per comprimerlo.`, true); return null; }
+      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+      return { blob: file, ext, type: file.type || "video/mp4" };
+    }
+    try {
+      const blob = await compressImage(file);
+      const isJpeg = blob !== file || /jpe?g/i.test(file.type);
+      return { blob, ext: isJpeg ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase(), type: isJpeg ? "image/jpeg" : file.type };
+    } catch (e: any) {
+      showToast(e.message || "Formato non supportato", true); return null;
+    }
+  };
+  // Upload admin su qualsiasi model (foto o video)
+  const adminUploadMedia = async (mod: any, slot: string, file: File) => {
+    setAdminUploading(mod.id + slot);
+    try {
+      const prepared = await prepareMedia(slot, file);
+      if (!prepared) { setAdminUploading(""); return; }
+      const folder = mod.user_id || `admin/${mod.id}`;
+      const path = `${folder}/${slot}_${Date.now()}.${prepared.ext}`;
+      const { error: upErr } = await supabase.storage.from("polas").upload(path, prepared.blob, { cacheControl: "3600", upsert: false, contentType: prepared.type });
+      if (upErr) { showToast(upErr.message, true); setAdminUploading(""); return; }
+      const publicUrl = supabase.storage.from("polas").getPublicUrl(path).data.publicUrl;
+      const old = mod[slot];
+      const patch: any = { [slot]: publicUrl };
+      if (slot.startsWith("pola_")) patch.data_polas = new Date().toLocaleDateString("it-IT");
+      const { error } = await supabase.from("modelle").update(patch).eq("id", mod.id);
+      if (error) { showToast(error.message, true); setAdminUploading(""); return; }
+      setModelle((prev: any[]) => prev.map((m: any) => m.id === mod.id ? { ...m, ...patch } : m));
+      const oldPath = old && old.includes("/object/public/polas/") ? decodeURIComponent(old.split("/object/public/polas/")[1]) : "";
+      if (oldPath) await supabase.storage.from("polas").remove([oldPath]);
+      showToast("Caricato ✓");
+    } catch (e: any) { showToast(e.message || "Errore upload", true); }
+    setAdminUploading("");
+  };
+  const adminRemoveMedia = async (mod: any, slot: string) => {
+    const old = mod[slot];
+    const { error } = await supabase.from("modelle").update({ [slot]: null }).eq("id", mod.id);
+    if (error) { showToast(error.message, true); return; }
+    setModelle((prev: any[]) => prev.map((m: any) => m.id === mod.id ? { ...m, [slot]: null } : m));
+    const oldPath = old && old.includes("/object/public/polas/") ? decodeURIComponent(old.split("/object/public/polas/")[1]) : "";
+    if (oldPath) await supabase.storage.from("polas").remove([oldPath]);
+    showToast("Rimosso ✓");
+  };
+  // Link digitals per il cliente
+  const digitalsLink = (tokens: string[]) => `${window.location.origin}/d/${tokens.filter(Boolean).join(",")}`;
+  const copiaDigitals = async (mods: any[]) => {
+    const tokens = mods.map((m: any) => m.share_token).filter(Boolean);
+    if (!tokens.length) { showToast("Link non disponibile: ricarica la pagina", true); return; }
+    const link = digitalsLink(tokens);
+    try { await navigator.clipboard.writeText(link); showToast(mods.length > 1 ? `Link di ${mods.length} model copiato ✓` : "Link copiato ✓"); }
+    catch { window.prompt("Copia il link:", link); }
+  };
+  // Ottimizza archivio: backup zip di tutto il bucket + compressione delle foto usate
+  const listBucket = async () => {
+    const out: any[] = [];
+    const { data: top, error } = await supabase.storage.from("polas").list("", { limit: 1000 });
+    if (error) throw error;
+    const walk = async (prefix: string, items: any[]) => {
+      for (const it of items) {
+        const full = prefix ? `${prefix}/${it.name}` : it.name;
+        if (it.id === null) {
+          const { data: sub } = await supabase.storage.from("polas").list(full, { limit: 1000 });
+          await walk(full, sub || []);
+        } else out.push({ path: full, size: it.metadata?.size || 0 });
+      }
+    };
+    await walk("", top || []);
+    return out;
+  };
+  const ottimizzaArchivio = async () => {
+    if (optRunning) return;
+    setOptRunning(true);
+    const log = (t: string) => setOptLog(prev => [...prev, t]);
+    setOptLog([]);
+    try {
+      log("Leggo l'archivio…");
+      const files = await listBucket();
+      const totMb = files.reduce((s, f) => s + f.size, 0) / 1e6;
+      log(`${files.length} file · ${totMb.toFixed(0)} MB`);
+      // 1. BACKUP in zip da ~250 MB
+      let batch: any[] = [], batchSize = 0, part = 1;
+      const stamp = new Date().toISOString().slice(0, 10);
+      const flush = async () => {
+        if (!batch.length) return;
+        downloadBlob(makeZip(batch), `peacock-polas-backup-${stamp}-parte${part}.zip`);
+        log(`Backup parte ${part} scaricato (${batch.length} file)`);
+        part++; batch = []; batchSize = 0;
+        await new Promise(r => setTimeout(r, 1500));
+      };
+      for (const f of files) {
+        const { data, error } = await supabase.storage.from("polas").download(f.path);
+        if (error || !data) { log(`⚠️ backup saltato: ${f.path}`); continue; }
+        const buf = new Uint8Array(await data.arrayBuffer());
+        batch.push({ name: f.path, data: buf }); batchSize += buf.length;
+        if (batchSize > 250e6) await flush();
+      }
+      await flush();
+      log("Backup completato. Comprimo le foto in uso…");
+      // 2. COMPRESSIONE foto referenziate
+      let saved = 0, done = 0, skipped = 0;
+      for (const mod of modelle) {
+        for (const { slot } of POLA_SLOTS) {
+          const url = mod[slot];
+          if (!url || !url.includes("/object/public/polas/")) continue;
+          const path = decodeURIComponent(url.split("/object/public/polas/")[1]);
+          const info = files.find(f => f.path === path);
+          if (!info || info.size < 700e3) continue;
+          try {
+            const { data } = await supabase.storage.from("polas").download(path);
+            const blob = await compressImage(data);
+            if (blob.size >= info.size) continue;
+            const newPath = `${path.split("/").slice(0, -1).join("/")}/${slot}_${Date.now()}_opt.jpg`;
+            const { error: upErr } = await supabase.storage.from("polas").upload(newPath, blob, { contentType: "image/jpeg", cacheControl: "3600" });
+            if (upErr) throw upErr;
+            const newUrl = supabase.storage.from("polas").getPublicUrl(newPath).data.publicUrl;
+            const { error: dbErr } = await supabase.from("modelle").update({ [slot]: newUrl }).eq("id", mod.id);
+            if (dbErr) throw dbErr;
+            await supabase.storage.from("polas").remove([path]);
+            mod[slot] = newUrl;
+            saved += info.size - blob.size; done++;
+            if (done % 10 === 0) log(`${done} foto compresse…`);
+          } catch (e: any) { skipped++; log(`⚠️ ${mod.nome} · ${slot}: ${e.message || "non compressa"}`); }
+        }
+      }
+      setModelle([...modelle]);
+      log(`Fatto: ${done} foto compresse, ${(saved / 1e6).toFixed(0)} MB liberati${skipped ? `, ${skipped} da ricaricare` : ""}.`);
+    } catch (e: any) { log("Errore: " + (e.message || e)); }
+    setOptRunning(false);
+  };
   // Upload singola pola
   const uploadPola = async (slot: string, file: File) => {
     if (!myModella || !user) return;
     setPolaUploading(slot);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${slot}_${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("polas").upload(path, file, { cacheControl: "3600", upsert: false });
+      const prepared = await prepareMedia(slot, file);
+      if (!prepared) { setPolaUploading(""); return; }
+      const path = `${user.id}/${slot}_${Date.now()}.${prepared.ext}`;
+      const { error: upErr } = await supabase.storage.from("polas").upload(path, prepared.blob, { cacheControl: "3600", upsert: false, contentType: prepared.type });
       if (upErr) { showToast(upErr.message, true); setPolaUploading(""); return; }
       const { data: urlData } = supabase.storage.from("polas").getPublicUrl(path);
       const publicUrl = urlData.publicUrl;
@@ -851,8 +1038,8 @@ export default function App() {
     } else {
       const newId = `m${Date.now()}`;
       const newMod = { ...modData, id: newId };
-      await supabase.from("modelle").insert(newMod);
-      setModelle((prev: any[]) => [...prev, newMod]);
+      const { data: inserted } = await supabase.from("modelle").insert(newMod).select().single();
+      setModelle((prev: any[]) => [...prev, inserted || newMod]);
     }
     showToast("Profile saved ✓"); setView("modelle");
   };
@@ -880,6 +1067,7 @@ export default function App() {
     if (view === "contratto") return setView("dettaglio");
     if (view === "ritenuta") return setView("dettaglio");
     if (view === "nuovo_casting") return setView("castings");
+    if (view === "ottimizza") return setView("lista");
     if (view === "dettaglio_casting") return setView("castings");
     setView("lista");
   };
@@ -899,6 +1087,7 @@ export default function App() {
     if (view === "report") return "Report";
     if (view === "agenda") return "Prossimi shooting";
     if (view === "password") return "Cambia password";
+    if (view === "ottimizza") return "Ottimizza archivio";
     if (view === "nuovo_job_bulk") return "Nuovo job — più model";
     return "";
   };
@@ -968,14 +1157,9 @@ export default function App() {
             <Field label="IBAN" value={formMyProfile.iban || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, iban: v.toUpperCase() }))} placeholder="IT..." />
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Polas</div>
-            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Carica 4 foto su sfondo neutro, senza filtri e senza trucco.</div>
+            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Carica 6 foto su muro chiaro e luce naturale: senza trucco, capelli raccolti, top aderente e jeans, niente filtri.</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-              {[
-                { slot: "pola_primo_piano", label: "Primo piano" },
-                { slot: "pola_profilo_sx", label: "Profilo sinistro" },
-                { slot: "pola_profilo_dx", label: "Profilo destro" },
-                { slot: "pola_figura_intera", label: "Figura intera" },
-              ].map(({ slot, label }) => {
+              {POLA_SLOTS.map(({ slot, label }) => {
                 const url = myModella?.[slot];
                 const isLoading = polaUploading === slot;
                 return (
@@ -998,6 +1182,33 @@ export default function App() {
                       </div>
                     </label>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Video di presentazione</div>
+            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Verticale, luce naturale, muro neutro, max {MAX_VIDEO_MB} MB. Presentazione: 15–20 sec, guarda in camera e di' nome, età, altezza e città. Camminata: avanti e indietro verso la camera. Libero: quello che ti rappresenta.</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+              {VIDEO_SLOTS.map(({ slot, label }) => {
+                const url = myModella?.[slot];
+                const isLoading = polaUploading === slot;
+                return (
+                  <div key={slot}>
+                    <label style={{ display: "block", cursor: isLoading ? "wait" : "pointer" }}>
+                      <input type="file" accept="video/*" style={{ display: "none" }} disabled={isLoading}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadPola(slot, f); e.target.value = ""; }} />
+                      <div style={{ width: "100%", aspectRatio: "9/16", borderRadius: 14, overflow: "hidden", background: url ? "#000" : "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {url ? (
+                          <video src={url} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ textAlign: "center", color: "#9C948A" }}>
+                            <div style={{ fontSize: 24, marginBottom: 4 }}>{isLoading ? "⏳" : "🎬"}</div>
+                            <div style={{ fontSize: 11 }}>{isLoading ? "Caricamento..." : "Tappa"}</div>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}{url ? " ✓" : ""}</div>
                   </div>
                 );
               })}
@@ -1191,8 +1402,8 @@ export default function App() {
                         ✓ Candidato — annulla
                       </button>
                     ) : (
-                      <button onClick={() => candidati(c.id)} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                        Candidati
+                      <button onClick={() => candidati(c.id)} disabled={castingSubmissionId === c.id} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "none", background: castingSubmissionId === c.id ? "#767676" : "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: castingSubmissionId === c.id ? "wait" : "pointer", fontFamily: "inherit" }}>
+                        {castingSubmissionId === c.id ? "Invio…" : "Candidati"}
                       </button>
                     )}
                   </div>
@@ -1272,6 +1483,7 @@ export default function App() {
                             { icon: "📋", label: "Casting", click: () => setView("castings") },
                             { icon: "📊", label: "Report", click: () => setView("report") },
                             { icon: "📅", label: "Prossimi shooting", click: () => setView("agenda") },
+                            { icon: "🗜️", label: "Ottimizza archivio", click: () => setView("ottimizza") },
                             { icon: "🔒", label: "Cambia password", click: () => setView("password") },
                           ].map((m, i) => (
                             <button key={i} onClick={() => { m.click(); setMenuOpen(false); }}
@@ -1290,6 +1502,12 @@ export default function App() {
             {view === "modelle" && (
               <>
                 <button onClick={() => setView("lista")} style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: "transparent", color: "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>← Jobs</button>
+                {userRuolo === "admin" && (
+                  <button onClick={() => { setSelectMode(m => !m); setSelectedIds([]); }}
+                    style={{ padding: "8px 16px", borderRadius: 100, border: "0.5px solid #EBEBEB", background: selectMode ? "#1C1714" : "transparent", color: selectMode ? "#FFF" : "#767676", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    {selectMode ? "Annulla" : "Seleziona"}
+                  </button>
+                )}
                 <button onClick={() => { setFormMod({ ...emptyModella, id: null }); setView("nuova_modella"); }}
                   style={{ padding: "8px 18px", borderRadius: 100, border: "none", background: "#000000", color: "#FFFFFF", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   + Model
@@ -1307,6 +1525,21 @@ export default function App() {
       </div>
       {/* CONTENT */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: 30 }}>
+        {view === "ottimizza" && userRuolo === "admin" && (
+          <div style={{ maxWidth: 520, margin: "20px auto", padding: "0 16px" }}>
+            <div style={{ background: "#FFF", border: "0.5px solid #EBEBEB", borderRadius: 20, padding: "20px" }}>
+              <div style={{ fontSize: 16, color: "#000", lineHeight: 1.5, marginBottom: 6 }}>1. Scarica sul computer uno zip di backup con <b>tutti</b> i file originali (più parti da ~250 MB).</div>
+              <div style={{ fontSize: 16, color: "#000", lineHeight: 1.5, marginBottom: 6 }}>2. Ricomprime le polas in uso sopra i 700 KB (lato lungo 2000 px, JPEG): stessa resa, peso ~10 volte inferiore.</div>
+              <div style={{ fontSize: 14, color: "#9C948A", lineHeight: 1.5, marginBottom: 14 }}>Tieni la pagina aperta fino al messaggio “Fatto”. Se Chrome chiede di consentire più download, accetta.</div>
+              <PrimaryBtn onClick={ottimizzaArchivio} disabled={optRunning}>{optRunning ? "In corso…" : "Avvia backup + compressione"}</PrimaryBtn>
+              {optLog.length > 0 && (
+                <div style={{ marginTop: 14, background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "#1C1714", lineHeight: 1.6, maxHeight: 320, overflowY: "auto", fontFamily: "ui-monospace, Menlo, monospace" }}>
+                  {optLog.map((l, i) => <div key={i}>{l}</div>)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {view === "password" && userRuolo === "admin" && (
           <div style={{ maxWidth: 430, margin: "24px auto", padding: "0 16px" }}>
             <ChangePasswordSection showToast={showToast} />
@@ -1515,15 +1748,23 @@ export default function App() {
                 const mj = jobs.filter(j => j.modella === mod.nome);
                 const netto = mj.reduce((s, j) => s + calcNetto(j), 0);
                 return (
-                  <div key={mod.id} onClick={() => { setSelectedModella(mod); setView("scheda_modella"); }}
-                    style={{ background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 20, padding: "22px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 16, background: "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ fontSize: 22, color: "#767676", fontWeight: 600 }}>{mod.nome.charAt(0)}</span>
+                  <div key={mod.id} onClick={() => {
+                      if (selectMode) { setSelectedIds(ids => ids.includes(mod.id) ? ids.filter(x => x !== mod.id) : [...ids, mod.id]); return; }
+                      setSelectedModella(mod); setView("scheda_modella");
+                    }}
+                    style={{ background: "#FFFFFF", border: selectMode && selectedIds.includes(mod.id) ? "2px solid #000" : "0.5px solid #EBEBEB", borderRadius: 20, padding: "22px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 16, background: "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                      {selectMode
+                        ? <span style={{ fontSize: 24, color: "#000" }}>{selectedIds.includes(mod.id) ? "✓" : ""}</span>
+                        : mod.pola_primo_piano
+                          ? <img src={mod.pola_primo_piano} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <span style={{ fontSize: 22, color: "#767676", fontWeight: 600 }}>{mod.nome.charAt(0)}</span>}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 20, fontWeight: 700, color: "#000000", marginBottom: 4 }}>{mod.nome}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
-                      <span style={{ fontSize: 17, color: "#767676" }}>{mod.instagram} · {mj.length} job · {fmt(netto)}</span>
+                      <span style={{ fontSize: 17, color: "#767676" }}>{mj.length} job · {fmt(netto)}</span>
+                      {(() => { const np = POLA_SLOTS.filter(x => mod[x.slot]).length; const nv = VIDEO_SLOTS.filter(x => mod[x.slot]).length; return <span style={{ fontSize: 10, fontWeight: 700, color: np === 6 ? "#16A34A" : "#9C948A", background: "#F5F5F5", padding: "3px 9px", borderRadius: 100, letterSpacing: "0.06em" }}>POLAS {np}/6 · VIDEO {nv}</span>; })()}
                       {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 10, fontWeight: 700, color: cc.color, background: cc.bg, padding: "3px 9px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
                       {contrattoScadenzaAlert(mod.contratto_scadenza) && <span style={{ fontSize: 10, fontWeight: 600, color: contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "#DC2626" : "#D97706" }}>{contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "⚠️ scaduto" : "⏰ in scadenza"}</span>}
                     </div>
@@ -1533,6 +1774,18 @@ export default function App() {
                 );
               })}
             </div>
+            {selectMode && selectedIds.length > 0 && (
+              <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, padding: "12px 16px calc(12px + env(safe-area-inset-bottom))", background: "rgba(255,255,255,0.96)", borderTop: "0.5px solid #EBEBEB", zIndex: 60, display: "flex", gap: 8, justifyContent: "center" }}>
+                <button onClick={() => copiaDigitals(selectedIds.map(id => modelle.find(m => m.id === id)).filter(Boolean))}
+                  style={{ flex: 1, maxWidth: 520, padding: "15px", borderRadius: 16, border: "none", background: "#000", color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                  🔗 Copia link digitals ({selectedIds.length})
+                </button>
+                <button onClick={() => window.open(digitalsLink(selectedIds.map(id => modelle.find(m => m.id === id)?.share_token)), "_blank")}
+                  style={{ padding: "15px 18px", borderRadius: 16, border: "0.5px solid #EBEBEB", background: "#FFF", color: "#000", fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
+                  Apri
+                </button>
+              </div>
+            )}
           </div>
         )}
         {/* ── SCHEDA MODELLA ── */}
@@ -1561,33 +1814,92 @@ export default function App() {
                 {mod.note && <><Divider /><InfoRow label="Note" val={mod.note} /></>}
                 {mod.allergie && <><Divider /><InfoRow label="⚠️ Allergie" val={mod.allergie} /></>}
               </PaddedSection>
+              {/* DIGITALS: link cliente */}
+              {userRuolo === "admin" && (
+                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => copiaDigitals([mod])}
+                    style={{ flex: 1, padding: "14px", borderRadius: 16, border: "none", background: "#000", color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                    🔗 Copia link digitals
+                  </button>
+                  <button onClick={() => window.open(digitalsLink([mod.share_token]), "_blank")}
+                    style={{ padding: "14px 18px", borderRadius: 16, border: "0.5px solid #EBEBEB", background: "#FFF", color: "#000", fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
+                    Apri
+                  </button>
+                </div>
+              )}
+              {/* MISURE */}
+              <PaddedSection title="Misure"
+                action={<button onClick={() => { setFormMod(mod); setView("nuova_modella"); }} style={{ fontSize: 17, color: "#C4A882", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Modifica</button>}>
+                {MISURE.some(x => mod[x.key]) ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px 8px", padding: "4px 0" }}>
+                    {MISURE.map(x => (
+                      <div key={x.key}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.08em", textTransform: "uppercase" }}>{x.label}</div>
+                        <div style={{ fontSize: 16, color: "#000" }}>{mod[x.key] || "—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : <div style={{ fontSize: 16, color: "#767676" }}>Misure non inserite.</div>}
+              </PaddedSection>
               {/* POLAS */}
-              <Section title="Polas">
-                {(mod.pola_primo_piano || mod.pola_profilo_sx || mod.pola_profilo_dx || mod.pola_figura_intera) ? (
-                  <div style={{ padding: "14px 16px" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      {[
-                        { slot: "pola_primo_piano", label: "Primo piano" },
-                        { slot: "pola_profilo_sx", label: "Profilo SX" },
-                        { slot: "pola_profilo_dx", label: "Profilo DX" },
-                        { slot: "pola_figura_intera", label: "Figura intera" },
-                      ].map(({ slot, label }) => (
+              <Section title={`Polas${mod.data_polas ? " · " + mod.data_polas : ""}`}>
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    {POLA_SLOTS.map(({ slot, label }) => {
+                      const busy = adminUploading === mod.id + slot;
+                      return (
                         <div key={slot}>
-                          <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 14, overflow: "hidden", background: "#F5F5F5", border: "0.5px solid #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {mod[slot] ? (
-                              <img src={mod[slot]} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            ) : (
-                              <div style={{ fontSize: 12, color: "#C4C0BA", textAlign: "center" }}>—</div>
-                            )}
-                          </div>
+                          <label style={{ display: "block", cursor: userRuolo === "admin" ? (busy ? "wait" : "pointer") : "default" }}>
+                            {userRuolo === "admin" && <input type="file" accept="image/*" style={{ display: "none" }} disabled={busy}
+                              onChange={e => { const f = e.target.files?.[0]; if (f) adminUploadMedia(mod, slot, f); e.target.value = ""; }} />}
+                            <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 14, overflow: "hidden", background: "#F5F5F5", border: "0.5px solid #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                              {mod[slot] ? (
+                                <img src={mod[slot]} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : (
+                                <div style={{ fontSize: 12, color: "#C4C0BA", textAlign: "center" }}>{busy ? "⏳" : "+ carica"}</div>
+                              )}
+                              {busy && mod[slot] && <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>⏳</div>}
+                            </div>
+                          </label>
                           <div style={{ fontSize: 10, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                ) : (
-                  <div style={{ padding: "16px", fontSize: 16, color: "#767676" }}>Il model non ha ancora caricato le polas.</div>
-                )}
+                </div>
+              </Section>
+              {/* VIDEO */}
+              <Section title="Video">
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                    {VIDEO_SLOTS.map(({ slot, label }) => {
+                      const busy = adminUploading === mod.id + slot;
+                      return (
+                        <div key={slot}>
+                          <div style={{ width: "100%", aspectRatio: "9/16", borderRadius: 14, overflow: "hidden", background: mod[slot] ? "#000" : "#F5F5F5", border: "0.5px solid #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {mod[slot] ? (
+                              <video src={mod[slot]} controls playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                            ) : (
+                              <div style={{ fontSize: 12, color: "#C4C0BA" }}>{busy ? "⏳" : "—"}</div>
+                            )}
+                          </div>
+                          {userRuolo === "admin" && (
+                            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 5 }}>
+                              <label style={{ fontSize: 11, fontWeight: 600, color: "#C4A882", cursor: busy ? "wait" : "pointer", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                                <input type="file" accept="video/*" style={{ display: "none" }} disabled={busy}
+                                  onChange={e => { const f = e.target.files?.[0]; if (f) adminUploadMedia(mod, slot, f); e.target.value = ""; }} />
+                                {busy ? "..." : mod[slot] ? "Cambia" : "+ " + label}
+                              </label>
+                              {mod[slot] && !busy && (
+                                <button onClick={() => adminRemoveMedia(mod, slot)} style={{ fontSize: 11, fontWeight: 600, color: "#767676", background: "none", border: "none", cursor: "pointer", padding: 0, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "inherit" }}>Togli</button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </Section>
               {/* CONTRATTO AGENZIA */}
               {(() => {
@@ -1660,6 +1972,13 @@ export default function App() {
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
             <Field label="Internal notes" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
             <Field label="Allergie / intolleranze" value={formMod.allergie || ""} onChange={v => setFormMod(f => ({ ...f, allergie: v }))} placeholder="es. nichel, lattice, polline..." />
+            <div style={{ height: 8 }} />
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Misure</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {MISURE.map(x => (
+                <Field key={x.key} label={x.label} value={formMod[x.key] || ""} onChange={v => setFormMod(f => ({ ...f, [x.key]: v }))} placeholder={x.ph} />
+              ))}
+            </div>
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Personal data (for tax)</div>
             <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
@@ -2493,4 +2812,3 @@ function ChangePasswordSection({ showToast }) {
     </div>
   );
 }
-
