@@ -94,7 +94,7 @@ export const POLA_SLOTS = [
   { slot: "pola_figura_intera", label: "Figura intera" },
   { slot: "pola_profilo_sx", label: "Profilo SX" },
   { slot: "pola_profilo_dx", label: "Profilo DX" },
-  { slot: "pola_figura_profilo", label: "Figura di profilo" },
+  { slot: "pola_mani", label: "Mani" },
 ];
 export const VIDEO_SLOTS = [
   { slot: "video_1", label: "Video 1" },

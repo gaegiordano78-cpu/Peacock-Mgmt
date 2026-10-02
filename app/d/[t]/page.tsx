@@ -14,7 +14,7 @@ const POLAS = [
   ["pola_figura_intera", "Full length"],
   ["pola_profilo_sx", "Profile L"],
   ["pola_profilo_dx", "Profile R"],
-  ["pola_figura_profilo", "Full profile"],
+  ["pola_mani", "Hands"],
 ];
 const MISURE = [
   ["altezza", "Height"], ["petto", "Chest"], ["vita", "Waist"], ["fianchi", "Hips"],
