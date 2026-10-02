@@ -997,6 +997,33 @@ export default function App() {
     } catch (e: any) { log("Errore: " + (e.message || e)); }
     setOptRunning(false);
   };
+  // Elimina dal bucket i file che nessuna scheda usa più (dopo il backup)
+  const pulisciArchivio = async () => {
+    if (optRunning) return;
+    if (!modelle.length) { showToast("Lista modelli non caricata", true); return; }
+    setOptRunning(true);
+    const log = (t: string) => setOptLog(prev => [...prev, t]);
+    setOptLog([]);
+    try {
+      const { data: fresh, error: mErr } = await supabase.from("modelle").select("*");
+      if (mErr || !fresh?.length) throw mErr || new Error("Lista modelli vuota");
+      const used = new Set<string>();
+      for (const m of fresh) for (const k of [...POLA_SLOTS.map(x => x.slot), ...VIDEO_SLOTS.map(x => x.slot), "foto_profilo"]) {
+        const u = m[k];
+        if (u && u.includes("/object/public/polas/")) used.add(decodeURIComponent(u.split("/object/public/polas/")[1]));
+      }
+      const files = await listBucket();
+      const orphans = files.filter(f => !used.has(f.path));
+      const mb = orphans.reduce((s, f) => s + f.size, 0) / 1e6;
+      log(`${orphans.length} file non usati · ${mb.toFixed(0)} MB`);
+      for (let i = 0; i < orphans.length; i += 100) {
+        const { error } = await supabase.storage.from("polas").remove(orphans.slice(i, i + 100).map(f => f.path));
+        if (error) throw error;
+      }
+      log(`Fatto: ${orphans.length} file eliminati, ${mb.toFixed(0)} MB liberati.`);
+    } catch (e: any) { log("Errore: " + (e.message || e)); }
+    setOptRunning(false);
+  };
   // Upload singola pola
   const uploadPola = async (slot: string, file: File) => {
     if (!myModella || !user) return;
@@ -1532,6 +1559,7 @@ export default function App() {
               <div style={{ fontSize: 16, color: "#000", lineHeight: 1.5, marginBottom: 6 }}>2. Ricomprime le polas in uso sopra i 700 KB (lato lungo 2000 px, JPEG): stessa resa, peso ~10 volte inferiore.</div>
               <div style={{ fontSize: 14, color: "#9C948A", lineHeight: 1.5, marginBottom: 14 }}>Tieni la pagina aperta fino al messaggio “Fatto”. Se Chrome chiede di consentire più download, accetta.</div>
               <PrimaryBtn onClick={ottimizzaArchivio} disabled={optRunning}>{optRunning ? "In corso…" : "Avvia backup + compressione"}</PrimaryBtn>
+              <GhostBtn onClick={() => { if (window.confirm("Eliminare definitivamente i file che nessuna scheda usa più? Fallo solo dopo aver scaricato il backup.")) pulisciArchivio(); }}>Elimina file non usati</GhostBtn>
               {optLog.length > 0 && (
                 <div style={{ marginTop: 14, background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "#1C1714", lineHeight: 1.6, maxHeight: 320, overflowY: "auto", fontFamily: "ui-monospace, Menlo, monospace" }}>
                   {optLog.map((l, i) => <div key={i}>{l}</div>)}
