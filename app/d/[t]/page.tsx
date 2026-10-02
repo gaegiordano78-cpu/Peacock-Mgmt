@@ -37,7 +37,7 @@ const css = `
   .dg-mis span b { font-weight: 400; color: #8A8A8A; margin-right: 6px; }
   .dg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 980px; }
   .dg-cell { background: #F2F2F2; aspect-ratio: 3/4; overflow: hidden; cursor: zoom-in; position: relative; }
-  .dg-cell img, .dg-cell video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .dg-cell img, .dg-cell video { width: 100%; height: 100%; object-fit: contain; display: block; }
   .dg-cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #8A8A8A; margin-top: 6px; }
   .dg-vids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; max-width: 980px; }
   .dg-vids .dg-cell { aspect-ratio: 9/16; cursor: default; background: #000; }
