@@ -1157,14 +1157,9 @@ export default function App() {
             <Field label="IBAN" value={formMyProfile.iban || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, iban: v.toUpperCase() }))} placeholder="IT..." />
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Polas</div>
-            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Carica 4 foto su sfondo neutro, senza filtri e senza trucco.</div>
+            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Carica 6 foto su muro chiaro e luce naturale: senza trucco, capelli raccolti, top aderente e jeans, niente filtri.</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-              {[
-                { slot: "pola_primo_piano", label: "Primo piano" },
-                { slot: "pola_profilo_sx", label: "Profilo sinistro" },
-                { slot: "pola_profilo_dx", label: "Profilo destro" },
-                { slot: "pola_figura_intera", label: "Figura intera" },
-              ].map(({ slot, label }) => {
+              {POLA_SLOTS.map(({ slot, label }) => {
                 const url = myModella?.[slot];
                 const isLoading = polaUploading === slot;
                 return (
@@ -1769,7 +1764,7 @@ export default function App() {
                       <div style={{ fontSize: 20, fontWeight: 700, color: "#000000", marginBottom: 4 }}>{mod.nome}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
                       <span style={{ fontSize: 17, color: "#767676" }}>{mj.length} job · {fmt(netto)}</span>
-                      {(() => { const np = POLA_SLOTS.filter(x => mod[x.slot]).length; const nv = VIDEO_SLOTS.filter(x => mod[x.slot]).length; return <span style={{ fontSize: 10, fontWeight: 700, color: np === 4 ? "#16A34A" : "#9C948A", background: "#F5F5F5", padding: "3px 9px", borderRadius: 100, letterSpacing: "0.06em" }}>POLAS {np}/4 · VIDEO {nv}</span>; })()}
+                      {(() => { const np = POLA_SLOTS.filter(x => mod[x.slot]).length; const nv = VIDEO_SLOTS.filter(x => mod[x.slot]).length; return <span style={{ fontSize: 10, fontWeight: 700, color: np === 6 ? "#16A34A" : "#9C948A", background: "#F5F5F5", padding: "3px 9px", borderRadius: 100, letterSpacing: "0.06em" }}>POLAS {np}/6 · VIDEO {nv}</span>; })()}
                       {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 10, fontWeight: 700, color: cc.color, background: cc.bg, padding: "3px 9px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
                       {contrattoScadenzaAlert(mod.contratto_scadenza) && <span style={{ fontSize: 10, fontWeight: 600, color: contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "#DC2626" : "#D97706" }}>{contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "⚠️ scaduto" : "⏰ in scadenza"}</span>}
                     </div>

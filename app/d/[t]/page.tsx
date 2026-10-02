@@ -10,9 +10,11 @@ const supabase = createClient(
 
 const POLAS = [
   ["pola_primo_piano", "Close-up"],
+  ["pola_mezzo_busto", "Half body"],
+  ["pola_figura_intera", "Full length"],
   ["pola_profilo_sx", "Profile L"],
   ["pola_profilo_dx", "Profile R"],
-  ["pola_figura_intera", "Full length"],
+  ["pola_figura_profilo", "Full profile"],
 ];
 const MISURE = [
   ["altezza", "Height"], ["petto", "Chest"], ["vita", "Waist"], ["fianchi", "Hips"],
@@ -32,11 +34,11 @@ const css = `
   .dg-name { font-size: clamp(30px, 5vw, 54px); font-weight: 700; letter-spacing: -.03em; line-height: 1; margin: 0 0 14px; text-transform: uppercase; }
   .dg-mis { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #111; margin-bottom: 26px; }
   .dg-mis span b { font-weight: 400; color: #8A8A8A; margin-right: 6px; }
-  .dg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .dg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 980px; }
   .dg-cell { background: #F2F2F2; aspect-ratio: 3/4; overflow: hidden; cursor: zoom-in; position: relative; }
   .dg-cell img, .dg-cell video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .dg-cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #8A8A8A; margin-top: 6px; }
-  .dg-vids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .dg-vids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; max-width: 980px; }
   .dg-vids .dg-cell { aspect-ratio: 9/16; cursor: default; background: #000; }
   .dg-vids video { object-fit: contain; }
   .dg-foot { padding: 34px 0 50px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }

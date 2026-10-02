@@ -90,9 +90,11 @@ export function downloadBlob(blob: Blob, filename: string) {
 
 export const POLA_SLOTS = [
   { slot: "pola_primo_piano", label: "Primo piano" },
+  { slot: "pola_mezzo_busto", label: "Mezzo busto" },
+  { slot: "pola_figura_intera", label: "Figura intera" },
   { slot: "pola_profilo_sx", label: "Profilo SX" },
   { slot: "pola_profilo_dx", label: "Profilo DX" },
-  { slot: "pola_figura_intera", label: "Figura intera" },
+  { slot: "pola_figura_profilo", label: "Figura di profilo" },
 ];
 export const VIDEO_SLOTS = [
   { slot: "video_1", label: "Video 1" },
