@@ -32,7 +32,7 @@ const css = `
   .dg-index a { color: #111; text-decoration: none; border-bottom: 1px solid transparent; }
   .dg-index a:hover { border-color: #111; }
   .dg-model { padding: 44px 0 40px; border-bottom: 1px solid #E6E6E6; scroll-margin-top: 10px; }
-  .dg-name { font-size: clamp(30px, 5vw, 54px); font-weight: 700; letter-spacing: -.03em; line-height: 1; margin: 0 0 14px; text-transform: uppercase; }
+  .dg-name { font-size: clamp(30px, 5vw, 54px); font-weight: 700; letter-spacing: -.03em; line-height: 1; margin: 0 0 24px; text-transform: uppercase; }
   .dg-mis { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #111; margin-bottom: 26px; }
   .dg-mis span b { font-weight: 400; color: #8A8A8A; margin-right: 6px; }
   .dg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 980px; }
@@ -82,17 +82,11 @@ export default function Digitals({ params }) {
         {models === null && <div className="dg-empty">Loading</div>}
         {models && models.length === 0 && <div className="dg-empty">Link not available</div>}
         {models && models.map(m => {
-          const mis = MISURE.filter(([k]) => m[k]);
           const pol = POLAS.filter(([k]) => m[k]);
           const vids = ["video_1", "video_2", "video_3"].filter(k => m[k]);
           return (
             <section className="dg-model" id={m.token} key={m.token}>
               <h1 className="dg-name">{m.nome}</h1>
-              {mis.length > 0 && (
-                <div className="dg-mis">
-                  {mis.map(([k, l]) => <span key={k}><b>{l}</b>{m[k]}</span>)}
-                </div>
-              )}
               {pol.length > 0 && (
                 <div className="dg-grid">
                   {pol.map(([k, l]) => (
