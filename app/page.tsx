@@ -1024,6 +1024,42 @@ export default function App() {
     } catch (e: any) { log("Errore: " + (e.message || e)); }
     setOptRunning(false);
   };
+  // Import in blocco: file chiamati <idModello>__<slot>.<ext> (es. m14__pola_primo_piano.jpg)
+  const importaFiles = async (fileList: FileList | null) => {
+    if (!fileList || optRunning) return;
+    setOptRunning(true);
+    const log = (t: string) => setOptLog(prev => [...prev, t]);
+    setOptLog([]);
+    const validSlots = [...POLA_SLOTS.map(x => x.slot), ...VIDEO_SLOTS.map(x => x.slot)];
+    const files = Array.from(fileList).filter(f => f.name.includes("__"));
+    log(`${files.length} file da importare`);
+    let ok = 0, skip = 0, err = 0;
+    const current: any = {};
+    for (const m of modelle) current[m.id] = { ...m };
+    for (const f of files) {
+      const base = f.name.replace(/\.[^.]+$/, "");
+      const [modId, slot] = base.split("__");
+      const mod = current[modId];
+      if (!mod || !validSlots.includes(slot)) { log(`⚠️ ${f.name}: nome non valido`); err++; continue; }
+      if (mod[slot]) { skip++; continue; }
+      try {
+        const prepared = await prepareMedia(slot, f);
+        if (!prepared) { err++; continue; }
+        const folder = mod.user_id || `admin/${mod.id}`;
+        const path = `${folder}/${slot}_${Date.now()}.${prepared.ext}`;
+        const { error: upErr } = await supabase.storage.from("polas").upload(path, prepared.blob, { cacheControl: "3600", contentType: prepared.type });
+        if (upErr) throw upErr;
+        const url = supabase.storage.from("polas").getPublicUrl(path).data.publicUrl;
+        const { error: dbErr } = await supabase.from("modelle").update({ [slot]: url }).eq("id", mod.id);
+        if (dbErr) throw dbErr;
+        mod[slot] = url; ok++;
+        if (ok % 10 === 0) log(`${ok} caricati…`);
+      } catch (e: any) { err++; log(`⚠️ ${f.name}: ${e.message || "errore"}`); }
+    }
+    setModelle(Object.values(current).sort((a: any, b: any) => a.nome.localeCompare(b.nome)));
+    log(`Fatto: ${ok} caricati, ${skip} già presenti (non toccati)${err ? `, ${err} errori` : ""}.`);
+    setOptRunning(false);
+  };
   // Upload singola pola
   const uploadPola = async (slot: string, file: File) => {
     if (!myModella || !user) return;
@@ -1559,6 +1595,11 @@ export default function App() {
               <div style={{ fontSize: 16, color: "#000", lineHeight: 1.5, marginBottom: 6 }}>2. Ricomprime le polas in uso sopra i 700 KB (lato lungo 2000 px, JPEG): stessa resa, peso ~10 volte inferiore.</div>
               <div style={{ fontSize: 14, color: "#9C948A", lineHeight: 1.5, marginBottom: 14 }}>Tieni la pagina aperta fino al messaggio “Fatto”. Se Chrome chiede di consentire più download, accetta.</div>
               <PrimaryBtn onClick={ottimizzaArchivio} disabled={optRunning}>{optRunning ? "In corso…" : "Avvia backup + compressione"}</PrimaryBtn>
+              <label style={{ display: "block", width: "100%", marginTop: 8, padding: "12px", border: "0.5px solid #EBEBEB", borderRadius: 14, color: "#767676", fontSize: 17, cursor: optRunning ? "wait" : "pointer", textAlign: "center", boxSizing: "border-box" }}>
+                <input id="import-files" type="file" multiple accept="image/*,video/*" style={{ display: "none" }} disabled={optRunning}
+                  onChange={e => { importaFiles(e.target.files); e.target.value = ""; }} />
+                Importa polas/video (file preparati)
+              </label>
               <GhostBtn onClick={() => { if (window.confirm("Eliminare definitivamente i file che nessuna scheda usa più? Fallo solo dopo aver scaricato il backup.")) pulisciArchivio(); }}>Elimina file non usati</GhostBtn>
               {optLog.length > 0 && (
                 <div style={{ marginTop: 14, background: "#F5F5F5", borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "#1C1714", lineHeight: 1.6, maxHeight: 320, overflowY: "auto", fontFamily: "ui-monospace, Menlo, monospace" }}>
