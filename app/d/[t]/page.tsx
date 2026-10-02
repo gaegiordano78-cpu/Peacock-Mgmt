@@ -16,6 +16,7 @@ const POLAS = [
   ["pola_profilo_dx", "Profile R"],
   ["pola_mani", "Hands"],
 ];
+const VIDEO_LABELS = { video_1: "Introduction", video_2: "Walk", video_3: "Free" };
 const MISURE = [
   ["altezza", "Height"], ["petto", "Chest"], ["vita", "Waist"], ["fianchi", "Hips"],
   ["taglia", "Size"], ["scarpe", "Shoes"], ["occhi", "Eyes"], ["capelli", "Hair"],
@@ -107,8 +108,11 @@ export default function Digitals({ params }) {
               {vids.length > 0 && (
                 <div className="dg-vids">
                   {vids.map(k => (
-                    <div className="dg-cell" key={k}>
-                      <video src={m[k]} controls playsInline preload="metadata" />
+                    <div key={k}>
+                      <div className="dg-cell">
+                        <video src={m[k]} controls playsInline preload="metadata" />
+                      </div>
+                      <div className="dg-cap">{VIDEO_LABELS[k]}</div>
                     </div>
                   ))}
                 </div>

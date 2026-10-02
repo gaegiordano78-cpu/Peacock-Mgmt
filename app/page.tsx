@@ -1187,7 +1187,7 @@ export default function App() {
               })}
             </div>
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Video di presentazione</div>
-            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>20–30 secondi, verticale, luce naturale, muro neutro. Di' nome, età, altezza e città, poi giro a 360° e qualche passo verso la camera. Max {MAX_VIDEO_MB} MB.</div>
+            <div style={{ fontSize: 14, color: "#9C948A", marginBottom: 14, lineHeight: 1.4 }}>Verticale, luce naturale, muro neutro, max {MAX_VIDEO_MB} MB. Presentazione: 15–20 sec, guarda in camera e di' nome, età, altezza e città. Camminata: avanti e indietro verso la camera. Libero: quello che ti rappresenta.</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
               {VIDEO_SLOTS.map(({ slot, label }) => {
                 const url = myModella?.[slot];

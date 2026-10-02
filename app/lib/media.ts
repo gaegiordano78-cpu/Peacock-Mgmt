@@ -97,9 +97,9 @@ export const POLA_SLOTS = [
   { slot: "pola_mani", label: "Mani" },
 ];
 export const VIDEO_SLOTS = [
-  { slot: "video_1", label: "Video 1" },
-  { slot: "video_2", label: "Video 2" },
-  { slot: "video_3", label: "Video 3" },
+  { slot: "video_1", label: "Presentazione" },
+  { slot: "video_2", label: "Camminata" },
+  { slot: "video_3", label: "Libero" },
 ];
 export const MISURE = [
   { key: "altezza", label: "Altezza", ph: "cm" },
