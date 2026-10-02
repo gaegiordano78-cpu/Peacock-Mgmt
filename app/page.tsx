@@ -1208,7 +1208,7 @@ export default function App() {
                         )}
                       </div>
                     </label>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{url ? "Sostituisci" : label}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#767676", textAlign: "center", marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}{url ? " ✓" : ""}</div>
                   </div>
                 );
               })}
