@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
-import { compressImage, compressVideo, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
+import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const passwordLinkAtLoad = typeof window !== "undefined" && (window.__peacockPasswordLink || /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash));
@@ -670,7 +670,7 @@ export default function App() {
     }
     setInviteLoading(false);
   };
-  const showToast = (msg, err = false) => { setToast(msg); setToastErr(err); setTimeout(() => setToast(""), 3000); };
+  const showToast = (msg, err = false) => { setToast(msg); setToastErr(err); clearTimeout((window as any).__toastT); (window as any).__toastT = setTimeout(() => setToast(""), err ? 8000 : 4000); };
   // Job helpers
   const saveJob = async () => {
     if (!formJob.titolo || !formJob.cliente) { showToast("Inserisci titolo e cliente", true); return; }
@@ -909,9 +909,11 @@ export default function App() {
     const isVideoSlot = slot.startsWith("video_");
     if (isVideoSlot) {
       if (!isVideoFile(file)) { showToast("Seleziona un video", true); return null; }
+      const ac = makeAudioContext(); // creato nel tocco: serve a iPhone per l'audio
       showToast("Ottimizzazione video… tieni aperta l'app");
       let last = -1;
-      const conv = await compressVideo(file, p => { const v = Math.floor(p * 10) * 10; if (v !== last) { last = v; showToast(`Ottimizzazione video… ${v}%`); } });
+      const conv = await compressVideo(file, p => { const v = Math.floor(p * 10) * 10; if (v !== last) { last = v; showToast(`Ottimizzazione video… ${v}%`); } }, ac);
+      try { ac && ac.close(); } catch {}
       if (conv) { showToast("Caricamento…"); return conv; }
       if (file.size > MAX_VIDEO_MB * 1024 * 1024) { showToast(`Video troppo pesante (${Math.round(file.size / 1048576)} MB, max ${MAX_VIDEO_MB}). Giralo più corto o in 1080p`, true); return null; }
       showToast("Caricamento…");
