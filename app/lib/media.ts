@@ -112,28 +112,33 @@ export const MISURE = [
   { key: "capelli", label: "Capelli", ph: "" },
 ];
 
-// Riconverte un video nel browser: 720p, MP4 (H.264) se supportato. Dura quanto il video.
-// Se il browser non supporta la registrazione, restituisce null (si carica l'originale).
 const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
   Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
-export async function compressVideo(file: File, onProgress?: (p: number) => void): Promise<{ blob: Blob; ext: string; type: string } | null> {
+export function makeAudioContext() {
+  try { const AC = (window as any).AudioContext || (window as any).webkitAudioContext; return AC ? new AC() : null; } catch { return null; }
+}
+
+// Riconverte un video nel browser: 720p, MP4 se supportato. Dura quanto il video.
+// Il video gira muto (consentito anche su iPhone); l'audio viene decodificato a parte e rimesso.
+// `ac` va creato nel tocco dell'utente (prima di qualsiasi await) perché iPhone lo lasci partire.
+export async function compressVideo(file: File, onProgress?: (p: number) => void, ac?: any): Promise<{ blob: Blob; ext: string; type: string } | null> {
   if (typeof MediaRecorder === "undefined") return null;
   const types = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
   const mime = types.find(t => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } });
   if (!mime) return null;
   const url = URL.createObjectURL(file);
   const video = document.createElement("video");
-  video.playsInline = true; video.muted = false; video.preload = "auto";
-  (video as any).setAttribute("playsinline", "");
-  // iOS: il video deve stare nel DOM per decodificare i frame
+  video.playsInline = true; video.muted = true; video.defaultMuted = true; video.preload = "auto";
+  video.setAttribute("playsinline", ""); video.setAttribute("muted", "");
   video.style.cssText = "position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none";
   document.body.appendChild(video);
-  let raf = 0; let ac: any = null;
+  let raf = 0; let audioSrc: any = null;
+  const ownAc = !ac; if (!ac) ac = makeAudioContext();
   try {
     const meta = new Promise<void>((res, rej) => { video.onloadedmetadata = () => res(); video.onerror = () => rej(new Error("video")); });
     video.src = url; video.load();
-    await withTimeout(meta, 10000);
+    await withTimeout(meta, 15000);
     const w0 = video.videoWidth, h0 = video.videoHeight, dur = video.duration;
     if (!w0 || !h0 || !isFinite(dur) || dur > 180) return null;
     const scale = Math.min(1, 720 / Math.min(w0, h0));
@@ -141,27 +146,30 @@ export async function compressVideo(file: File, onProgress?: (p: number) => void
     const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext("2d");
     const stream = (canvas as any).captureStream(30) as MediaStream;
-    try {
-      const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (AC) {
-        ac = new AC(); if (ac.state === "suspended") await withTimeout(ac.resume(), 2000).catch(() => {});
-        const src = ac.createMediaElementSource(video); const dest = ac.createMediaStreamDestination();
-        src.connect(dest);
+    // Audio: decodifica la traccia del file e la manda nel registratore
+    if (ac) {
+      try {
+        if (ac.state === "suspended") await withTimeout(ac.resume(), 3000).catch(() => {});
+        const buf = await withTimeout(new Promise<AudioBuffer>((res, rej) => {
+          file.arrayBuffer().then(ab => ac.decodeAudioData(ab, res, rej)).catch(rej);
+        }), 30000);
+        const dest = ac.createMediaStreamDestination();
+        audioSrc = ac.createBufferSource(); audioSrc.buffer = buf; audioSrc.connect(dest);
         dest.stream.getAudioTracks().forEach((t: MediaStreamTrack) => stream.addTrack(t));
-      }
-    } catch {}
+      } catch { audioSrc = null; }
+    }
     const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2_500_000, audioBitsPerSecond: 96_000 });
     const chunks: Blob[] = [];
     rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const done = new Promise<void>(res => { rec.onstop = () => res(); });
-    // Se il browser non permette la riproduzione (es. iPhone senza tocco), si carica l'originale
-    await withTimeout(video.play(), 5000);
-    const draw = () => { ctx.drawImage(video, 0, 0, w, h); onProgress && onProgress(Math.min(1, video.currentTime / dur)); raf = requestAnimationFrame(draw); };
+    await withTimeout(video.play(), 8000);
     rec.start(1000);
+    if (audioSrc) audioSrc.start(0, video.currentTime);
+    const draw = () => { ctx.drawImage(video, 0, 0, w, h); onProgress && onProgress(Math.min(1, video.currentTime / dur)); raf = requestAnimationFrame(draw); };
     draw();
-    await withTimeout(new Promise<void>(res => { video.onended = () => res(); }), (dur + 20) * 1000);
+    await withTimeout(new Promise<void>(res => { video.onended = () => res(); }), (dur + 30) * 1000);
     cancelAnimationFrame(raf);
-    rec.stop(); await withTimeout(done, 5000);
+    rec.stop(); await withTimeout(done, 8000);
     const type = mime.split(";")[0];
     const blob = new Blob(chunks, { type });
     if (!blob.size || blob.size >= file.size) return null;
@@ -169,9 +177,10 @@ export async function compressVideo(file: File, onProgress?: (p: number) => void
   } catch { return null; }
   finally {
     cancelAnimationFrame(raf);
+    try { audioSrc && audioSrc.stop(); } catch {}
     try { video.pause(); } catch {}
     video.removeAttribute("src"); video.load(); video.remove();
-    try { ac && ac.close(); } catch {}
+    try { ownAc && ac && ac.close(); } catch {}
     URL.revokeObjectURL(url);
   }
 }
