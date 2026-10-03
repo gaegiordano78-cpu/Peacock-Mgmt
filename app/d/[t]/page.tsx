@@ -104,7 +104,7 @@ export default function Digitals({ params }) {
                   {vids.map(k => (
                     <div key={k}>
                       <div className="dg-cell">
-                        <video src={m[k]} controls playsInline preload="metadata" />
+                        <video src={m[k] + "#t=0.1"} controls playsInline preload="metadata" />
                       </div>
                       <div className="dg-cap">{VIDEO_LABELS[k]}</div>
                     </div>

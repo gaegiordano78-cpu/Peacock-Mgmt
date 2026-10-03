@@ -1295,7 +1295,7 @@ export default function App() {
                         onChange={e => { const f = e.target.files?.[0]; if (f) uploadPola(slot, f); e.target.value = ""; }} />
                       <div style={{ width: "100%", aspectRatio: "9/16", borderRadius: 14, overflow: "hidden", background: url ? "#000" : "#EBEBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {url ? (
-                          <video src={url} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <video src={url + "#t=0.1"} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <div style={{ textAlign: "center", color: "#9C948A" }}>
                             <div style={{ fontSize: 24, marginBottom: 4 }}>{isLoading ? "⏳" : "🎬"}</div>
@@ -1980,7 +1980,7 @@ export default function App() {
                         <div key={slot}>
                           <div style={{ width: "100%", aspectRatio: "9/16", borderRadius: 14, overflow: "hidden", background: mod[slot] ? "#000" : "#F5F5F5", border: "0.5px solid #EBEBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {mod[slot] ? (
-                              <video src={mod[slot]} controls playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                              <video src={mod[slot] + "#t=0.1"} controls playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                             ) : (
                               <div style={{ fontSize: 12, color: "#C4C0BA" }}>{busy ? "⏳" : "—"}</div>
                             )}
