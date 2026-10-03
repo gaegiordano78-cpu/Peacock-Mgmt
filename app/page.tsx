@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
 import { compressImage, compressVideo, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
@@ -533,6 +534,12 @@ export default function App() {
   const [castingSubmissionId, setCastingSubmissionId] = useState<string | null>(null);
   const [formCasting, setFormCasting] = useState(emptyCasting);
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
+  const [pushState, setPushState] = useState("unknown");
+  useEffect(() => { pushStatus().then(setPushState).catch(() => setPushState("unsupported")); }, []);
+  const attivaNotifiche = async () => {
+    try { await enablePush(supabase); setPushState("on"); showToast("Notifiche attive ✓"); }
+    catch (e) { showToast(e.message || "Errore notifiche", true); pushStatus().then(setPushState); }
+  };
   const [modelView, setModelView] = useState("home"); // "home" | "profilo" | "job_dettaglio" | "ritenuta_model"
   const [formMyProfile, setFormMyProfile] = useState<any>({});
   const [polaUploading, setPolaUploading] = useState("");
@@ -768,6 +775,8 @@ export default function App() {
       if (error) { showToast(error.message, true); return; }
       if (data) setCastings(prev => [data, ...prev]);
       showToast("Casting salvato · invio email..."); setView("castings");
+      // Notifica push ai model (non blocca)
+      sendPushToModels(supabase, { title: "Nuovo casting", body: `${castingData.brand} · ${castingData.tipologia}`, url: "/" }).catch(() => {});
       // Notifica email ai model (fire-and-forget)
       try {
         const res = await fetch("https://xtpafxourildjnofeulr.supabase.co/functions/v1/notify-casting", {
@@ -1450,6 +1459,17 @@ export default function App() {
           </div>
         </div>
         <div style={{ padding: "20px 16px 0" }}>
+          {pushState === "off" && (
+            <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "14px 16px", border: "0.5px solid #EBEBEB", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ fontSize: 15, color: "#000", lineHeight: 1.3 }}>Ricevi una notifica quando esce un nuovo casting</div>
+              <button onClick={attivaNotifiche} style={{ padding: "8px 14px", borderRadius: 100, border: "none", background: "#000", color: "#FFF", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Attiva</button>
+            </div>
+          )}
+          {pushState === "unsupported" && isIOS() && !isStandalone() && (
+            <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "14px 16px", border: "0.5px solid #EBEBEB", marginBottom: 16, fontSize: 14, color: "#767676", lineHeight: 1.4 }}>
+              Per ricevere le notifiche dei casting: tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>, poi apri Peacock da lì.
+            </div>
+          )}
           <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
           <div style={{ fontSize: 17, color: "#767676", marginBottom: 20 }}>Your jobs</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
