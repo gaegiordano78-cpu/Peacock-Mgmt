@@ -910,9 +910,11 @@ export default function App() {
     if (isVideoSlot) {
       if (!isVideoFile(file)) { showToast("Seleziona un video", true); return null; }
       showToast("Ottimizzazione video… tieni aperta l'app");
-      const conv = await compressVideo(file);
-      if (conv) return conv;
-      if (file.size > MAX_VIDEO_MB * 1024 * 1024) { showToast(`Video troppo pesante (max ${MAX_VIDEO_MB} MB). Mandalo prima su WhatsApp per comprimerlo.`, true); return null; }
+      let last = -1;
+      const conv = await compressVideo(file, p => { const v = Math.floor(p * 10) * 10; if (v !== last) { last = v; showToast(`Ottimizzazione video… ${v}%`); } });
+      if (conv) { showToast("Caricamento…"); return conv; }
+      if (file.size > MAX_VIDEO_MB * 1024 * 1024) { showToast(`Video troppo pesante (${Math.round(file.size / 1048576)} MB, max ${MAX_VIDEO_MB}). Giralo più corto o in 1080p`, true); return null; }
+      showToast("Caricamento…");
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
       return { blob: file, ext, type: file.type || "video/mp4" };
     }
