@@ -948,7 +948,7 @@ export default function App() {
     showToast("Rimosso ✓");
   };
   // Link digitals per il cliente
-  const digitalsLink = (tokens: string[]) => `${window.location.origin}/d/${tokens.filter(Boolean).join(",")}`;
+  const digitalsLink = (tokens: string[]) => `https://digitals.peacockmodels.com/d/${tokens.filter(Boolean).join(",")}`;
   const copiaDigitals = async (mods: any[]) => {
     const tokens = mods.map((m: any) => m.share_token).filter(Boolean);
     if (!tokens.length) { showToast("Link non disponibile: ricarica la pagina", true); return; }
