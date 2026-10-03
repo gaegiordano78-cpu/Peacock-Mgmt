@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { compressImage, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
+import { compressImage, compressVideo, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const passwordLinkAtLoad = typeof window !== "undefined" && (window.__peacockPasswordLink || /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash));
@@ -900,6 +900,9 @@ export default function App() {
     const isVideoSlot = slot.startsWith("video_");
     if (isVideoSlot) {
       if (!isVideoFile(file)) { showToast("Seleziona un video", true); return null; }
+      showToast("Ottimizzazione video… tieni aperta l'app");
+      const conv = await compressVideo(file);
+      if (conv) return conv;
       if (file.size > MAX_VIDEO_MB * 1024 * 1024) { showToast(`Video troppo pesante (max ${MAX_VIDEO_MB} MB). Mandalo prima su WhatsApp per comprimerlo.`, true); return null; }
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
       return { blob: file, ext, type: file.type || "video/mp4" };
@@ -1299,7 +1302,7 @@ export default function App() {
                         ) : (
                           <div style={{ textAlign: "center", color: "#9C948A" }}>
                             <div style={{ fontSize: 24, marginBottom: 4 }}>{isLoading ? "⏳" : "🎬"}</div>
-                            <div style={{ fontSize: 11 }}>{isLoading ? "Caricamento..." : "Tappa"}</div>
+                            <div style={{ fontSize: 11 }}>{isLoading ? "Ottimizzazione…" : "Tappa"}</div>
                           </div>
                         )}
                       </div>
