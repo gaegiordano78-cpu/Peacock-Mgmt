@@ -898,6 +898,7 @@ export default function App() {
       p_citta:         formMyProfile.citta         || "",
       p_cap:           formMyProfile.cap           || "",
       p_iban:          formMyProfile.iban          || "",
+      p_data_nascita:  formMyProfile.data_nascita  || null,
     });
     if (error) { showToast(error.message, true); return; }
     setMyModella((prev: any) => ({
@@ -910,6 +911,7 @@ export default function App() {
       citta:         formMyProfile.citta         || "",
       cap:           formMyProfile.cap           || "",
       iban:          formMyProfile.iban          || "",
+      data_nascita:  formMyProfile.data_nascita  || (prev || {}).data_nascita || "",
     }));
     showToast("Profilo aggiornato ✓");
     setModelView("home");
@@ -1269,6 +1271,7 @@ export default function App() {
             <Field label="Link sito / portfolio" value={formMyProfile.link_sito || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, link_sito: v }))} placeholder="https://..." />
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Dati personali</div>
+            <Field label="Data di nascita" value={formMyProfile.data_nascita || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, data_nascita: v }))} placeholder="gg/mm/aaaa" />
             <Field label="Codice Fiscale" value={formMyProfile.cf || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, cf: v.toUpperCase() }))} />
             <Field label="Indirizzo" value={formMyProfile.indirizzo || ""} onChange={v => setFormMyProfile((f: any) => ({ ...f, indirizzo: v }))} placeholder="Via..." />
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
