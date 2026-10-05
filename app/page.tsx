@@ -629,6 +629,16 @@ export default function App() {
     if (error) setLoginError("Email o password errati");
     setLoginLoading(false);
   };
+  const doResetPassword = async () => {
+    const email = loginEmail.trim().toLowerCase();
+    if (!email) { setLoginError("Scrivi prima la tua email qui sopra"); return; }
+    setLoginLoading(true);
+    setLoginError("");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    setLoginLoading(false);
+    if (error) { setLoginError("Non riesco a inviare la mail. Riprova tra un minuto."); return; }
+    setLoginError("Mail inviata ✓ Controlla la posta (anche spam) e apri il link.");
+  };
   const doSetPassword = async () => {
     if (!newPassword || newPassword.length < 6) { setLoginError("La password deve avere almeno 6 caratteri"); return; }
     if (newPassword !== confirmPassword) { setLoginError("Le password non coincidono"); return; }
@@ -1231,6 +1241,7 @@ export default function App() {
         <Field label="Email" value={loginEmail} onChange={v => setLoginEmail(v.trim().toLowerCase())} type="text" />
         <Field label="Password" value={loginPassword} onChange={setLoginPassword} type="password" />
         <PrimaryBtn onClick={doLogin} disabled={loginLoading}>{loginLoading ? "Accesso..." : "Entra"}</PrimaryBtn>
+        <div onClick={doResetPassword} style={{ textAlign: "center", marginTop: 16, fontSize: 15, color: "#767676", textDecoration: "underline", cursor: "pointer" }}>Password dimenticata?</div>
       </div>
     </div>
   );
