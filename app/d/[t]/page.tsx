@@ -15,7 +15,9 @@ const POLAS = [
   ["pola_profilo_sx", "Profile L"],
   ["pola_profilo_dx", "Profile R"],
   ["pola_mani", "Hands"],
-  ["pola_tatuaggi", "Tattoos"],
+  ["pola_tatuaggio_1", "Tattoo"],
+  ["pola_tatuaggio_2", "Tattoo"],
+  ["pola_tatuaggio_3", "Tattoo"],
 ];
 const VIDEO_LABELS = { video_1: "Introduction", video_2: "Walk", video_3: "Free" };
 const MISURE = [

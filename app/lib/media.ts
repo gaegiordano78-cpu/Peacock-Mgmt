@@ -95,7 +95,9 @@ export const POLA_SLOTS = [
   { slot: "pola_profilo_sx", label: "Profilo SX" },
   { slot: "pola_profilo_dx", label: "Profilo DX" },
   { slot: "pola_mani", label: "Mani" },
-  { slot: "pola_tatuaggi", label: "Tatuaggi" },
+  { slot: "pola_tatuaggio_1", label: "Tatuaggio 1" },
+  { slot: "pola_tatuaggio_2", label: "Tatuaggio 2" },
+  { slot: "pola_tatuaggio_3", label: "Tatuaggio 3" },
 ];
 export const VIDEO_SLOTS = [
   { slot: "video_1", label: "Presentazione" },
