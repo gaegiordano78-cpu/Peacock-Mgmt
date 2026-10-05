@@ -142,7 +142,7 @@ const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
-const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", data_fine_shooting: null, call_time: "", luogo: "", fatturato: 0, netto_model: 0, rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", metodo_pagamento: "bonifico", data_pagamento_cliente: "", note: "" };
+const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", data_fine_shooting: null, call_time: "", luogo: "", fatturato: 0, netto_model: 0, compenso_tipo: "netto", rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", metodo_pagamento: "bonifico", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
 const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
@@ -356,12 +356,16 @@ function generaCallSheet(job) {
     const [y, m, g] = job.data_shooting.split("-");
     return `${g}/${m}/${y}`;
   })();
-  const netto = Number(job.netto_model) || 0;
+  const nettoDb = Number(job.netto_model) || 0;
+  // Se il compenso è stato inserito come lordo, in call sheet va riportato il lordo così com'è (nessuna conversione).
+  const isLordo = job.compenso_tipo === "lordo";
+  const netto = isLordo ? Math.round((nettoDb / 0.8) * 100) / 100 : nettoDb;
+  const tipoStr = isLordo ? "lordi" : "netti";
   const rimb  = Number(job.rimborso) || 0;
   const feeStr = netto > 0
     ? (rimb > 0
-      ? `${netto} euro netti + rimborso spese ${rimb} euro (gestito tramite agenzia)`
-      : `${netto} euro netti (gestiti tramite agenzia)`)
+      ? `${netto} euro ${tipoStr} + rimborso spese ${rimb} euro (gestito tramite agenzia)`
+      : `${netto} euro ${tipoStr} (gestiti tramite agenzia)`)
     : "";
   return `📸 CALL SHEET — MODELS
 
@@ -440,11 +444,11 @@ const SelectField = ({ label, value, onChange, options }) => (
 );
 // Compenso model: menu a tendina Netto/Lordo. Salva sempre netto_model (lordo = netto / 0.8, ritenuta 20%).
 const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
-const CompensoField = ({ netto, onChange }) => {
-  const [modo, setModo] = useState("netto");
+const CompensoField = ({ netto, onChange, tipo = "netto", onTipoChange = (_t: string) => {} }) => {
+  const [modo, setModo] = useState(tipo === "lordo" ? "lordo" : "netto");
   const [lordoTxt, setLordoTxt] = useState(() => { const n = Number(netto) || 0; return n ? String(r2(n / 0.8)) : ""; });
   const n = Number(netto) || 0;
-  const cambiaModo = m => { setModo(m); if (m === "lordo") setLordoTxt(n ? String(r2(n / 0.8)) : ""); };
+  const cambiaModo = m => { setModo(m); onTipoChange(m); if (m === "lordo") setLordoTxt(n ? String(r2(n / 0.8)) : ""); };
   const lbl = { display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" };
   const box = { background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" };
   return (
@@ -723,11 +727,13 @@ export default function App() {
         cliente: bulkCommon.cliente,
         modella: r.modella,
         data_shooting: r.data_shooting || null,
+        data_fine_shooting: r.data_fine_shooting || null,
         call_time: r.call_time || "",
         luogo: bulkCommon.luogo || "",
         contatto_referente: bulkCommon.contatto_referente || "",
         fatturato: Math.round(fatt * 100) / 100,
         netto_model: netto,
+        compenso_tipo: r.compenso_tipo === "lordo" ? "lordo" : "netto",
         rimborso: 0,
         stato_job: "confermato",
         stato_pagamento: "da pagare",
@@ -2176,7 +2182,7 @@ export default function App() {
               <Field label="Fatturato €"   value={formJob.fatturato}   onChange={v => setFormJob(f => ({ ...f, fatturato: Number(v) }))}   type="number" />
               <Field label="Rimborso €" value={formJob.rimborso} onChange={v => setFormJob(f => ({ ...f, rimborso: Number(v) }))} type="number" />
             </div>
-            <CompensoField key={formJob.id || "nuovo"} netto={formJob.netto_model} onChange={v => setFormJob(f => ({ ...f, netto_model: v }))} />
+            <CompensoField key={formJob.id || "nuovo"} netto={formJob.netto_model} tipo={formJob.compenso_tipo || "netto"} onTipoChange={t => setFormJob(f => ({ ...f, compenso_tipo: t }))} onChange={v => setFormJob(f => ({ ...f, netto_model: v }))} />
             {(formJob.fatturato > 0 || formJob.netto_model > 0) && (
               <div style={{ background: "#F5F5F5", borderRadius: 16, padding: "14px 16px", marginBottom: 14, border: "0.5px solid #EBEBEB" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Anteprima</div>
@@ -2322,14 +2328,14 @@ export default function App() {
           const fattTot = Number(bulkCommon.fatturato_totale) || 0;
           const guadagno = fattTot - sommaNetti;
           const addRow = () => {
-            setBulkRows(rs => [...rs, { id: Date.now() + Math.random(), modella: nomiModelle[0] || "", data_shooting: "", call_time: "", netto_model: 0 }]);
+            setBulkRows(rs => [...rs, { id: Date.now() + Math.random(), modella: nomiModelle[0] || "", data_shooting: "", data_fine_shooting: "", call_time: "", netto_model: 0, compenso_tipo: "netto" }]);
           };
           const removeRow = (id) => setBulkRows(rs => rs.filter(r => r.id !== id));
           const duplicateRow = (id) => setBulkRows(rs => {
             const idx = rs.findIndex(r => r.id === id);
             if (idx === -1) return rs;
             const orig = rs[idx];
-            const copy = { ...orig, id: Date.now() + Math.random(), data_shooting: "" };
+            const copy = { ...orig, id: Date.now() + Math.random(), data_shooting: "", data_fine_shooting: "" };
             const next = [...rs];
             next.splice(idx + 1, 0, copy);
             return next;
@@ -2371,11 +2377,13 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <SelectField label="Model" value={r.modella} onChange={v => updateRow(r.id, "modella", v)} options={nomiModelle} />
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                          <Field label="Data shooting" value={r.data_shooting} onChange={v => updateRow(r.id, "data_shooting", v)} type="date" />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                          <Field label="Data inizio" value={r.data_shooting} onChange={v => updateRow(r.id, "data_shooting", v)} type="date" />
+                          <Field label="Data fine (opz.)" value={r.data_fine_shooting || ""} onChange={v => updateRow(r.id, "data_fine_shooting", v)} type="date" />
                           <Field label="Call time" value={r.call_time} onChange={v => updateRow(r.id, "call_time", v)} type="time" />
                         </div>
-                        <CompensoField key={r.id} netto={r.netto_model} onChange={v => updateRow(r.id, "netto_model", v)} />
+                        <div style={{ fontSize: 12, color: "#767676", marginTop: -2 }}>Il compenso va inserito come totale di tutte le giornate.</div>
+                        <CompensoField key={r.id} netto={r.netto_model} tipo={r.compenso_tipo || "netto"} onTipoChange={t => updateRow(r.id, "compenso_tipo", t)} onChange={v => updateRow(r.id, "netto_model", v)} />
                       </div>
                     </div>
                   ))}
