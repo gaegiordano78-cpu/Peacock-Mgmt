@@ -535,6 +535,7 @@ export default function App() {
   const [formCasting, setFormCasting] = useState(emptyCasting);
   const [selectedCasting, setSelectedCasting] = useState<any>(null);
   const [pushState, setPushState] = useState("unknown");
+  const [iosGuideHidden, setIosGuideHidden] = useState(false);
   useEffect(() => { pushStatus().then(setPushState).catch(() => setPushState("unsupported")); }, []);
   const attivaNotifiche = async () => {
     try { await enablePush(supabase); setPushState("on"); showToast("Notifiche attive ✓"); }
@@ -1480,9 +1481,14 @@ export default function App() {
               <button onClick={attivaNotifiche} style={{ padding: "8px 14px", borderRadius: 100, border: "none", background: "#000", color: "#FFF", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Attiva</button>
             </div>
           )}
-          {pushState === "unsupported" && isIOS() && !isStandalone() && (
-            <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "14px 16px", border: "0.5px solid #EBEBEB", marginBottom: 16, fontSize: 14, color: "#767676", lineHeight: 1.4 }}>
-              Per ricevere le notifiche dei casting: tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>, poi apri Peacock da lì.
+          {pushState === "unsupported" && isIOS() && !isStandalone() && !iosGuideHidden && (
+            <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "16px", border: "0.5px solid #EBEBEB", marginBottom: 16, fontSize: 15, color: "#000", lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 700, marginBottom: 8 }}>🔔 Attiva le notifiche dei casting</div>
+              <div>1. Apri questa pagina da <b>Safari</b></div>
+              <div>2. Tocca <b>Condividi</b> (quadrato con la freccia, in basso)</div>
+              <div>3. Scegli <b>Aggiungi alla schermata Home</b></div>
+              <div>4. Chiudi Safari e apri <b>Peacock dalla nuova icona</b>: lì compare il tasto "Attiva"</div>
+              <button onClick={() => setIosGuideHidden(true)} style={{ marginTop: 12, padding: "8px 14px", borderRadius: 100, border: "none", background: "#000", color: "#FFF", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Ho capito</button>
             </div>
           )}
           <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
