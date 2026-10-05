@@ -1241,7 +1241,7 @@ export default function App() {
         <Field label="Email" value={loginEmail} onChange={v => setLoginEmail(v.trim().toLowerCase())} type="text" />
         <Field label="Password" value={loginPassword} onChange={setLoginPassword} type="password" />
         <PrimaryBtn onClick={doLogin} disabled={loginLoading}>{loginLoading ? "Accesso..." : "Entra"}</PrimaryBtn>
-        <div onClick={doResetPassword} style={{ textAlign: "center", marginTop: 16, fontSize: 15, color: "#767676", textDecoration: "underline", cursor: "pointer" }}>Password dimenticata?</div>
+        <button onClick={doResetPassword} disabled={loginLoading} style={{ width: "100%", marginTop: 12, padding: "14px 0", borderRadius: 12, border: "1px solid #1C1714", background: "#FFFFFF", color: "#1C1714", fontSize: 16, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>Password dimenticata?</button>
       </div>
     </div>
   );
