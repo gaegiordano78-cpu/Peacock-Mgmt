@@ -144,7 +144,14 @@ const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "
 const JOB_BG    = { confermato: "#F5F5F5", "in attesa": "#F5F5F5", completato: "#F5F5F5", interno: "#F5F5F5" };
 const emptyJob = { id: null, titolo: "", cliente: "", modella: initialModelle[0].nome, data_shooting: "", data_fine_shooting: null, call_time: "", luogo: "", fatturato: 0, netto_model: 0, compenso_tipo: "netto", rimborso: 0, contatto_referente: "", stato_job: "confermato", stato_pagamento: "da pagare", metodo_pagamento: "bonifico", data_pagamento_cliente: "", note: "" };
 const emptyModella = { id: null, nome: "", contratto_tipo: "Start", contratto_scadenza: "", polas: "", foto_profilo: "", cf: "", data_nascita: "", luogo_nascita: "", indirizzo: "", citta: "", cap: "", banca: "", intestato_a: "", iban: "" };
-const emptyCasting = { id: null, genere: "donna", data: "", brand: "", tipologia: "", caratteristiche: "" };
+const emptyCasting = { id: null, genere: "donna", data: "", date_shooting: [""], brand: "", tipologia: "", caratteristiche: "" };
+// Giorni di un casting: usa date_shooting, con fallback al vecchio campo data
+const castingDays = (c) => {
+  const arr = (Array.isArray(c?.date_shooting) ? c.date_shooting : []).filter(Boolean);
+  if (arr.length) return [...arr].sort();
+  return c?.data ? [c.data] : [];
+};
+const fmtCastingDays = (c) => castingDays(c).map(d => fmtDate(d)).join(" · ");
 // ── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
 function apriCalendar(job, tipo) {
   const dataBase = job.data_shooting;
@@ -780,7 +787,9 @@ export default function App() {
   const saveCasting = async () => {
     if (!formCasting.brand || !formCasting.tipologia) { showToast("Inserisci brand e tipologia", true); return; }
     const { id, ...castingData } = formCasting;
-    if (!castingData.data) castingData.data = null;
+    const giorni = Array.from(new Set((castingData.date_shooting || []).filter(Boolean))).sort();
+    castingData.date_shooting = giorni;
+    castingData.data = giorni[0] || null;
     if (id) {
       const { error } = await supabase.from("castings").update(castingData).eq("id", id);
       if (error) { showToast(error.message, true); return; }
@@ -804,7 +813,7 @@ export default function App() {
           body: JSON.stringify({
             titolo: castingData.tipologia,
             cliente: castingData.brand,
-            data_shooting: castingData.data ? fmtDate(castingData.data) : "",
+            data_shooting: giorni.length ? giorni.map(d => fmtDate(d)).join(" · ") : "",
             luogo: "",
             compenso: "",
             descrizione: castingData.caratteristiche || "",
@@ -843,11 +852,11 @@ export default function App() {
       return;
     }
     const casting = castings.find(c => c.id === castingId);
-    if (casting?.data) {
-      const conflitto = jobs.find(j => j.modella === myModella.nome && j.data_shooting === casting.data);
+    for (const giorno of castingDays(casting)) {
+      const conflitto = jobs.find(j => j.modella === myModella.nome && j.data_shooting === giorno);
       if (conflitto) {
         window.alert(
-          `⚠️ Sei già impegnato/a il ${fmtDate(casting.data)} per:\n"${conflitto.titolo}" (${conflitto.cliente})`
+          `⚠️ Sei già impegnato/a il ${fmtDate(giorno)} per:\n"${conflitto.titolo}" (${conflitto.cliente})`
         );
         return;
       }
@@ -1538,7 +1547,7 @@ export default function App() {
                         {c.genere}
                       </span>
                     </div>
-                    <div style={{ fontSize: 16, color: "#767676", marginBottom: 4 }}>{c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}</div>
+                    <div style={{ fontSize: 16, color: "#767676", marginBottom: 4 }}>{c.tipologia}{castingDays(c).length ? " · " + fmtCastingDays(c) : ""}</div>
                     {c.caratteristiche && <div style={{ fontSize: 15, color: "#767676", marginBottom: 10, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{c.caratteristiche}</div>}
                     {giaCandidata ? (
                       <button onClick={() => scandidati(c.id)} style={{ width: "100%", padding: "10px", borderRadius: 100, border: "0.5px solid #16A34A", background: "#F0FDF4", color: "#16A34A", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
@@ -2225,7 +2234,7 @@ export default function App() {
                         </span>
                       </div>
                       <div style={{ fontSize: 16, color: "#767676", marginBottom: 8 }}>
-                        {c.tipologia}{c.data ? " · " + fmtDate(c.data) : ""}
+                        {c.tipologia}{castingDays(c).length ? " · " + fmtCastingDays(c) : ""}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ fontSize: 15, fontWeight: 700, color: "#000000" }}>{nCand}</span>
@@ -2244,7 +2253,21 @@ export default function App() {
             <SelectField label="Genere" value={formCasting.genere} onChange={v => setFormCasting(f => ({ ...f, genere: v }))} options={["donna", "uomo", "uomo + donna"]} />
             <Field label="Brand / Cliente *" value={formCasting.brand} onChange={v => setFormCasting(f => ({ ...f, brand: v }))} placeholder="es. Zara" />
             <Field label="Tipologia *" value={formCasting.tipologia} onChange={v => setFormCasting(f => ({ ...f, tipologia: v }))} placeholder="es. Lookbook SS26" />
-            <Field label="Data shooting" value={formCasting.data} onChange={v => setFormCasting(f => ({ ...f, data: v }))} type="date" />
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>Giorni shooting</label>
+              {(formCasting.date_shooting && formCasting.date_shooting.length ? formCasting.date_shooting : [""]).map((d, i, arr) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+                  <input type="date" value={d || ""} onChange={e => setFormCasting(f => { const a = [...(f.date_shooting && f.date_shooting.length ? f.date_shooting : [""])]; a[i] = e.target.value; return { ...f, date_shooting: a }; })}
+                    style={{ flex: 1, minWidth: 0, background: "#FFFFFF", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#000000", fontSize: 17, padding: "13px 15px", fontFamily: "inherit", boxSizing: "border-box", outline: "none" }} />
+                  {arr.length > 1 && (
+                    <button type="button" onClick={() => setFormCasting(f => ({ ...f, date_shooting: arr.filter((_, k) => k !== i) }))}
+                      style={{ width: 44, height: 44, flexShrink: 0, background: "transparent", border: "0.5px solid #EBEBEB", borderRadius: 12, color: "#767676", fontSize: 20, cursor: "pointer", fontFamily: "inherit" }}>×</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" onClick={() => setFormCasting(f => ({ ...f, date_shooting: [...(f.date_shooting && f.date_shooting.length ? f.date_shooting : [""]), ""] }))}
+                style={{ padding: "10px 16px", background: "transparent", border: "0.5px dashed #767676", borderRadius: 100, color: "#000000", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>+ Aggiungi giorno</button>
+            </div>
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "inherit" }}>Caratteristiche richieste</label>
               <textarea value={formCasting.caratteristiche} onChange={e => setFormCasting(f => ({ ...f, caratteristiche: e.target.value }))} placeholder="Altezza, età, tipologia, note aggiuntive..."
@@ -2270,14 +2293,14 @@ export default function App() {
             <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
                 <Badge label={cast.genere} color="#000000" bg="#F5F5F5" />
-                {cast.data && <Badge label={fmtDate(cast.data)} color="#767676" bg="#F5F5F5" />}
+                {castingDays(cast).map(d => <Badge key={d} label={fmtDate(d)} color="#767676" bg="#F5F5F5" />)}
               </div>
               <PaddedSection title="Dettagli casting">
                 <InfoRow label="Brand" val={cast.brand} />
                 <Divider />
                 <InfoRow label="Tipologia" val={cast.tipologia} />
                 <Divider />
-                <InfoRow label="Data shooting" val={fmtDate(cast.data)} />
+                <InfoRow label={castingDays(cast).length > 1 ? "Giorni shooting" : "Data shooting"} val={fmtCastingDays(cast) || "—"} />
                 {cast.caratteristiche && (
                   <>
                     <Divider />
@@ -2314,7 +2337,7 @@ export default function App() {
                   ))
                 )}
               </Section>
-              <GhostBtn onClick={() => { setFormCasting(cast); setView("nuovo_casting"); }}>Modifica casting</GhostBtn>
+              <GhostBtn onClick={() => { setFormCasting({ ...cast, date_shooting: castingDays(cast).length ? castingDays(cast) : [""] }); setView("nuovo_casting"); }}>Modifica casting</GhostBtn>
               <button onClick={() => { if (window.confirm("Eliminare questo casting? Verranno rimosse anche tutte le candidature.")) deleteCasting(cast.id); }}
                 style={{ width: "100%", marginTop: 8, padding: "12px", background: "transparent", border: "1.5px solid #FCA5A5", borderRadius: 14, color: "#000000", fontSize: 17, cursor: "pointer", fontFamily: "inherit" }}>
                 Elimina casting
