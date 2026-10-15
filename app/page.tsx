@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { annualIncome, romeDate } from "./lib/annual-income.mjs";
+import { contractSchedule } from "./lib/contracts.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
 import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
@@ -130,15 +131,7 @@ const calcGuadagnoPeacock = j => (Number(j.fatturato) || 0) - (Number(j.netto_mo
 const fmt     = n => n === 0 ? "—" : `€${Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtDate = d => { if (!d) return "—"; const [y, m, g] = d.split("-"); return `${g}/${m}/${y}`; };
 // Contratto helpers
-const CONTRATTO_COLORS = { Start: { color: "#7C3AED", bg: "#F5F3FF" }, Advance: { color: "#D97706", bg: "#FFFBEB" }, Top: { color: "#000000", bg: "#FEF2F2" } };
-const contrattoScadenzaAlert = (scadenza) => {
-  if (!scadenza) return null;
-  const [g, m, a] = scadenza.split("/");
-  const diff = (new Date(`${a}-${m}-${g}`).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
-  if (diff < 0) return "scaduto";
-  if (diff <= 30) return "in scadenza";
-  return null;
-};
+const CONTRATTO_COLORS = { Start: { color: "#7C3AED", bg: "#F5F3FF" }, Advance: { color: "#D97706", bg: "#FFFBEB" }, Top: { color: "#000000", bg: "#FEF2F2" }, "Contratto di prova": { color: "#57534E", bg: "#F5F5F4" } };
 const PAG_COLOR = { pagato: "#4a8a4a", "da pagare": "#888888", "in attesa": "#C9A96E" };
 const PAG_BG    = { pagato: "#F5F5F5", "da pagare": "#F5F5F5", "in attesa": "#F5F5F5" };
 const JOB_COLOR = { confermato: "#000000", "in attesa": "#000000", completato: "#767676", interno: "#000000" };
@@ -1938,6 +1931,7 @@ export default function App() {
               {modelle.filter(m => m.nome.toLowerCase().includes(cercaModella.toLowerCase())).map(mod => {
                 const mj = jobs.filter(j => j.modella === mod.nome);
                 const netto = mj.reduce((s, j) => s + calcNetto(j), 0);
+                const contract = contractSchedule(mod);
                 return (
                   <div key={mod.id} onClick={() => {
                       if (selectMode) { setSelectedIds(ids => ids.includes(mod.id) ? ids.filter(x => x !== mod.id) : [...ids, mod.id]); return; }
@@ -1957,7 +1951,7 @@ export default function App() {
                       <span style={{ fontSize: 17, color: "#767676" }}>{mj.length} job · {fmt(netto)}</span>
                       {(() => { const np = POLA_SLOTS.filter(x => !x.slot.startsWith("pola_tatuaggio") && mod[x.slot]).length; const nv = VIDEO_SLOTS.filter(x => mod[x.slot]).length; return <span style={{ fontSize: 10, fontWeight: 700, color: np === 6 ? "#16A34A" : "#9C948A", background: "#F5F5F5", padding: "3px 9px", borderRadius: 100, letterSpacing: "0.06em" }}>POLAS {np}/6 · VIDEO {nv}</span>; })()}
                       {mod.contratto_tipo && (() => { const cc = CONTRATTO_COLORS[mod.contratto_tipo] || CONTRATTO_COLORS.Start; return <span style={{ fontSize: 10, fontWeight: 700, color: cc.color, background: cc.bg, padding: "3px 9px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.06em" }}>{mod.contratto_tipo}</span>; })()}
-                      {contrattoScadenzaAlert(mod.contratto_scadenza) && <span style={{ fontSize: 10, fontWeight: 600, color: contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "#DC2626" : "#D97706" }}>{contrattoScadenzaAlert(mod.contratto_scadenza) === "scaduto" ? "⚠️ scaduto" : "⏰ in scadenza"}</span>}
+                      {contract.alert && <span style={{ fontSize: 10, fontWeight: 600, color: contract.alert === "scaduto" ? "#DC2626" : "#D97706" }}>{contract.alert === "scaduto" ? "⚠️ scaduto" : contract.automatic ? "↻ rinnovo vicino" : "⏰ in scadenza"}</span>}
                     </div>
                     </div>
                     <span style={{ color: "#C4C0BA", fontSize: 20 }}>›</span>
@@ -2094,14 +2088,15 @@ export default function App() {
               </Section>
               {/* CONTRATTO AGENZIA */}
               {(() => {
-                const alert = contrattoScadenzaAlert(mod.contratto_scadenza);
+                const contract = contractSchedule(mod);
+                const alert = contract.alert;
                 const tipo = mod.contratto_tipo || "Start";
                 const cc = CONTRATTO_COLORS[tipo] || CONTRATTO_COLORS.Start;
                 return (
                   <Section title="Agency contract"
                     action={<button onClick={() => { setFormMod(mod); setView("nuova_modella"); }} style={{ fontSize: 17, color: "#C4A882", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Modifica</button>}>
                     <div style={{ padding: "14px 16px" }}>
-                      {mod.contratto_firma ? (
+                      {mod.contratto_firma || mod.contratto_inizio || mod.contratto_url ? (
                         <>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                             <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 12px", borderRadius: 100, fontSize: 17, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: cc.color, background: cc.bg, border: `1px solid ${cc.color}33` }}>
@@ -2109,18 +2104,24 @@ export default function App() {
                             </span>
                             {alert && (
                               <span style={{ fontSize: 17, fontWeight: 600, color: alert === "scaduto" ? "#DC2626" : "#D97706", background: alert === "scaduto" ? "#FEF2F2" : "#FFFBEB", padding: "3px 10px", borderRadius: 100 }}>
-                                {alert === "scaduto" ? "⚠️ Scaduto" : "⏰ In scadenza"}
+                                {alert === "scaduto" ? "⚠️ Scaduto" : contract.automatic ? "↻ Rinnovo vicino" : "⏰ In scadenza"}
                               </span>
                             )}
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #EBEBEB" }}>
+                          {mod.contratto_inizio && <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #EBEBEB" }}>
+                            <span style={{ fontSize: 16, color: "#767676" }}>Data di inizio</span>
+                            <span style={{ fontSize: 16, color: "#000000" }}>{mod.contratto_inizio}</span>
+                          </div>}
+                          {mod.contratto_firma && <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #EBEBEB" }}>
                             <span style={{ fontSize: 16, color: "#767676" }}>Firmato il</span>
                             <span style={{ fontSize: 16, color: "#000000" }}>{mod.contratto_firma}</span>
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                            <span style={{ fontSize: 16, color: "#767676" }}>Scade il</span>
-                            <span style={{ fontSize: 16, fontWeight: alert ? 600 : 400, color: alert === "scaduto" ? "#DC2626" : alert === "in scadenza" ? "#D97706" : "#1C1714" }}>{mod.contratto_scadenza}</span>
-                          </div>
+                          </div>}
+                          {contract.date && <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                            <span style={{ fontSize: 16, color: "#767676" }}>{contract.automatic ? "Prossimo rinnovo" : "Scade il"}</span>
+                            <span style={{ fontSize: 16, fontWeight: alert ? 600 : 400, color: alert === "scaduto" ? "#DC2626" : alert ? "#D97706" : "#1C1714" }}>{contract.date}</span>
+                          </div>}
+                          {contract.automatic && <div style={{ fontSize: 14, color: "#767676", marginTop: 8 }}>Rinnovo automatico{mod.contratto_durata_mesi ? ` ogni ${mod.contratto_durata_mesi} mesi` : ""}, salvo disdetta.</div>}
+                          {/^https:\/\/drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+(?:\/|$)/.test(mod.contratto_url || "") && <a href={mod.contratto_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 12, color: "#8B6F47", fontSize: 16, fontWeight: 600 }}>Apri contratto PDF ↗</a>}
                         </>
                       ) : (
                         <div style={{ fontSize: 16, color: "#767676" }}>Nessun contratto registrato.</div>
@@ -2193,7 +2194,11 @@ export default function App() {
             <Field label="Last update" value={formMod.data_polas} onChange={v => setFormMod(f => ({ ...f, data_polas: v }))} placeholder="gg/mm/aaaa" />
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Agency contract</div>
-            <SelectField label="Type" value={formMod.contratto_tipo} onChange={v => setFormMod(f => ({ ...f, contratto_tipo: v }))} options={["Start", "Advance", "Top"]} />
+            <SelectField label="Type" value={formMod.contratto_tipo} onChange={v => setFormMod(f => ({ ...f, contratto_tipo: v }))} options={["Start", "Advance", "Top", "Contratto di prova"]} />
+            <SelectField label="Rinnovo" value={formMod.contratto_rinnovo_automatico === true ? "Automatico" : formMod.contratto_rinnovo_automatico === false ? "Senza rinnovo" : "Non indicato"} onChange={v => setFormMod(f => ({ ...f, contratto_rinnovo_automatico: v === "Non indicato" ? null : v === "Automatico" }))} options={["Non indicato", "Automatico", "Senza rinnovo"]} />
+            <SelectField label="Durata del periodo" value={formMod.contratto_durata_mesi ? `${formMod.contratto_durata_mesi} mesi` : "Non indicata"} onChange={v => setFormMod(f => ({ ...f, contratto_durata_mesi: v === "Non indicata" ? null : parseInt(v, 10) }))} options={["Non indicata", "12 mesi", "24 mesi"]} />
+            <Field label="Data di inizio" value={formMod.contratto_inizio} onChange={v => setFormMod(f => ({ ...f, contratto_inizio: v }))} placeholder="gg/mm/aaaa" />
+            <Field label="Link contratto PDF (Drive)" value={formMod.contratto_url} onChange={v => setFormMod(f => ({ ...f, contratto_url: v }))} placeholder="https://drive.google.com/file/d/.../view" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Sign date" value={formMod.contratto_firma} onChange={v => setFormMod(f => ({ ...f, contratto_firma: v }))} placeholder="gg/mm/aaaa" />
               <Field label="Expiry date" value={formMod.contratto_scadenza} onChange={v => setFormMod(f => ({ ...f, contratto_scadenza: v }))} placeholder="gg/mm/aaaa" />
