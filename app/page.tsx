@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
+import { annualIncome, romeDate } from "./lib/annual-income.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
 import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
@@ -633,6 +634,27 @@ export default function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
+  const [incomeToday, setIncomeToday] = useState(() => romeDate());
+  useEffect(() => {
+    if (!user?.id || userRuolo !== "model") return;
+    let active = true;
+    const refreshIncome = async () => {
+      if (document.visibilityState === "hidden") return;
+      setIncomeToday(romeDate());
+      const { data } = await supabase.from("jobs").select("*").order("data_shooting", { ascending: false });
+      if (active && data) setJobs(data);
+    };
+    refreshIncome();
+    const timer = setInterval(refreshIncome, 60000);
+    window.addEventListener("focus", refreshIncome);
+    document.addEventListener("visibilitychange", refreshIncome);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener("focus", refreshIncome);
+      document.removeEventListener("visibilitychange", refreshIncome);
+    };
+  }, [user?.id, userRuolo]);
   const doLogin = async () => {
     setLoginError("");
     setLoginLoading(true);
@@ -1158,10 +1180,11 @@ export default function App() {
     setPolaUploading("");
   };
   const marcaPagato = async id => {
-    const oggi = new Date().toISOString().split("T")[0];
+    const oggi = romeDate();
     const { error } = await supabase.from("jobs").update({ stato_pagamento: "pagato", data_pagamento_cliente: oggi }).eq("id", id);
     if (error) { showToast("Errore: " + error.message, true); return; }
     setJobs(prev => prev.map(j => j.id === id ? { ...j, stato_pagamento: "pagato", data_pagamento_cliente: oggi } : j));
+    setSelectedJob(prev => prev?.id === id ? { ...prev, stato_pagamento: "pagato", data_pagamento_cliente: oggi } : prev);
     showToast("Pagamento registrato ✓ " + oggi);
   };
   const aggiungiCal = (job, tipo) => {
@@ -1365,6 +1388,7 @@ export default function App() {
       );
     }
     const myJobs = jobs.filter(j => j.modella === myModella?.nome).sort((a, b) => new Date(b.data_shooting).getTime() - new Date(a.data_shooting).getTime());
+    const income = annualIncome(myJobs, myModella?.nome, incomeToday);
     const totNetto = myJobs.reduce((s, j) => s + calcNetto(j), 0);
     const totPagato = myJobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
     // Sub-view: dettaglio job del model
@@ -1505,6 +1529,15 @@ export default function App() {
           )}
           <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
           <div style={{ fontSize: 17, color: "#767676", marginBottom: 20 }}>Your jobs</div>
+          <div role={income.reached ? "alert" : "status"} style={{ background: income.reached ? "#FFFBEB" : "#FFFFFF", border: `1px solid ${income.reached ? "#F59E0B" : "#EBEBEB"}`, borderRadius: 14, padding: "16px", marginBottom: 20 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>{income.reached ? "Hai raggiunto 4.000 € lordi nell’anno" : `Compensi lordi incassati · ${income.year}`}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 8, color: "#000" }}>{fmt(income.grossCents / 100)}</div>
+            <div style={{ fontSize: 14, lineHeight: 1.5, color: "#595959", marginTop: 8 }}>
+              Compensi con ritenuta d’acconto registrati in Peacock, incassati dal 1° gennaio al 31 dicembre {income.year}. Rimborsi spese esclusi.
+              {income.reached && <p style={{ margin: "8px 0 0", fontWeight: 600 }}>Hai raggiunto la soglia di avviso: contatta Peacock per verificare la tua situazione prima dei prossimi pagamenti.</p>}
+              {income.missingPaymentDates > 0 && <p style={{ margin: "8px 0 0" }}>Alcuni pagamenti non hanno una data valida e non sono inclusi nel totale. Contatta Peacock per completarli.</p>}
+            </div>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
             <div style={{ background: "#FFFFFF", borderRadius: 12, padding: "14px", border: "0.5px solid #EBEBEB" }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#000" }}>{fmt(totNetto)}</div>
@@ -1781,7 +1814,7 @@ export default function App() {
                   <span style={{ fontSize: 22, fontWeight: 800, color: "#000000", letterSpacing: "-0.03em" }}>{fmt(calcDaPagareModel(job))}</span>
                 </div>
                 {job.stato_pagamento !== "pagato" ? (
-                  <button onClick={() => { marcaPagato(job.id); setSelectedJob({ ...job, stato_pagamento: "pagato" }); }}
+                  <button onClick={() => marcaPagato(job.id)}
                     style={{ width: "100%", marginTop: 10, padding: "13px", background: "#16A34A", border: "none", borderRadius: 14, color: "#FFF", fontSize: 17, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     ✓ Marca come pagato
                   </button>
