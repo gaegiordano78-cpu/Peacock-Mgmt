@@ -18,6 +18,16 @@ function addMonths(date, months) {
 export function contractSchedule(model, today = romeDate()) {
   const automatic = model.contratto_rinnovo_automatico === true;
   const now = new Date(`${today}T00:00:00Z`);
+  // Preserve month-only precision when the contract's exact day is unknown.
+  const partial = /^(0?[1-9]|1[0-2])\/(\d{4})$/.exec(model.contratto_inizio || '');
+  if (automatic && partial && Number.isInteger(Number(model.contratto_durata_mesi)) && Number(model.contratto_durata_mesi) > 0 && Number(model.contratto_durata_mesi) <= 120) {
+    const months = Number(model.contratto_durata_mesi);
+    const origin = Number(partial[2]) * 12 + Number(partial[1]) - 1;
+    const current = now.getUTCFullYear() * 12 + now.getUTCMonth();
+    const periods = Math.max(1, Math.ceil((current - origin) / months));
+    const end = origin + periods * months;
+    return { date: `${String(end % 12 + 1).padStart(2, '0')}/${Math.floor(end / 12)}`, automatic, alert: end === current ? 'rinnovo vicino' : null };
+  }
   const start = parseDate(model.contratto_inizio);
   const months = Number(model.contratto_durata_mesi);
   let end = parseDate(model.contratto_scadenza);

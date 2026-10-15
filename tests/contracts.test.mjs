@@ -22,3 +22,9 @@ test('renewal day remains current, leap-day anniversaries clamp to February', ()
 test('missing or malformed dates never fabricate a renewal date', () => {
   assert.equal(contractSchedule({contratto_inizio:'31/02/2025',contratto_rinnovo_automatico:true,contratto_durata_mesi:12},'2026-10-15').date,'');
 });
+test('month-only starts preserve precision through automatic renewals', () => {
+  const model={contratto_inizio:'03/2026',contratto_rinnovo_automatico:true,contratto_durata_mesi:24};
+  assert.equal(contractSchedule(model,'2026-10-15').date,'03/2028');
+  assert.equal(contractSchedule(model,'2028-03-25').date,'03/2028');
+  assert.equal(contractSchedule(model,'2028-04-01').date,'03/2030');
+});
