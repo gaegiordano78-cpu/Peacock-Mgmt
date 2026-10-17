@@ -1,0 +1,66 @@
+.welcome {
+  position: fixed; inset: 0; z-index: 9000; overflow: hidden;
+  background: #090909; color: #faf9f5;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  animation: exit 240ms 2360ms ease-in both;
+}
+.welcome * { box-sizing: border-box; }
+.center {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; flex-direction: column; padding: 64px 20px;
+}
+.face {
+  position: relative; width: 92px; height: 72px; margin-bottom: 24px;
+  transform: rotate(-9deg); transform-origin: 50% 80%;
+  animation: faceIn 900ms cubic-bezier(.22,1,.36,1) both, tilt 650ms 1150ms ease-in-out both;
+}
+.eye { position: absolute; top: 0; width: 12px; height: 29px; border-radius: 50%; background: #faf9f5; transform-origin: center; }
+.left { left: 23px; animation: look 550ms 500ms ease both; }
+.right { right: 23px; animation: wink 750ms 1100ms ease-in-out both; }
+.smile {
+  position: absolute; left: 27px; top: 36px; width: 43px; height: 23px;
+  border-bottom: 4px solid #faf9f5; border-radius: 0 0 65% 65%;
+  transform: rotate(-12deg); animation: smileIn 450ms 800ms ease-out both;
+}
+.cheek {
+  position: absolute; top: 34px; left: 10px; width: 9px; height: 3px;
+  border-radius: 4px; background: #faf9f5; transform: rotate(-35deg);
+  opacity: 0; animation: cheekPop 500ms 1200ms ease-out both;
+}
+.greeting {
+  display: flex; gap: .21em; align-items: baseline;
+  font-size: clamp(48px, 10vw, 86px); font-weight: 700;
+  letter-spacing: -.075em; line-height: 1.05; white-space: nowrap;
+}
+.ciao, .baby { display: inline-block; transform-origin: center 80%; }
+.ciao { animation: wordIn 900ms 220ms cubic-bezier(.16,1,.3,1) both; }
+.baby {
+  font-family: Georgia, "Times New Roman", serif; font-style: italic;
+  font-weight: 400; letter-spacing: -.07em;
+  animation: babyIn 1000ms 390ms cubic-bezier(.16,1,.3,1) both;
+}
+.dot {
+  display: inline-block; margin-left: .01em; font-family: Arial, Helvetica, sans-serif;
+  font-style: normal; transform-origin: 50% 90%; animation: dotHop 650ms 1350ms ease-in-out both;
+}
+.note { font-size: 10px; letter-spacing: .27em; margin-top: 27px; color: #a3a29e; animation: captionIn 750ms 1500ms ease-out both; }
+.bottom {
+  position: absolute; bottom: max(24px, env(safe-area-inset-bottom));
+  left: max(24px, env(safe-area-inset-left)); right: max(24px, env(safe-area-inset-right));
+  display: flex; justify-content: space-between; gap: 15px;
+  font-size: 9px; letter-spacing: .14em; color: #a3a29e;
+}
+@keyframes faceIn { 0% { opacity: 0; transform: translateY(24px) scale(.5) rotate(-25deg); } 55% { opacity: 1; transform: translateY(-7px) scale(1.07) rotate(-9deg); } 100% { opacity: 1; transform: translateY(0) scale(1) rotate(-9deg); } }
+@keyframes tilt { 0%,100% { rotate: 0deg; } 50% { rotate: 10deg; } }
+@keyframes look { 0%,100% { translate: 0 0; } 45% { translate: 3px 0; } }
+@keyframes wink { 0%,25%,100% { transform: scaleY(1); border-radius: 50%; } 45%,65% { transform: scaleY(.13) rotate(-12deg); border-radius: 7px; } }
+@keyframes smileIn { from { opacity: 0; transform: scaleX(.3) rotate(8deg); } to { opacity: 1; transform: scaleX(1) rotate(-12deg); } }
+@keyframes cheekPop { 0%,100% { opacity: 0; translate: 0 0; } 40%,65% { opacity: 1; translate: -4px 0; } }
+@keyframes wordIn { 0% { opacity: 0; transform: translateY(42px) rotate(-12deg) scale(.86); } 55% { opacity: 1; transform: translateY(-8px) rotate(2deg) scale(1.02); } 100% { opacity: 1; transform: none; } }
+@keyframes babyIn { 0% { opacity: 0; transform: translateY(45px) rotate(13deg) scale(.83); } 56% { opacity: 1; transform: translateY(-7px) rotate(-3deg) scale(1.04); } 100% { opacity: 1; transform: none; } }
+@keyframes dotHop { 0%,100% { transform: translateY(0) scale(1); } 35% { transform: translateY(-17px) scale(.95,1.08); } 75% { transform: translateY(0) scale(1.25,.8); } }
+@keyframes captionIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes exit { from { opacity: 1; } to { opacity: 0; } }
+@media (max-width: 400px) { .face { margin-bottom: 28px; } .bottom { font-size: 8px; } }
+@media (prefers-reduced-motion: reduce) { .welcome, .welcome * { animation: none !important; } }

@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
+import ModelWelcome from "./components/ModelWelcome";
 import { annualIncome, romeDate } from "./lib/annual-income.mjs";
 import { contractSchedule } from "./lib/contracts.mjs";
 import { createClient } from "@supabase/supabase-js";
@@ -515,6 +516,7 @@ export default function App() {
   const [inviteEmail, setInviteEmail]   = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [splash, setSplash]     = useState(true);
+  const [welcomeCompletedFor, setWelcomeCompletedFor] = useState<string | null>(null);
   const [jobs, setJobs]         = useState([]);
   const [modelle, setModelle]   = useState<any[]>([]);
   const [view, setView]         = useState("lista"); // lista | dettaglio | nuovo_job | calcolatrice | modelle | scheda_modella | nuova_modella | contratto
@@ -1279,6 +1281,10 @@ export default function App() {
     </div>
   );
   // ── VISTA MODELLA ────────────────────────────────────────────────────────
+  if (user && userRuolo === "model" && welcomeCompletedFor !== user.id) {
+    if (splash) return <div style={{ minHeight: "100vh", background: "#090909" }} />;
+    return <ModelWelcome userId={user.id} onComplete={() => setWelcomeCompletedFor(user.id)} />;
+  }
   if (user && userRuolo === "model") {
     // Sub-view: profilo personale
     if (modelView === "profilo") {
