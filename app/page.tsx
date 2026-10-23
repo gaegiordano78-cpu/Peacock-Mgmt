@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ModelWelcome from "./components/ModelWelcome";
 import { annualIncome, romeDate } from "./lib/annual-income.mjs";
 import { contractSchedule } from "./lib/contracts.mjs";
+import { downloadReceiptPDF } from "./lib/receipt-pdf.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
 import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
@@ -1456,12 +1457,12 @@ export default function App() {
       const job = jobs.find(j => j.id === modelSelectedJob.id) || modelSelectedJob;
       const testo = generaRitenuta(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
       const stampaPDFModel = () => {
-        const win = window.open("", "_blank");
-        if (!win) { showToast("Abilita i popup per stampare", true); return; }
-        win.document.write(generaRitenutaHTML(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta));
-        win.document.close();
-        win.focus();
-        setTimeout(() => { win.print(); }, 400);
+        try {
+          downloadReceiptPDF(testo, myModella.nome, numRitenuta);
+          showToast("PDF pronto: controlla i download");
+        } catch {
+          showToast("PDF non generato. Riprova o usa Copia testo.", true);
+        }
       };
       return (
         <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
@@ -1490,7 +1491,7 @@ export default function App() {
             </div>
             <button onClick={stampaPDFModel}
               style={{ width: "100%", padding: "15px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
-              🖨️ Genera PDF
+              📄 Scarica PDF
             </button>
             <button onClick={() => {
               navigator.clipboard.writeText(testo).then(() => { showToast("Ritenuta copiata ✓"); });
@@ -1880,12 +1881,12 @@ export default function App() {
           if (!mod) return <div style={{ padding: 16, color: "#000000" }}>Completa prima la scheda anagrafica del model.</div>;
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
           const stampaPDF = () => {
-            const win = window.open("", "_blank");
-            if (!win) { showToast("Abilita i popup per stampare", true); return; }
-            win.document.write(generaRitenutaHTML(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta));
-            win.document.close();
-            win.focus();
-            setTimeout(() => { win.print(); }, 400);
+        try {
+          downloadReceiptPDF(testo, mod.nome, numRitenuta);
+          showToast("PDF pronto: controlla i download");
+        } catch {
+          showToast("PDF non generato. Riprova o usa Copia testo.", true);
+        }
           };
           return (
             <div style={{ padding: "16px" }}>
@@ -1903,7 +1904,7 @@ export default function App() {
               </div>
               <button onClick={stampaPDF}
                 style={{ width: "100%", padding: "15px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
-                🖨️ Genera PDF
+                📄 Scarica PDF
               </button>
               <button onClick={() => {
                 navigator.clipboard.writeText(testo).then(() => {
