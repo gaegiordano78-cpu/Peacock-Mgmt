@@ -5,6 +5,7 @@ import ModelWelcome from "./components/ModelWelcome";
 import { annualIncome, romeDate } from "./lib/annual-income.mjs";
 import { contractSchedule } from "./lib/contracts.mjs";
 import { downloadReceiptPDF } from "./lib/receipt-pdf.mjs";
+import { useModelNavigation } from "./lib/use-model-navigation";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
 import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
@@ -548,7 +549,7 @@ export default function App() {
     try { await enablePush(supabase); setPushState("on"); showToast("Notifiche attive ✓"); }
     catch (e) { showToast(e.message || "Errore notifiche", true); pushStatus().then(setPushState); }
   };
-  const [modelView, setModelView] = useState("home"); // "home" | "profilo" | "job_dettaglio" | "ritenuta_model"
+  const { screen: modelView, setScreen: setModelView, job: modelSelectedJob, setJob: setModelSelectedJob } = useModelNavigation(userRuolo === "model" ? user?.id : null); // "home" | "profilo" | "job_dettaglio" | "ritenuta_model"
   const [formMyProfile, setFormMyProfile] = useState<any>({});
   const [polaUploading, setPolaUploading] = useState("");
   const [adminUploading, setAdminUploading] = useState("");
@@ -556,7 +557,6 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [optLog, setOptLog] = useState<string[]>([]);
   const [optRunning, setOptRunning] = useState(false);
-  const [modelSelectedJob, setModelSelectedJob] = useState<any>(null);
   const [reportMese, setReportMese] = useState<string>("");
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [bulkCommon, setBulkCommon] = useState<any>({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 });
