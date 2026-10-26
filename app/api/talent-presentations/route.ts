@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     ];
     for (const item of candidates) {
       const url = normalize(item, profile);
-      if (url && !/logo|icon|avatar|placeholder|favicon/i.test(url)) images.add(url);
+      if (url && !/logo|icon|avatar|placeholder|favicon|chatgpt-image|generated|\.svg(?:\?|$)/i.test(url)) {\n        const clean = url.replace(/-\\d+x\\d+(?=\\.(?:jpe?g|png|webp)(?:\\?|$))/i, "");\n        images.add(clean);\n      }
     }
     return NextResponse.json({ name: title, profile, images: [...images].slice(0, 24), warning: images.size ? null : "Immagini non estraibili automaticamente: verificare la scheda sul sito." }, { headers: { "Cache-Control": "no-store" } });
   } catch {
