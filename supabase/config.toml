@@ -1,0 +1,7 @@
+# Both functions authenticate their caller with Auth.getUser and check the
+# server-owned profiles.ruolo field before any read, write or message delivery.
+[functions.invite-user]
+verify_jwt = false
+
+[functions.notify-casting]
+verify_jwt = false
