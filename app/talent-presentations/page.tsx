@@ -24,8 +24,41 @@ export default function TalentPresentations() {
   const [view,setView] = useState<'desktop'|'mobile'>('desktop');
   const [exporting,setExporting] = useState(false);
   const [sendingTest,setSendingTest] = useState(false);
+  const [adminAuth,setAdminAuth] = useState<'checking'|'signed_out'|'admin'|'not_admin'>('checking');
+  const [authEmail,setAuthEmail] = useState('');
+  const [authPassword,setAuthPassword] = useState('');
+  const [authBusy,setAuthBusy] = useState(false);
+  const [authError,setAuthError] = useState('');
   const [status,setStatus] = useState('');
   const [previewValid,setPreviewValid] = useState(true);
+  async function checkAdmin() {
+    const {data:{session}}=await authClient.auth.getSession();
+    if(!session?.user){setAdminAuth('signed_out');return;}
+    const {data,error:roleError}=await authClient.from('profiles').select('ruolo').eq('id',session.user.id).single();
+    setAdminAuth(!roleError&&data?.ruolo==='admin'?'admin':'not_admin');
+  }
+  async function signInAdmin(e:React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setAuthBusy(true);setAuthError('');
+    const {data,error:loginError}=await authClient.auth.signInWithPassword({email:authEmail.trim(),password:authPassword});
+    setAuthPassword('');
+    if(loginError||!data.user) {
+      setAuthError('Accesso non riuscito: controlla le credenziali Peacock.');
+      setAdminAuth('signed_out');
+    } else {
+      const {data:profile,error:roleError}=await authClient.from('profiles').select('ruolo').eq('id',data.user.id).single();
+      if(roleError||profile?.ruolo!=='admin') {
+        await authClient.auth.signOut();
+        setAdminAuth('signed_out');
+        setAuthError('L’account non ha i permessi di amministratore.');
+      } else setAdminAuth('admin');
+    }
+    setAuthBusy(false);
+  }
+  async function signOutAdmin() {
+    await authClient.auth.signOut();
+    setAdminAuth('signed_out');
+  }
   async function loadTalent(slug:string):Promise<Talent> {
     const r = await fetch('/api/talent-presentations?slug='+encodeURIComponent(slug),{cache:'no-store'});
     const data = await r.json();
@@ -35,13 +68,15 @@ export default function TalentPresentations() {
   }
   useEffect(()=>{
     (window as any).__hideSplash?.();
+    void checkAdmin();
+    const {data:{subscription}}=authClient.auth.onAuthStateChange(()=>{void checkAdmin();});
     let active=true;
     fetch('/api/talent-presentations?roster=1',{cache:'no-store'}).then(async r=>{
       const d=await r.json();if(!r.ok)throw new Error(d.error||'Roster non disponibile.');
       if(active)setRoster(d.talents);
     }).catch(e=>{if(active)setRosterError(e.message);}).finally(()=>{if(active)setRosterLoading(false);});
     loadTalent('yile').then(t=>{if(active)setTalents([t]);}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading('');});
-    return ()=>{active=false;};
+    return ()=>{active=false;subscription.unsubscribe();};
   },[]);
   async function toggle(t:RosterTalent) {
     setError('');setStatus('');
@@ -54,6 +89,7 @@ export default function TalentPresentations() {
   }
   async function sendTest() {
     if(!talents.length || !previewValid || sendingTest || !!loading)return;
+    if(adminAuth!=='admin'){setAuthError('Accedi come amministratore per inviare una prova.');return;}
     const recipient = 'info@gaetanogiordano.com';
     const sender = 'hello@peacockmodels.com';
     if(!window.confirm('INVIO REALE DI UNA EMAIL DI PROVA\\n\\nDa: '+sender+'\\nA: '+recipient+'\\n\\nConfermi l’invio?'))return;
@@ -117,7 +153,21 @@ export default function TalentPresentations() {
         {error&&<p role="alert" className={styles.error}>{error}</p>}
         {loading==='yile'&&<p role="status" className={styles.muted}>Recupero della copertina ufficiale di Yile…</p>}
         <button className={styles.export} onClick={exportHtml} disabled={!talents.length||!previewValid||!!loading||exporting||sendingTest}>{exporting?'Verifica immagini…':'Scarica HTML email'}</button>
-        <button className={styles.export} onClick={sendTest} disabled={!talents.length||!previewValid||!!loading||exporting||sendingTest} style={{background:'#fff',color:'#171717',border:'1px solid #171717',marginTop:10}}>{sendingTest?'Invio prova in corso…':'Invia email di prova'}</button>
+        <div style={{border:'1px solid #ddd',padding:15,marginTop:16}}>
+          <strong style={{fontSize:13}}>Accesso per email di prova</strong>
+          {adminAuth==='checking'&&<p className={styles.muted}>Verifica sessione amministratore…</p>}
+          {adminAuth==='admin'&&<div style={{marginTop:10}}><p className={styles.muted}>Sessione amministratore attiva.</p><button type="button" onClick={signOutAdmin} style={{border:0,background:'none',textDecoration:'underline',padding:0,cursor:'pointer'}}>Esci</button></div>}
+          {(adminAuth==='signed_out'||adminAuth==='not_admin')&&<form onSubmit={signInAdmin} style={{display:'grid',gap:9,marginTop:12}}>
+            <p className={styles.note}>Nelle anteprime Vercel devi accedere separatamente con l'account amministratore dell'app Peacock.</p>
+            <label htmlFor="preview-admin-email" style={{fontSize:12}}>Email amministratore</label>
+            <input id="preview-admin-email" type="email" autoComplete="username" required value={authEmail} onChange={e=>setAuthEmail(e.target.value)} style={{width:'100%',padding:10,border:'1px solid #bbb'}}/>
+            <label htmlFor="preview-admin-password" style={{fontSize:12}}>Password Peacock</label>
+            <input id="preview-admin-password" type="password" autoComplete="current-password" required value={authPassword} onChange={e=>setAuthPassword(e.target.value)} style={{width:'100%',padding:10,border:'1px solid #bbb'}}/>
+            <button type="submit" disabled={authBusy} style={{padding:11,background:'#171717',color:'#fff',border:0}}>{authBusy?'Accesso in corso…':'Accedi come amministratore'}</button>
+          </form>}
+          {authError&&<p role="alert" className={styles.error}>{authError}</p>}
+        </div>
+        <button className={styles.export} onClick={sendTest} disabled={adminAuth!=='admin'||!talents.length||!previewValid||!!loading||exporting||sendingTest} style={{background:'#fff',color:'#171717',border:'1px solid #171717',marginTop:10,opacity:adminAuth==='admin'?1:.55}}>{sendingTest?'Invio prova in corso…':'Invia email di prova'}</button>
         <p className={styles.note}>Mittente fisso: hello@peacockmodels.com<br/>Destinatario prova: info@gaetanogiordano.com<br/>L’invio richiede una conferma e l’accesso amministratore.</p>
         {status&&<p role="status" className={styles.muted}>{status}</p>}
         <p className={styles.note}>Una copertina originale per talento, dal sito Peacock.<br/>Nessuna email viene inviata.</p>
