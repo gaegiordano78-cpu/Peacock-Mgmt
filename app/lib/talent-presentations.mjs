@@ -1,0 +1,33 @@
+export const PEACOCK_LOGO = 'https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock-.png';
+const HOSTS = new Set(['peacockmodels.com', 'www.peacockmodels.com']);
+export const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function officialUrl(value, kind = 'profile') {
+  try {
+    const u = new URL(value);
+    if (u.protocol !== 'https:' || !HOSTS.has(u.hostname) || u.username || u.password || u.port || u.search || u.hash) return false;
+    return kind === 'image' ? /^\/wp-content\/uploads\/.+\.(?:jpe?g|png)$/i.test(u.pathname) : /^\/modello\/[a-z0-9-]{1,60}\/$/.test(u.pathname);
+  } catch { return false; }
+}
+export function validateTalent(t) {
+  if (!t || typeof t.name !== 'string' || !t.name.trim() || !officialUrl(t.profile) || !officialUrl(t.cover, 'image') || !Number.isFinite(t.width) || !Number.isFinite(t.height) || t.width < 200 || t.height < 200) throw new Error('Il talento non ha una copertina ufficiale valida.');
+}
+export function presentationHtml(talents) {
+  if (!Array.isArray(talents) || !talents.length || talents.length > 20) throw new Error('Seleziona da 1 a 20 talenti.');
+  talents.forEach(validateTalent);
+  if (new Set(talents.map(t => t.profile)).size !== talents.length) throw new Error('La selezione contiene talenti duplicati.');
+  const single = talents.length === 1;
+  const image = (t, width) => `<a href="${escapeHtml(t.profile)}" target="_blank" style="text-decoration:none;color:#171717"><img src="${escapeHtml(t.cover)}" width="${width}" height="${Math.round(width*t.height/t.width)}" border="0" alt="${escapeHtml(t.name)} — Peacock Models Management" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;outline:none;text-decoration:none;margin:0 auto"></a>`;
+  let content;
+  if (single) {
+    const t = talents[0];
+    content = `<tr><td class="content-pad" align="center" style="padding:0 24px"><p style="font:10px/16px Arial,Helvetica,sans-serif;letter-spacing:3px;margin:0 0 10px;color:#666666">INTRODUCING</p><h1 style="font:normal 26px/32px Arial,Helvetica,sans-serif;letter-spacing:3px;margin:0 0 24px;color:#171717">${escapeHtml(t.name.toUpperCase())}</h1>${image(t,512)}<p style="font:13px/22px Arial,Helvetica,sans-serif;margin:24px 8px;color:#333333">Vi presentiamo ${escapeHtml(t.name.toUpperCase())}, uno dei talenti rappresentati da Peacock Models Management.</p><table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0"><tr><td align="center" bgcolor="#171717" style="background:#171717;border:1px solid #171717;mso-padding-alt:14px 25px"><a href="${escapeHtml(t.profile)}" target="_blank" style="display:inline-block;padding:14px 25px;font:11px/16px Arial,Helvetica,sans-serif;letter-spacing:1.5px;color:#ffffff;text-decoration:none;mso-padding-alt:0">SCOPRI ${escapeHtml(t.name.toUpperCase())}</a></td></tr></table></td></tr>`;
+  } else {
+    const rows = [];
+    for(let i=0;i<talents.length;i+=2) {
+      rows.push(`<tr>${talents.slice(i,i+2).map(t => `<td class="talent-cell" width="50%" valign="top" align="center" style="width:50%;padding:0 8px 28px">${image(t,248)}<p style="margin:14px 0 0;font:12px/18px Arial,Helvetica,sans-serif;letter-spacing:1.5px"><a href="${escapeHtml(t.profile)}" target="_blank" style="color:#171717;text-decoration:underline">${escapeHtml(t.name.toUpperCase())}</a></p></td>`).join('')}${i+1===talents.length?'<td class="empty-cell" width="50%" style="width:50%"></td>':''}</tr>`);
+    }
+    content = `<tr><td class="content-pad" align="center" style="padding:0 24px"><h1 style="font:normal 20px/28px Arial,Helvetica,sans-serif;letter-spacing:1.4px;margin:0 0 30px;color:#171717">NUOVI VOLTI, NUOVE STORIE.</h1></td></tr><tr><td style="padding:0 16px"><table role="presentation" border="0" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed">${rows.join('')}</table></td></tr>`;
+  }
+  return `<!doctype html>
+<html lang="it" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting"><meta name="color-scheme" content="light"><title>${single?'INTRODUCING '+escapeHtml(talents[0].name.toUpperCase()):'NUOVI VOLTI, NUOVE STORIE.'} — Peacock Models</title><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]--><style>body,table,td{margin:0;padding:0}table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}body{background:#FFFFFF!important}a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important}@media screen and (max-width:480px){.content-pad{padding-left:16px!important;padding-right:16px!important}.talent-cell{display:block!important;width:100%!important;box-sizing:border-box;padding:0 0 28px!important}.talent-cell img{max-width:100%!important}.empty-cell{display:none!important}.outer-pad{padding:0!important}}</style></head><body bgcolor="#FFFFFF" style="margin:0;padding:0;background:#FFFFFF;color:#171717;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%"><table role="presentation" border="0" width="100%" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF" style="width:100%;background:#FFFFFF"><tr><td class="outer-pad" align="center" style="padding:12px 0 28px"><!--[if mso]><table role="presentation" width="560" border="0" cellpadding="0" cellspacing="0"><tr><td><![endif]--><table role="presentation" border="0" width="100%" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF" style="width:100%;max-width:560px;background:#FFFFFF"><tr><td align="center" style="padding:28px 24px 38px"><a href="https://peacockmodels.com/" target="_blank"><img src="${PEACOCK_LOGO}" width="176" height="90" border="0" alt="Peacock Models Management" style="display:block;width:176px;max-width:100%;height:auto;border:0;background:#FFFFFF"></a></td></tr>${content}<tr><td align="center" style="padding:42px 20px 26px;font:10px/19px Arial,Helvetica,sans-serif;color:#606060"><p style="margin:0 0 10px;font-size:10px;letter-spacing:1.2px;color:#171717">PEACOCK MODELS MANAGEMENT · BARI</p><p style="margin:0">Per info e booking:<br><a href="mailto:hello@peacockmodels.com" style="color:#606060;text-decoration:underline">hello@peacockmodels.com</a><br><a href="https://peacockmodels.com/" target="_blank" style="color:#606060;text-decoration:underline">www.peacockmodels.com</a></p></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table></body></html>`;
+}
