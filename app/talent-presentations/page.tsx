@@ -33,6 +33,7 @@ export default function TalentPresentations() {
     finally { setLoading(false); }
   }
   function exportHtml() {
+    if (talents.some(t => !t.images.some(validImage))) { setError("Non è possibile esportare: mancano immagini originali di uno o più talenti."); return; }
     const html = template(talents);
     const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
     const a = document.createElement("a"); a.href = url; a.download = "peacock-talent-presentation.html"; a.click(); URL.revokeObjectURL(url);
@@ -58,7 +59,7 @@ export default function TalentPresentations() {
     {talents.length > 0 && <>
       <h2 style={{ fontFamily: "Georgia,serif", fontWeight: 400 }}>Anteprima email</h2>
       <iframe title="Anteprima presentazione" srcDoc={template(talents)} sandbox="" style={{ width: "100%", height: 650, border: "1px solid #ddd", background: "white" }}/>
-      <button onClick={exportHtml} style={{ background: "#191919", color: "#fff", border: 0, padding: "14px 24px", marginTop: 20 }}>Scarica HTML email</button>
+      <button onClick={exportHtml} disabled={talents.some(t => !t.images.some(validImage))} style={{ background: "#191919", color: "#fff", border: 0, padding: "14px 24px", marginTop: 20, opacity: talents.some(t => !t.images.some(validImage)) ? .45 : 1 }}>Scarica HTML email</button>
       <p style={{ fontSize: 12, color: "#666" }}>Invio manuale a cura di Gae. Verificare le fotografie prima dell'utilizzo.</p>
     </>}
   </main>;
