@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { PEACOCK_LOGO, presentationHtml } from '../lib/talent-presentations.mjs';
 import styles from './presentations.module.css';
+const authClient = createClient('https://xtpafxourildjnofeulr.supabase.co','sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC');
 type RosterTalent = {slug:string; name:string; profile:string};
 type Talent = RosterTalent & {cover:string; width:number; height:number};
 async function decodedImage(src:string) {
@@ -21,6 +23,7 @@ export default function TalentPresentations() {
   const [rosterError,setRosterError] = useState('');
   const [view,setView] = useState<'desktop'|'mobile'>('desktop');
   const [exporting,setExporting] = useState(false);
+  const [sendingTest,setSendingTest] = useState(false);
   const [status,setStatus] = useState('');
   const [previewValid,setPreviewValid] = useState(true);
   async function loadTalent(slug:string):Promise<Talent> {
@@ -48,6 +51,27 @@ export default function TalentPresentations() {
     try {const data=await loadTalent(t.slug);setTalents(old=>old.some(x=>x.slug===data.slug)?old:[...old,data]);setPreviewValid(true);}
     catch(e){setError(e instanceof Error?e.message:'Fotografia non disponibile.');}
     finally{setLoading('');}
+  }
+  async function sendTest() {
+    if(!talents.length || !previewValid || sendingTest || !!loading)return;
+    const recipient = 'info@gaetanogiordano.com';
+    const sender = 'hello@peacockmodels.com';
+    if(!window.confirm('INVIO REALE DI UNA EMAIL DI PROVA\\n\\nDa: '+sender+'\\nA: '+recipient+'\\n\\nConfermi l’invio?'))return;
+    setSendingTest(true);setError('');setStatus('');
+    try {
+      await Promise.all([decodedImage(PEACOCK_LOGO),...talents.map(t=>decodedImage(t.cover))]);
+      const {data:{session}}=await authClient.auth.getSession();
+      if(!session?.access_token)throw new Error('Accedi come amministratore Peacock per inviare la prova.');
+      const r=await fetch('/api/talent-presentations/send-test',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+        body:JSON.stringify({slugs:talents.map(t=>t.slug),destinatario:recipient,conferma:true})
+      });
+      const data=await r.json();
+      if(!r.ok)throw new Error(data.error||'Impossibile inviare la prova.');
+      setStatus('Prova accettata dal server SMTP. Controlla '+recipient+' e la cartella Spam.');
+    }catch(e){setError(e instanceof Error?e.message:'Invio della prova non riuscito.');}
+    finally{setSendingTest(false);}
   }
   async function exportHtml() {
     if(!talents.length || !previewValid)return;
@@ -92,7 +116,9 @@ export default function TalentPresentations() {
         {!talents.length&&!loading&&<p className={styles.muted}>Seleziona almeno un talento dal roster.</p>}
         {error&&<p role="alert" className={styles.error}>{error}</p>}
         {loading==='yile'&&<p role="status" className={styles.muted}>Recupero della copertina ufficiale di Yile…</p>}
-        <button className={styles.export} onClick={exportHtml} disabled={!talents.length||!previewValid||!!loading||exporting}>{exporting?'Verifica immagini…':'Scarica HTML email'}</button>
+        <button className={styles.export} onClick={exportHtml} disabled={!talents.length||!previewValid||!!loading||exporting||sendingTest}>{exporting?'Verifica immagini…':'Scarica HTML email'}</button>
+        <button className={styles.export} onClick={sendTest} disabled={!talents.length||!previewValid||!!loading||exporting||sendingTest} style={{background:'#fff',color:'#171717',border:'1px solid #171717',marginTop:10}}>{sendingTest?'Invio prova in corso…':'Invia email di prova'}</button>
+        <p className={styles.note}>Mittente fisso: hello@peacockmodels.com<br/>Destinatario prova: info@gaetanogiordano.com<br/>L’invio richiede una conferma e l’accesso amministratore.</p>
         {status&&<p role="status" className={styles.muted}>{status}</p>}
         <p className={styles.note}>Una copertina originale per talento, dal sito Peacock.<br/>Nessuna email viene inviata.</p>
       </section>
