@@ -5,7 +5,7 @@ import { PEACOCK_LOGO, presentationHtml } from '../lib/talent-presentations.mjs'
 import styles from './presentations.module.css';
 const authClient = createClient('https://xtpafxourildjnofeulr.supabase.co','sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC');
 type RosterTalent = {slug:string; name:string; profile:string};
-type Talent = RosterTalent & {cover:string; width:number; height:number};
+type Talent = RosterTalent & {cover:string; width:number; height:number; cardCover?:string; cardWidth?:number; cardHeight?:number};
 async function decodedImage(src:string) {
   const image = new Image();
   image.referrerPolicy = 'no-referrer';
@@ -63,7 +63,7 @@ export default function TalentPresentations() {
     const r = await fetch('/api/talent-presentations?slug='+encodeURIComponent(slug),{cache:'no-store'});
     const data = await r.json();
     if(!r.ok)throw new Error(data.error || 'Profilo non disponibile.');
-    await Promise.all([decodedImage(data.cover),decodedImage(PEACOCK_LOGO)]);
+    await Promise.all([decodedImage(data.cover),decodedImage(PEACOCK_LOGO),...(data.cardCover?[decodedImage(data.cardCover)]:[])]);
     return data;
   }
   useEffect(()=>{
@@ -95,7 +95,7 @@ export default function TalentPresentations() {
     if(!window.confirm('INVIO REALE DI UNA EMAIL DI PROVA\\n\\nDa: '+sender+'\\nA: '+recipient+'\\n\\nConfermi l’invio?'))return;
     setSendingTest(true);setError('');setStatus('');
     try {
-      await Promise.all([decodedImage(PEACOCK_LOGO),...talents.map(t=>decodedImage(t.cover))]);
+      await Promise.all([decodedImage(PEACOCK_LOGO),...talents.map(t=>decodedImage(talents.length>1?(t.cardCover||t.cover):t.cover))]);
       const {data:{session}}=await authClient.auth.getSession();
       if(!session?.access_token)throw new Error('Accedi come amministratore Peacock per inviare la prova.');
       const r=await fetch('/api/talent-presentations/send-test',{
@@ -113,7 +113,7 @@ export default function TalentPresentations() {
     if(!talents.length || !previewValid)return;
     setExporting(true);setError('');setStatus('');
     try {
-      await Promise.all([decodedImage(PEACOCK_LOGO),...talents.map(t=>decodedImage(t.cover))]);
+      await Promise.all([decodedImage(PEACOCK_LOGO),...talents.map(t=>decodedImage(talents.length>1?(t.cardCover||t.cover):t.cover))]);
       const url=URL.createObjectURL(new Blob([presentationHtml(talents)],{type:'text/html;charset=utf-8'}));
       const a=document.createElement('a');a.href=url;a.download=talents.length===1?`peacock-introducing-${talents[0].slug}.html`:'peacock-nuovi-volti.html';a.click();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -122,7 +122,8 @@ export default function TalentPresentations() {
     finally{setExporting(false);}
   }
   const filtered=roster.filter(t=>(t.name+' '+t.slug).toLocaleLowerCase('it').includes(query.toLocaleLowerCase('it')));
-  const html=talents.length&&previewValid?presentationHtml(talents):'';
+  let html='', layoutError='';
+  if(talents.length&&previewValid){try{html=presentationHtml(talents);}catch(e){layoutError=e instanceof Error?e.message:'Copertine uniformi non disponibili.';}}
   const frameHeight=talents.length===1?Math.ceil(700+(view==='mobile'?343:512)*talents[0].height/talents[0].width):view==='mobile'?500+talents.reduce((sum,t)=>sum+343*t.height/t.width+80,0):500+talents.reduce((sum,t,i)=>i%2===0?sum+248*Math.max(t.height/t.width,talents[i+1]?talents[i+1].height/talents[i+1].width:0)+80:sum,0);
   return <main className={styles.page}>
     <header className={styles.header}><a href="/" className={styles.back}>← Peacock MGMT</a><span className={styles.label}>PRESENTAZIONI TALENTI</span><h1>Talent Presentations</h1><p>Seleziona i talenti e prepara la tua presentazione editoriale.</p></header>
@@ -150,7 +151,7 @@ export default function TalentPresentations() {
           </div>
         </div>)}
         {!talents.length&&!loading&&<p className={styles.muted}>Seleziona almeno un talento dal roster.</p>}
-        {error&&<p role="alert" className={styles.error}>{error}</p>}
+        {(error||layoutError)&&<p role="alert" className={styles.error}>{error||layoutError}</p>}
         {loading==='yile'&&<p role="status" className={styles.muted}>Recupero della copertina ufficiale di Yile…</p>}
         <button className={styles.export} onClick={exportHtml} disabled={!talents.length||!previewValid||!!loading||exporting||sendingTest}>{exporting?'Verifica immagini…':'Scarica HTML email'}</button>
         <div style={{border:'1px solid #ddd',padding:15,marginTop:16}}>
