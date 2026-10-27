@@ -43,6 +43,8 @@ export async function fetchTalent(slug, fetcher = fetch) {
   const media=await (await request(`${API}media/${t.featured_media}?_fields=source_url,media_details,mime_type`,fetcher)).json();
   const {width,height}=media.media_details||{};
   if(!Number.isFinite(width)||!Number.isFinite(height)||width<200||height<200)throw new Error('La copertina ufficiale non ha dimensioni valide.');
-  await Promise.all([verifyImage(media.source_url,fetcher),verifyImage(PEACOCK_LOGO,fetcher)]);
-  return {slug,name:plain(t.title?.rendered),profile:t.link,cover:media.source_url,width,height,logo:PEACOCK_LOGO};
+  const card = media.media_details?.sizes?.img_card_modello;
+  if(card && (!Number.isFinite(card.width) || !Number.isFinite(card.height) || card.width < 200 || card.height < 200 || card.width * 5 !== card.height * 4 || !officialUrl(card.source_url,'image')))throw new Error('La copertina uniforme ufficiale non è valida.');
+  await Promise.all([verifyImage(media.source_url,fetcher),verifyImage(PEACOCK_LOGO,fetcher),...(card?[verifyImage(card.source_url,fetcher)]:[])]);
+  return {slug,name:plain(t.title?.rendered),profile:t.link,cover:media.source_url,width,height,logo:PEACOCK_LOGO,...(card?{cardCover:card.source_url,cardWidth:card.width,cardHeight:card.height}:{})};
 }

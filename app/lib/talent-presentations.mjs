@@ -16,6 +16,12 @@ export function presentationHtml(talents) {
   talents.forEach(validateTalent);
   if (new Set(talents.map(t => t.profile)).size !== talents.length) throw new Error('La selezione contiene talenti duplicati.');
   const single = talents.length === 1;
+  const gridTalents = single ? talents : talents.map(t => {
+    const card = t.cardCover ? {...t,cover:t.cardCover,width:t.cardWidth,height:t.cardHeight} : t;
+    validateTalent(card);
+    if(card.width * 5 !== card.height * 4)throw new Error(`La copertina uniforme 4:5 di ${t.name} non è disponibile sul sito Peacock.`);
+    return card;
+  });
   const image = (t, width, percent = 100) => `<a href="${escapeHtml(t.profile)}" target="_blank" style="text-decoration:none;color:#171717"><img src="${escapeHtml(t.cover)}" width="${width}" height="${Math.round(width*t.height/t.width)}" border="0" alt="${escapeHtml(t.name)} — Peacock Models Management" style="display:block;width:${percent}%;max-width:${width}px;height:auto;border:0;outline:none;text-decoration:none;margin:0 auto"></a>`;
   let content;
   if (single) {
@@ -24,7 +30,7 @@ export function presentationHtml(talents) {
   } else {
     const rows = [];
     for(let i=0;i<talents.length;i+=2) {
-      rows.push(`<tr>${talents.slice(i,i+2).map(t => `<td class="talent-cell" width="50%" valign="top" align="center" style="width:50%;padding:0 8px 28px">${image(t,248)}<p style="margin:14px 0 0;font:12px/18px Arial,Helvetica,sans-serif;letter-spacing:1.5px"><a href="${escapeHtml(t.profile)}" target="_blank" style="color:#171717;text-decoration:underline">${escapeHtml(t.name.toUpperCase())}</a></p></td>`).join('')}${i+1===talents.length?'<td class="empty-cell" width="50%" style="width:50%"></td>':''}</tr>`);
+      rows.push(`<tr>${gridTalents.slice(i,i+2).map(t => `<td class="talent-cell" width="50%" valign="top" align="center" style="width:50%;padding:0 8px 28px">${image(t,248)}<p style="margin:14px 0 0;font:12px/18px Arial,Helvetica,sans-serif;letter-spacing:1.5px"><a href="${escapeHtml(t.profile)}" target="_blank" style="color:#171717;text-decoration:underline">${escapeHtml(t.name.toUpperCase())}</a></p></td>`).join('')}${i+1===talents.length?'<td class="empty-cell" width="50%" style="width:50%"></td>':''}</tr>`);
     }
     content = `<tr><td class="content-pad" align="center" style="padding:0 24px"><h1 style="font:normal 20px/28px Arial,Helvetica,sans-serif;letter-spacing:1.4px;margin:0 0 30px;color:#171717">NUOVI VOLTI, NUOVE STORIE.</h1></td></tr><tr><td style="padding:0 16px"><table role="presentation" border="0" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed">${rows.join('')}</table></td></tr>`;
   }
