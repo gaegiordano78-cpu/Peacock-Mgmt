@@ -24,6 +24,8 @@ export default function TalentPresentations() {
   const [view,setView] = useState<'desktop'|'mobile'>('desktop');
   const [exporting,setExporting] = useState(false);
   const [sendingTest,setSendingTest] = useState(false);
+  const [mailCheck,setMailCheck] = useState<'idle'|'checking'|'ready'|'error'>('idle');
+  const [mailError,setMailError] = useState('');
   const [adminAuth,setAdminAuth] = useState<'checking'|'signed_out'|'admin'|'not_admin'>('checking');
   const [authEmail,setAuthEmail] = useState('');
   const [authPassword,setAuthPassword] = useState('');
@@ -31,11 +33,18 @@ export default function TalentPresentations() {
   const [authError,setAuthError] = useState('');
   const [status,setStatus] = useState('');
   const [previewValid,setPreviewValid] = useState(true);
+  async function checkMailConnection(token:string) {
+    setMailCheck('checking');setMailError('');
+    try{const r=await fetch('/api/talent-presentations/send-test',{headers:{Authorization:'Bearer '+token},cache:'no-store'});const data=await r.json();if(!r.ok)throw new Error(data.error||'Collegamento Nina non disponibile.');setMailCheck('ready');}
+    catch(e){setMailCheck('error');setMailError(e instanceof Error?e.message:'Collegamento Nina non disponibile.');}
+  }
   async function checkAdmin() {
     const {data:{session}}=await authClient.auth.getSession();
-    if(!session?.user){setAdminAuth('signed_out');return;}
+    if(!session?.user){setAdminAuth('signed_out');setMailCheck('idle');return;}
     const {data,error:roleError}=await authClient.from('profiles').select('ruolo').eq('id',session.user.id).single();
-    setAdminAuth(!roleError&&data?.ruolo==='admin'?'admin':'not_admin');
+    const isAdmin=!roleError&&data?.ruolo==='admin';
+    setAdminAuth(isAdmin?'admin':'not_admin');
+    if(isAdmin)await checkMailConnection(session.access_token);else setMailCheck('idle');
   }
   async function signInAdmin(e:React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,13 +60,13 @@ export default function TalentPresentations() {
         await authClient.auth.signOut();
         setAdminAuth('signed_out');
         setAuthError('L’account non ha i permessi di amministratore.');
-      } else setAdminAuth('admin');
+      } else {setAdminAuth('admin');if(data.session?.access_token)await checkMailConnection(data.session.access_token);}
     }
     setAuthBusy(false);
   }
   async function signOutAdmin() {
     await authClient.auth.signOut();
-    setAdminAuth('signed_out');
+    setAdminAuth('signed_out');setMailCheck('idle');setMailError('');
   }
   async function loadTalent(slug:string):Promise<Talent> {
     const r = await fetch('/api/talent-presentations?slug='+encodeURIComponent(slug),{cache:'no-store'});
@@ -90,22 +99,26 @@ export default function TalentPresentations() {
   async function sendTest() {
     if(!talents.length || !previewValid || sendingTest || !!loading)return;
     if(adminAuth!=='admin'){setAuthError('Accedi come amministratore per inviare una prova.');return;}
+    if(mailCheck!=='ready'){setError('Verifica prima il collegamento email Nina.');return;}
     const recipient = 'info@gaetanogiordano.com';
     const sender = 'hello@peacockmodels.com';
-    if(!window.confirm('INVIO REALE DI UNA EMAIL DI PROVA\\n\\nDa: '+sender+'\\nA: '+recipient+'\\n\\nConfermi l’invio?'))return;
+    const subject=(talents.length===1?'PROVA — INTRODUCING '+talents[0].name.toUpperCase():'PROVA — NUOVI VOLTI, NUOVE STORIE.')+' — '+new Intl.DateTimeFormat('it-IT',{timeZone:'Europe/Rome',dateStyle:'short',timeStyle:'medium'}).format(new Date());
+    if(!window.confirm('INVIO REALE DI UNA EMAIL DI PROVA\n\nDa: '+sender+'\nA: '+recipient+'\nOggetto: '+subject+'\n\nConfermi l’invio?'))return;
     setSendingTest(true);setError('');setStatus('');
     try {
       await Promise.all([decodedImage(PEACOCK_LOGO),...talents.map(t=>decodedImage(talents.length>1?(t.cardCover||t.cover):t.cover))]);
       const {data:{session}}=await authClient.auth.getSession();
       if(!session?.access_token)throw new Error('Accedi come amministratore Peacock per inviare la prova.');
+      const htmlBytes=new TextEncoder().encode(presentationHtml(talents));
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',htmlBytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
       const r=await fetch('/api/talent-presentations/send-test',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-        body:JSON.stringify({slugs:talents.map(t=>t.slug),destinatario:recipient,conferma:true})
+        body:JSON.stringify({slugs:talents.map(t=>t.slug),destinatario:recipient,oggetto:subject,html_sha256:hash,conferma:true})
       });
       const data=await r.json();
       if(!r.ok)throw new Error(data.error||'Impossibile inviare la prova.');
-      setStatus('Prova accettata dal server SMTP. Controlla '+recipient+' e la cartella Spam.');
+      setStatus('Prova accettata dal servizio email Nina. Controlla '+recipient+' e la cartella Spam.');
     }catch(e){setError(e instanceof Error?e.message:'Invio della prova non riuscito.');}
     finally{setSendingTest(false);}
   }
@@ -157,7 +170,7 @@ export default function TalentPresentations() {
         <div style={{border:'1px solid #ddd',padding:15,marginTop:16}}>
           <strong style={{fontSize:13}}>Accesso per email di prova</strong>
           {adminAuth==='checking'&&<p className={styles.muted}>Verifica sessione amministratore…</p>}
-          {adminAuth==='admin'&&<div style={{marginTop:10}}><p className={styles.muted}>Sessione amministratore attiva.</p><button type="button" onClick={signOutAdmin} style={{border:0,background:'none',textDecoration:'underline',padding:0,cursor:'pointer'}}>Esci</button></div>}
+          {adminAuth==='admin'&&<div style={{marginTop:10}}><p className={styles.muted}>Sessione amministratore attiva.</p>{mailCheck==='checking'&&<p className={styles.muted}>Verifica collegamento email Nina…</p>}{mailCheck==='ready'&&<p className={styles.muted}>Collegamento email Nina pronto.</p>}{mailCheck==='error'&&<><p role="alert" className={styles.error}>{mailError}</p><button type="button" onClick={()=>void checkAdmin()}>Riprova collegamento</button></>}<button type="button" onClick={signOutAdmin} style={{border:0,background:'none',textDecoration:'underline',padding:0,cursor:'pointer'}}>Esci</button></div>}
           {(adminAuth==='signed_out'||adminAuth==='not_admin')&&<form onSubmit={signInAdmin} style={{display:'grid',gap:9,marginTop:12}}>
             <p className={styles.note}>Nelle anteprime Vercel devi accedere separatamente con l'account amministratore dell'app Peacock.</p>
             <label htmlFor="preview-admin-email" style={{fontSize:12}}>Email amministratore</label>
@@ -168,10 +181,10 @@ export default function TalentPresentations() {
           </form>}
           {authError&&<p role="alert" className={styles.error}>{authError}</p>}
         </div>
-        <button className={styles.export} onClick={sendTest} disabled={adminAuth!=='admin'||!talents.length||!previewValid||!!loading||exporting||sendingTest} style={{background:'#fff',color:'#171717',border:'1px solid #171717',marginTop:10,opacity:adminAuth==='admin'?1:.55}}>{sendingTest?'Invio prova in corso…':'Invia email di prova'}</button>
+        <button className={styles.export} onClick={sendTest} disabled={adminAuth!=='admin'||mailCheck!=='ready'||!talents.length||!previewValid||!!loading||exporting||sendingTest||!!layoutError} style={{background:'#fff',color:'#171717',border:'1px solid #171717',marginTop:10,opacity:adminAuth==='admin'?1:.55}}>{sendingTest?'Invio prova in corso…':'Invia email di prova'}</button>
         <p className={styles.note}>Mittente fisso: hello@peacockmodels.com<br/>Destinatario prova: info@gaetanogiordano.com<br/>L’invio richiede una conferma e l’accesso amministratore.</p>
         {status&&<p role="status" className={styles.muted}>{status}</p>}
-        <p className={styles.note}>Una copertina originale per talento, dal sito Peacock.<br/>Nessuna email viene inviata.</p>
+        <p className={styles.note}>Una copertina originale per talento, dal sito Peacock.<br/>L’invio avviene solo con il pulsante e la tua conferma.</p>
       </section>
       <section className={styles.preview} aria-label="Anteprima newsletter">
         <div className={styles.previewHead}><h2>Anteprima email</h2><div className={styles.tabs} role="group" aria-label="Formato anteprima"><button aria-pressed={view==='desktop'} onClick={()=>setView('desktop')}>Desktop</button><button aria-pressed={view==='mobile'} onClick={()=>setView('mobile')}>Mobile</button></div></div>
@@ -182,3 +195,4 @@ export default function TalentPresentations() {
     </div>
   </main>;
 }
+
