@@ -76,16 +76,20 @@ export function createReceiptPDF(html) {
   return doc.output('blob');
 }
 
-export function receiptFilename(name, number) {
-  const safe = value => String(value || '').normalize('NFKC').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 70);
-  return `Ritenuta-${safe(name) || 'Peacock'}${number ? '-' + safe(number) : ''}.pdf`;
+export function receiptFilename(name, brand) {
+  const safe = value => String(value || '').normalize('NFKC')
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+    .replace(/\s+/g, ' ').trim().replace(/[. ]+$/g, '').slice(0, 90);
+  const model = safe(name) || 'Ritenuta';
+  const client = safe(brand);
+  return `${model}${client ? ' per ' + client : ''}.pdf`;
 }
 
-export function downloadReceiptPDF(text, name, number) {
+export function downloadReceiptPDF(text, name, brand) {
   const url = URL.createObjectURL(createReceiptPDF(text));
   const link = document.createElement('a');
   link.href = url;
-  link.download = receiptFilename(name, number);
+  link.download = receiptFilename(name, brand);
   document.body.appendChild(link);
   try { link.click(); } finally {
     link.remove();
