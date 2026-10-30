@@ -1458,7 +1458,7 @@ export default function App() {
       const testo = generaRitenuta(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
       const stampaPDFModel = () => {
         try {
-          downloadReceiptPDF(generaRitenutaHTML(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta), myModella.nome, numRitenuta);
+          downloadReceiptPDF(generaRitenutaHTML(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta), myModella.nome, job.cliente);
           showToast("PDF pronto: controlla i download");
         } catch {
           showToast("PDF non generato. Riprova o usa Copia testo.", true);
@@ -1882,7 +1882,7 @@ export default function App() {
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
           const stampaPDF = () => {
         try {
-          downloadReceiptPDF(generaRitenutaHTML(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta), mod.nome, numRitenuta);
+          downloadReceiptPDF(generaRitenutaHTML(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta), mod.nome, job.cliente);
           showToast("PDF pronto: controlla i download");
         } catch {
           showToast("PDF non generato. Riprova o usa Copia testo.", true);
