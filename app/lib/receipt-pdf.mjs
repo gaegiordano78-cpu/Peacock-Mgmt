@@ -86,10 +86,14 @@ export function receiptFilename(name, brand) {
 }
 
 export function downloadReceiptPDF(text, name, brand) {
-  const url = URL.createObjectURL(createReceiptPDF(text));
+  downloadReceiptBlob(createReceiptPDF(text), receiptFilename(name, brand));
+}
+
+export function downloadReceiptBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = receiptFilename(name, brand);
+  link.download = filename;
   document.body.appendChild(link);
   try { link.click(); } finally {
     link.remove();

@@ -8,6 +8,7 @@ localStorage.setItem('sb-xtpafxourildjnofeulr-auth-token',JSON.stringify({access
 });
 await page.route('https://xtpafxourildjnofeulr.supabase.co/**',async route=>{
 const url=route.request().url();let data=[];
+if(url.includes('/rpc/save_receipt')) { const body=route.request().postDataJSON(); data={id:'test-receipt',filename:'Test Model.pdf',pdf:body.p_pdf}; }
 if(url.includes('/profiles'))data={ruolo:'model'};
 if(url.includes('/modelle')){const m={id:'model-1',nome:'Test Model',user_id:'test-model'};data=url.includes('user_id=')?m:[m];}
 if(url.includes('/jobs'))data=[{id:133,titolo:'SHOOTING TEST',modella:'Test Model',netto_model:'300.00',data_shooting:null,stato_pagamento:'da pagare',stato_job:'confermato'}];
