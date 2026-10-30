@@ -1,10 +1,11 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ModelWelcome from "./components/ModelWelcome";
 import { annualIncome, romeDate } from "./lib/annual-income.mjs";
 import { contractSchedule } from "./lib/contracts.mjs";
-import { downloadReceiptPDF } from "./lib/receipt-pdf.mjs";
+import ReceiptArchive from "./components/ReceiptArchive";
+import { saveReceipt, downloadSavedReceipt } from "./lib/receipt-archive.mjs";
 import { useModelNavigation } from "./lib/use-model-navigation";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
@@ -183,7 +184,7 @@ function apriCalendar(job, tipo) {
 }
 // ── GENERATORE CONTRATTO ─────────────────────────────────────────────────────
 function generaContratto(job, modella) {
-  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Rome" });
   const netto = calcNetto(job);
   const rimb = job.rimborso > 0 ? ` + spese trasporto €${job.rimborso.toFixed(2)}` : "";
   const dataJob = fmtDate(job.data_shooting);
@@ -227,7 +228,7 @@ Firma Agenzia: _______________________________`;
 }
 // ── GENERATORE RITENUTA ─────────────────────────────────────────────────────
 function generaRitenuta(job, modella, numRitenuta, descrizione, dataInizio, dataFine) {
-  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Rome" });
   const lordo = calcLordo(job);
   const ritenuta = calcRitenuta(job);
   const netto = calcNetto(job);
@@ -263,7 +264,7 @@ Data: ${oggi}                    Firma del prestatore: _________________________
 }
 // ── GENERATORE RITENUTA HTML (per PDF) ──────────────────────────────────────
 function generaRitenutaHTML(job, modella, numRitenuta, descrizione, dataInizio, dataFine) {
-  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const oggi = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Rome" });
   const lordo = calcLordo(job);
   const ritenuta = calcRitenuta(job);
   const netto = calcNetto(job);
@@ -533,6 +534,9 @@ export default function App() {
   const [loading, setLoading]   = useState("");
   const [contrattoCopied, setContrattoCopied] = useState(false);
   const [myModella, setMyModella] = useState(null);
+  const [savingReceipt, setSavingReceipt] = useState(false);
+  const receiptLock = useRef(false);
+  const [receiptError, setReceiptError] = useState("");
   const [ritenutaCopied, setRitenutaCopied] = useState(false);
   const [numRitenuta, setNumRitenuta] = useState("");
   const [descRitenuta, setDescRitenuta] = useState("Model");
@@ -1216,6 +1220,20 @@ export default function App() {
   const totPagato      = jobs.filter(j => j.stato_pagamento === "pagato").reduce((s, j) => s + calcNetto(j), 0);
   const totGuadagnoPeacock = jobs.reduce((s, j) => s + calcGuadagnoPeacock(j), 0);
   const nomiModelle = modelle.map(m => m.nome);
+  const archiveAndDownloadReceipt = async (job, model) => {
+    if (receiptLock.current) return;
+    receiptLock.current = true; setSavingReceipt(true); setReceiptError("");
+    let saved = false;
+    try {
+      const html = generaRitenutaHTML(job, model, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
+      const receipt = await saveReceipt(supabase, { html, job, model, number: numRitenuta, date: romeDate(new Date()) });
+      saved = true;
+      downloadSavedReceipt(receipt);
+      showToast("Ritenuta salvata e PDF pronto");
+    } catch (e) {
+      setReceiptError(saved ? "Ritenuta salvata. Puoi scaricarla dall’Archivio ritenute." : (e.message || "Ritenuta non salvata. Riprova."));
+    } finally { receiptLock.current = false; setSavingReceipt(false); }
+  };
   // ── NAV ──────────────────────────────────────────────────────────────────
   const backView = () => {
     if (view === "dettaglio") return setView("lista");
@@ -1285,6 +1303,9 @@ export default function App() {
   if (user && userRuolo === "model" && welcomeCompletedFor !== user.id) {
     if (splash) return <div style={{ minHeight: "100vh", background: "#090909" }} />;
     return <ModelWelcome userId={user.id} onComplete={() => setWelcomeCompletedFor(user.id)} />;
+  }
+  if ((userRuolo === "admin" && view === "archivio_ritenute") || (userRuolo === "model" && modelView === "archivio_ritenute")) {
+    return <ReceiptArchive key={user.id} client={supabase} onBack={() => userRuolo === "model" ? setModelView("home") : setView("lista")} />;
   }
   if (user && userRuolo === "model") {
     // Sub-view: profilo personale
@@ -1456,14 +1477,7 @@ export default function App() {
     if (modelView === "ritenuta_model" && modelSelectedJob && myModella) {
       const job = jobs.find(j => j.id === modelSelectedJob.id) || modelSelectedJob;
       const testo = generaRitenuta(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
-      const stampaPDFModel = () => {
-        try {
-          downloadReceiptPDF(generaRitenutaHTML(job, myModella, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta), myModella.nome, job.cliente);
-          showToast("PDF pronto: controlla i download");
-        } catch {
-          showToast("PDF non generato. Riprova o usa Copia testo.", true);
-        }
-      };
+      const stampaPDFModel = () => archiveAndDownloadReceipt(job, myModella);
       return (
         <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
           {toast && (
@@ -1489,9 +1503,11 @@ export default function App() {
             <div style={{ background: "#FFFFFF", borderRadius: 16, border: "0.5px solid #EBEBEB", padding: "20px 18px", fontSize: 15, color: "#000000", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
               {testo}
             </div>
-            <button onClick={stampaPDFModel}
+            {receiptError && <p role="alert" style={{ color: "#b91c1c" }}>{receiptError}</p>}
+<GhostBtn onClick={() => setModelView("archivio_ritenute")}>Archivio ritenute</GhostBtn>
+<button disabled={savingReceipt} onClick={stampaPDFModel}
               style={{ width: "100%", padding: "15px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
-              📄 Scarica PDF
+              {savingReceipt ? "Salvataggio…" : "📄 Scarica PDF"}
             </button>
             <button onClick={() => {
               navigator.clipboard.writeText(testo).then(() => { showToast("Ritenuta copiata ✓"); });
@@ -1529,6 +1545,7 @@ export default function App() {
           )}
           <div style={{ fontSize: 22, fontWeight: 700, color: "#000", marginBottom: 4 }}>{myModella?.nome || "Ciao"}</div>
           <div style={{ fontSize: 17, color: "#767676", marginBottom: 20 }}>Your jobs</div>
+          <GhostBtn onClick={() => setModelView("archivio_ritenute")}>Archivio ritenute</GhostBtn>
           <div role={income.reached ? "alert" : "status"} style={{ background: income.reached ? "#FFFBEB" : "#FFFFFF", border: `1px solid ${income.reached ? "#F59E0B" : "#EBEBEB"}`, borderRadius: 14, padding: "16px", marginBottom: 20 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>{income.reached ? "Hai raggiunto 4.000 € lordi nell’anno" : `Compensi lordi incassati · ${income.year}`}</div>
             <div style={{ fontSize: 24, fontWeight: 800, marginTop: 8, color: "#000" }}>{fmt(income.grossCents / 100)}</div>
@@ -1666,6 +1683,7 @@ export default function App() {
                           {[
                             { icon: "+", label: "Crea job multipli", click: () => { setBulkCommon({ titolo: "", cliente: "", luogo: "", contatto_referente: "", note: "", fatturato_totale: 0 }); setBulkRows([]); setView("nuovo_job_bulk"); } },
                             { icon: "📋", label: "Casting", click: () => setView("castings") },
+                            { icon: "🧾", label: "Archivio ritenute", click: () => setView("archivio_ritenute") },
                             { icon: "📊", label: "Report", click: () => setView("report") },
                             { icon: "📅", label: "Prossimi shooting", click: () => setView("agenda") },
                             { icon: "🗜️", label: "Ottimizza archivio", click: () => setView("ottimizza") },
@@ -1880,14 +1898,7 @@ export default function App() {
           const mod = modelle.find(m => m.nome === job.modella);
           if (!mod) return <div style={{ padding: 16, color: "#000000" }}>Completa prima la scheda anagrafica del model.</div>;
           const testo = generaRitenuta(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta);
-          const stampaPDF = () => {
-        try {
-          downloadReceiptPDF(generaRitenutaHTML(job, mod, numRitenuta, descRitenuta, dataInizioRitenuta, dataFineRitenuta), mod.nome, job.cliente);
-          showToast("PDF pronto: controlla i download");
-        } catch {
-          showToast("PDF non generato. Riprova o usa Copia testo.", true);
-        }
-          };
+          const stampaPDF = () => archiveAndDownloadReceipt(job, mod);
           return (
             <div style={{ padding: "16px" }}>
               <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "16px", marginBottom: 16, border: "1px solid #EAE4DC" }}>
@@ -1902,9 +1913,11 @@ export default function App() {
               <div style={{ background: "#FFFFFF", borderRadius: 16, border: "0.5px solid #EBEBEB", padding: "20px 18px", fontSize: 15, color: "#000000", lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: "Georgia, serif", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
                 {testo}
               </div>
-              <button onClick={stampaPDF}
+              {receiptError && <p role="alert" style={{ color: "#b91c1c" }}>{receiptError}</p>}
+<GhostBtn onClick={() => setView("archivio_ritenute")}>Archivio ritenute</GhostBtn>
+<button disabled={savingReceipt} onClick={stampaPDF}
                 style={{ width: "100%", padding: "15px", background: "#1C1714", border: "none", borderRadius: 16, color: "#FFF", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 8 }}>
-                📄 Scarica PDF
+                {savingReceipt ? "Salvataggio…" : "📄 Scarica PDF"}
               </button>
               <button onClick={() => {
                 navigator.clipboard.writeText(testo).then(() => {
