@@ -8,7 +8,7 @@ import { downloadReceiptPDF } from "./lib/receipt-pdf.mjs";
 import { useModelNavigation } from "./lib/use-model-navigation";
 import { createClient } from "@supabase/supabase-js";
 import { pushSupported, isIOS, isStandalone, pushStatus, enablePush, sendPushToModels } from "./lib/push";
-import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS, MISURE } from "./lib/media";
+import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_MB, makeZip, downloadBlob, POLA_SLOTS, VIDEO_SLOTS } from "./lib/media";
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const passwordLinkAtLoad = typeof window !== "undefined" && (window.__peacockPasswordLink || /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash));
@@ -2019,20 +2019,6 @@ export default function App() {
                   </button>
                 </div>
               )}
-              {/* MISURE */}
-              <PaddedSection title="Misure"
-                action={<button onClick={() => { setFormMod(mod); setView("nuova_modella"); }} style={{ fontSize: 17, color: "#C4A882", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Modifica</button>}>
-                {MISURE.some(x => mod[x.key]) ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px 8px", padding: "4px 0" }}>
-                    {MISURE.map(x => (
-                      <div key={x.key}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#9C948A", letterSpacing: "0.08em", textTransform: "uppercase" }}>{x.label}</div>
-                        <div style={{ fontSize: 16, color: "#000" }}>{mod[x.key] || "—"}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : <div style={{ fontSize: 16, color: "#767676" }}>Misure non inserite.</div>}
-              </PaddedSection>
               {/* POLAS */}
               <Section title={`Polas${mod.data_polas ? " · " + mod.data_polas : ""}`}>
                 <div style={{ padding: "14px 16px" }}>
@@ -2171,13 +2157,6 @@ export default function App() {
             <Field label="Link sito"  value={formMod.link_sito}  onChange={v => setFormMod(f => ({ ...f, link_sito: v }))} />
             <Field label="Internal notes" value={formMod.note} onChange={v => setFormMod(f => ({ ...f, note: v }))} />
             <Field label="Allergie / intolleranze" value={formMod.allergie || ""} onChange={v => setFormMod(f => ({ ...f, allergie: v }))} placeholder="es. nichel, lattice, polline..." />
-            <div style={{ height: 8 }} />
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Misure</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {MISURE.map(x => (
-                <Field key={x.key} label={x.label} value={formMod[x.key] || ""} onChange={v => setFormMod(f => ({ ...f, [x.key]: v }))} placeholder={x.ph} />
-              ))}
-            </div>
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 17, fontWeight: 700, color: "#767676", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>Personal data (for tax)</div>
             <Field label="Codice Fiscale" value={formMod.cf} onChange={v => setFormMod(f => ({ ...f, cf: v.toUpperCase() }))} />
