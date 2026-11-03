@@ -1,5 +1,7 @@
 node_modules/
 .next/
 package-lock.json
-.env*.local
-.vercel
+.env*
+!.env.example
+.vercel/
+*.tsbuildinfo
