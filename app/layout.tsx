@@ -54,6 +54,7 @@ export default function RootLayout({
           <img src="/logo-peacock.png" alt="Peacock" />
         </div>
         <script dangerouslySetInnerHTML={{ __html: `
+          window.__peacockAuthReturn = /(?:^|[?&#])(?:access_token|refresh_token|token_hash|code|error|error_code|error_description|type)=/.test(window.location.search + window.location.hash) || window.location.pathname.startsWith("/auth/");
           window.__peacockPasswordLink = /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash);
           window.__hideSplash = function() {
             var el = document.getElementById('splash-loader');
@@ -73,7 +74,7 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'AW-18059680840');
+            if (!window.__peacockAuthReturn) gtag('config', 'AW-18059680840');
           `}
         </Script>
 
