@@ -1,6 +1,8 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect, useRef } from "react";
+import PasswordRecovery from "./components/PasswordRecovery";
+import { readAuthReturn } from "./lib/password-recovery.mjs";
 import ModelWelcome from "./components/ModelWelcome";
 import { annualIncome, romeDate } from "./lib/annual-income.mjs";
 import { contractSchedule } from "./lib/contracts.mjs";
@@ -13,7 +15,8 @@ import { compressImage, compressVideo, makeAudioContext, isVideoFile, MAX_VIDEO_
 const SUPABASE_URL = "https://xtpafxourildjnofeulr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u9bT7JY0grFwVFrRnLxkhw_fVI84jIC";
 const passwordLinkAtLoad = typeof window !== "undefined" && (window.__peacockPasswordLink || /(?:^|[&#])type=(?:invite|recovery)(?:&|$)/.test(window.location.hash));
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const authReturn = typeof window !== "undefined" ? readAuthReturn(window.location.href) : null;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { detectSessionInUrl: !authReturn } });
 const LOGO = "https://peacockmodels.com/wp-content/uploads/2025/04/logo-peacock.svg";
 const LOGO_SPLASH = "/logo-peacock.png";
 // ── DATI ────────────────────────────────────────────────────────────────────
@@ -507,6 +510,12 @@ const IMG_MEN   = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-i
 const IMG_WOMEN = "https://peacockmodels.com/wp-content/uploads/2026/03/gemini-image-2-metti-sfondo-bianco-con-retroilluminazione-delicata-1-4.jpg";
 // ── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+  return authReturn ? <PasswordRecovery client={supabase} params={authReturn} /> : <MainApp />;
+}
+function MainApp() {
   const [user, setUser]         = useState(null);
   const [userRuolo, setUserRuolo] = useState(null);
   const [loginEmail, setLoginEmail]     = useState("");
